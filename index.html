@@ -18,6 +18,10 @@
         .search-wrap input:focus { border-color:#1565c0; box-shadow:0 0 0 3px rgba(21,101,192,.1); }
         .container { max-width:1100px; margin:0 auto; padding:0 1rem 2rem; }
 
+        /* Licensing Legend */
+        .license-legend { display:flex; flex-wrap:wrap; justify-content:center; gap:.8rem; margin-bottom:1.2rem; padding:.6rem 1rem; background:var(--card-bg); border-radius:var(--radius); box-shadow:0 1px 4px rgba(0,0,0,.04); font-size:.72rem; color:var(--muted); }
+        .license-legend .ll-item { display:flex; align-items:center; gap:.3rem; }
+
         /* Pattern Cards */
         .pattern-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1rem; margin-bottom:1.5rem; }
         .pattern-card { background:var(--card-bg); border-radius:var(--radius); overflow:hidden; box-shadow:0 1px 8px rgba(0,0,0,.06); cursor:pointer; transition:transform .2s,box-shadow .2s; }
@@ -77,6 +81,31 @@
         .prompt-label { font-size:.68rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:600; margin-bottom:.25rem; }
         .prompt-chip { display:inline-block; background:#f0f4f8; border:1px solid #e2e6ea; border-radius:16px; padding:.2rem .65rem; font-size:.76rem; margin:.15rem .2rem .15rem 0; color:#374151; font-style:italic; }
 
+        /* Tier Badges */
+        .tier-badge { font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:.12rem .45rem; border-radius:4px; flex-shrink:0; }
+        .tier-base { background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; }
+        .tier-premium { background:#fff3e0; color:#e65100; border:1px solid #ffe0b2; }
+        .tier-coming { background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb; }
+
+        /* Coming Soon Section */
+        .coming-soon-section { background:var(--card-bg); border-radius:var(--radius); box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:1.5rem; overflow:hidden; }
+        .cs-header { padding:1rem 1.2rem; background:linear-gradient(135deg,#0d47a1,#1976d2); color:#fff; display:flex; align-items:center; justify-content:space-between; }
+        .cs-header h3 { font-size:1rem; }
+        .cs-header .cs-badge { background:rgba(255,255,255,.2); padding:.15rem .6rem; border-radius:12px; font-size:.7rem; }
+        .cs-body { padding:1rem 1.2rem; }
+        .cs-quarter { margin-bottom:1rem; }
+        .cs-quarter-label { font-size:.72rem; font-weight:700; color:#1565c0; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.4rem; padding-bottom:.2rem; border-bottom:2px solid #e3f2fd; }
+        .cs-item { display:flex; align-items:flex-start; gap:.5rem; padding:.4rem 0; border-bottom:1px solid #f5f5f5; }
+        .cs-item:last-child { border-bottom:none; }
+        .cs-prod { font-size:.65rem; font-weight:600; padding:.1rem .4rem; border-radius:3px; flex-shrink:0; white-space:nowrap; }
+        .cs-prod-s4 { background:#e3f2fd; color:#1565c0; }
+        .cs-prod-sf { background:#e0f2f1; color:#00897b; }
+        .cs-prod-ariba { background:#fff3e0; color:#ef6c00; }
+        .cs-prod-concur { background:#f3e5f5; color:#7b1fa2; }
+        .cs-prod-joule { background:#fce4ec; color:#c62828; }
+        .cs-desc { font-size:.78rem; color:var(--text); }
+        .cs-commercial { font-size:.58rem; font-weight:600; padding:.08rem .35rem; border-radius:3px; margin-left:.3rem; }
+
         footer { text-align:center; padding:1.5rem; color:#999; font-size:.72rem; }
         .hidden { display:none !important; }
 
@@ -107,6 +136,12 @@
 </div>
 
 <div class="container">
+    <div class="license-legend">
+        <div class="ll-item"><span class="tier-badge tier-base">Base</span> Included with licensing</div>
+        <div class="ll-item"><span class="tier-badge tier-premium">Premium</span> Per user / per month add-on</div>
+        <div class="ll-item"><span class="tier-badge tier-coming">Coming</span> On SAP roadmap — not yet GA</div>
+    </div>
+
     <div class="pattern-grid">
         <div class="pattern-card pc-nav" onclick="showPattern('nav')">
             <div class="pc-head"><div class="pc-icon">🧭</div><h2>Navigational</h2><p>Navigate to apps, screens, and pages using natural language</p><span class="pc-count" id="nav-count"></span></div>
@@ -125,11 +160,15 @@
     <div id="panel-info" class="detail-panel"></div>
     <div id="panel-trans" class="detail-panel"></div>
     <div id="panel-anal" class="detail-panel"></div>
+
+    <!-- Coming Soon Section -->
+    <div class="coming-soon-section" id="comingSoon"></div>
 </div>
 
-<footer>Source: Arkansas Application Architecture (June 2025) · Joule Capability Catalog · Generated March 2026</footer>
+<footer>Source: Arkansas Application Architecture (June 2025) · SAP AI Roadmap (March 2026) · Joule Capability Catalog</footer>
 
 <script>
+// Tier: "base" = included, "premium" = add-on, undefined = base (default)
 const DATA = {
   "S/4HANA Finance – GL": { product:"s4", nav:[{name:"Navigate to Manage Journal Entries",prompts:["Open manage journal entries app","Take me to journal entries"]},{name:"Navigate to G/L Account Balance",prompts:["Show me G/L account balances","Open account balance display"]},{name:"Navigate to Chart of Accounts",prompts:["Open chart of accounts","Take me to chart of accounts"]},{name:"Navigate to Journal Entry Analyzer",prompts:["Open journal entry analyzer","Navigate to JE analyzer"]},{name:"Navigate to Display Financial Statement",prompts:["Show financial statement","Open financial statement display"]},{name:"Navigate to Manage Recurring Journal Entries",prompts:["Open recurring journal entries","Manage recurring JEs"]}], info:[{name:"Display Journal Entry Details",prompts:["Show me details for journal entry 100000045","What are the line items for document 100000045?"]},{name:"G/L Account Balance Inquiry",prompts:["What is the balance of G/L account 400000?","Show me the balance for account 113100 in company code 1010"]},{name:"Financial Statement Query",prompts:["Show me the income statement for Q1 2026","What is the total revenue for company code 1010?"]}], trans:[{name:"Post General Journal Entry",prompts:["Post a journal entry for $5,000 to account 400000","Create a journal entry debiting 113100 and crediting 400000"]},{name:"Park General Journal Entry",prompts:["Park a journal entry for review","Save journal entry as parked document"]},{name:"Create Recurring Journal Entry",prompts:["Create a monthly recurring journal entry for rent expense","Set up recurring JE for $2,500 every month"]}], anal:[] },
   "S/4HANA Finance – AR": { product:"s4", nav:[{name:"Navigate to Manage Customer Line Items",prompts:["Open manage customer line items","Show me customer line items app"]},{name:"Navigate to Customer Balance Display",prompts:["Open customer balance display","Show customer balances"]},{name:"Navigate to Manage Customer Master Data",prompts:["Open customer master data","Take me to manage customers"]},{name:"Navigate to Customer Aging Reports",prompts:["Open customer aging report","Show me AR aging"]}], info:[{name:"Customer Balance Inquiry",prompts:["What is the balance for customer 1000010?","Show me the account balance for ABC Corp"]},{name:"Customer Open Items",prompts:["Show open items for customer 1000010","List unpaid invoices for customer ABC Corp"]},{name:"Customer Aging Analysis",prompts:["Show aging for customer 1000010","What invoices are overdue for ABC Corp?"]},{name:"Customer Invoice Details",prompts:["Show me details for customer invoice 90000123","What is the status of invoice 90000123?"]}], trans:[{name:"Post Customer Invoice",prompts:["Post a customer invoice for $10,000 to customer 1000010","Create an invoice for ABC Corp"]},{name:"Post Customer Credit Memo",prompts:["Post a credit memo for customer 1000010 for $500","Create a credit memo for ABC Corp"]},{name:"Post Customer Payment",prompts:["Post a payment of $10,000 from customer 1000010","Record incoming payment from ABC Corp"]},{name:"Post Customer Down Payment",prompts:["Post a down payment of $2,000 from customer 1000010","Record advance payment from ABC Corp"]},{name:"Clear Customer Open Items",prompts:["Clear open items for customer 1000010","Match payment to invoice for ABC Corp"]}], anal:[] },
@@ -166,10 +205,51 @@ const PATTERNS = {
   anal: { label:'Analytical', bg:'linear-gradient(135deg,#6a1b9a,#ab47bc)' }
 };
 
+// Coming Soon items from SAP AI Roadmap (Arkansas-relevant, deduplicated)
+const COMING_SOON = [
+  { q:"Q2 2026", prod:"s4", item:"Public Sector Joule: AI-assisted enterprise search & copilot transactions for additional public sector management objects" },
+  { q:"Q2 2026", prod:"s4", item:"Project assistant: portfolio management and project budget analytics via Joule copilot" },
+  { q:"Q2 2026", prod:"s4", item:"Accounts Receivable Agent — AI-powered AR collections and correspondence", commercial:"base" },
+  { q:"Q2 2026", prod:"s4", item:"Cash Management Agent — intelligent cash positioning and forecasting", commercial:"base" },
+  { q:"Q2 2026", prod:"s4", item:"Dispute Resolution Agent — automated dispute analysis and resolution", commercial:"base" },
+  { q:"Q2 2026", prod:"s4", item:"Production Planning and Operations Agent", commercial:"base" },
+  { q:"Q2 2026", prod:"s4", item:"Project Setup Agent — automated project structure creation", commercial:"base" },
+  { q:"Q2 2026", prod:"ariba", item:"Joule CoPilot-enabled navigation and transactional automation for SAP Ariba Contracts" },
+  { q:"Q2 2026", prod:"ariba", item:"Joule: natural language processing (NLP) awarding process in Sourcing" },
+  { q:"Q2 2026", prod:"ariba", item:"Supplier Risk: using Joule to get information about engagements and suppliers" },
+  { q:"Q2 2026", prod:"sf", item:"AI-assisted development goal creation with Joule (Succession & Development)" },
+  { q:"Q2 2026", prod:"concur", item:"Trip changes in Joule — modify existing bookings via natural language" },
+  { q:"Q2 2026", prod:"joule", item:"Deep Research Capability — multi-step research across SAP data" },
+  { q:"Q2 2026", prod:"joule", item:"Dashboard Analyzer Agent (Business Transformation)", commercial:"base" },
+  { q:"Q3 2026", prod:"s4", item:"Joule-supported business summary of central purchasing contract" },
+  { q:"Q3 2026", prod:"s4", item:"Joule in MDG central governance" },
+  { q:"Q3 2026", prod:"s4", item:"AI-assisted safety observation reporting with Joule" },
+  { q:"Q3 2026", prod:"ariba", item:"SAP Joule action bar: bid anomaly identification and message drafting in Sourcing" },
+  { q:"Q3 2026", prod:"ariba", item:"Joule copilot: AI assistant for suppliers in Sourcing" },
+  { q:"Q3 2026", prod:"concur", item:"Update to booking agent for rail through Joule" },
+  { q:"Q3 2026", prod:"concur", item:"Expense Pre-Submit Audit Agent — AI reviews expense reports before submission", commercial:"base" },
+  { q:"Q3 2026", prod:"concur", item:"Meeting Location Planner Agent", commercial:"base" },
+  { q:"Q4 2026", prod:"s4", item:"Public Sector: navigational assistance to public sector management apps through Joule" },
+  { q:"Q4 2026", prod:"s4", item:"Public Sector: conversational assistance in public sector management apps with Joule" },
+  { q:"Q4 2026", prod:"s4", item:"Integration of Joule capabilities into public sector SAP Fiori apps" },
+  { q:"Q4 2026", prod:"s4", item:"Navigational assistance to Grantor Management applications with Joule" },
+  { q:"Q4 2026", prod:"s4", item:"Project assistant: prediction and recommendation skills via Joule copilot" },
+  { q:"Q4 2026", prod:"s4", item:"Joule-based AI agents for optimized maintenance event scheduling" },
+  { q:"Q4 2026", prod:"s4", item:"Conversational navigation to quality management apps with Joule" },
+  { q:"Q4 2026", prod:"sf", item:"Data-driven goals generation with Joule (Succession & Development)" }
+];
+
 // Count
 let counts = {nav:0,info:0,trans:0,anal:0};
 for (const s of Object.values(DATA)) for (const p of ['nav','info','trans','anal']) counts[p]+=s[p].length;
 for (const p of ['nav','info','trans','anal']) document.getElementById(p+'-count').textContent=counts[p]+' capabilities';
+
+// Build tier badge HTML
+function tierBadge(tier) {
+  if(tier==='premium') return '<span class="tier-badge tier-premium">Premium</span>';
+  if(tier==='coming') return '<span class="tier-badge tier-coming">Coming</span>';
+  return '<span class="tier-badge tier-base">Base</span>';
+}
 
 // Build panels
 for (const [pKey,pMeta] of Object.entries(PATTERNS)) {
@@ -177,7 +257,6 @@ for (const [pKey,pMeta] of Object.entries(PATTERNS)) {
   const allSols = Object.entries(DATA).filter(([,v])=>v[pKey].length>0);
   if(!allSols.length) continue;
 
-  // Group by product
   const grouped = {};
   for(const pr of PRODUCTS) grouped[pr.key]=allSols.filter(([,v])=>v.product===pr.key);
 
@@ -193,7 +272,6 @@ for (const [pKey,pMeta] of Object.entries(PATTERNS)) {
   }
   html += '</div><div class="module-area">';
 
-  // For each product, a module-tabs + panes group
   for(const pr of PRODUCTS) {
     if(!grouped[pr.key].length) continue;
     const vis = pr.key===firstProd;
@@ -208,7 +286,8 @@ for (const [pKey,pMeta] of Object.entries(PATTERNS)) {
       html += `<div class="sol-pane${i===0?' active':''}" id="modpane-${pKey}-${pr.key}-${i}"><div class="sol-content">`;
       for(const cap of val[pKey]) {
         const st = (cap.name+' '+cap.prompts.join(' ')).toLowerCase();
-        html += `<div class="cap-item" data-search="${st}"><button class="cap-toggle" onclick="this.closest('.cap-item').classList.toggle('open')"><span class="arrow">▶</span><span class="cap-name">${cap.name}</span></button><div class="cap-body"><div class="cap-inner"><div class="prompt-label">Sample Prompts</div>${cap.prompts.map(p=>`<span class="prompt-chip">"${p}"</span>`).join('')}</div></div></div>`;
+        const badge = tierBadge(cap.tier || 'base');
+        html += `<div class="cap-item" data-search="${st}"><button class="cap-toggle" onclick="this.closest('.cap-item').classList.toggle('open')"><span class="arrow">▶</span><span class="cap-name">${cap.name}</span>${badge}</button><div class="cap-body"><div class="cap-inner"><div class="prompt-label">Sample Prompts</div>${cap.prompts.map(p=>`<span class="prompt-chip">"${p}"</span>`).join('')}</div></div></div>`;
       }
       html += '</div></div>';
     });
@@ -217,6 +296,27 @@ for (const [pKey,pMeta] of Object.entries(PATTERNS)) {
   html += '</div></div>';
   panel.innerHTML = html;
 }
+
+// Build Coming Soon section
+(function buildComingSoon() {
+  const el = document.getElementById('comingSoon');
+  const quarters = [...new Set(COMING_SOON.map(i=>i.q))].sort();
+  const prodLabels = {s4:'S/4HANA',sf:'SuccessFactors',ariba:'Ariba',concur:'Concur',joule:'Joule Platform'};
+  const prodCls = {s4:'cs-prod-s4',sf:'cs-prod-sf',ariba:'cs-prod-ariba',concur:'cs-prod-concur',joule:'cs-prod-joule'};
+
+  let html = `<div class="cs-header"><h3>🔮 Coming Soon — SAP Joule Roadmap</h3><span class="cs-badge">${COMING_SOON.length} planned items</span></div><div class="cs-body">`;
+  for(const q of quarters) {
+    const items = COMING_SOON.filter(i=>i.q===q);
+    html += `<div class="cs-quarter"><div class="cs-quarter-label">${q}</div>`;
+    for(const it of items) {
+      const comm = it.commercial ? `<span class="cs-commercial tier-badge ${it.commercial==='premium'?'tier-premium':'tier-base'}">${it.commercial}</span>` : '';
+      html += `<div class="cs-item"><span class="cs-prod ${prodCls[it.prod]}">${prodLabels[it.prod]}</span><span class="cs-desc">${it.item}${comm}</span></div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+})();
 
 // Interactions
 let activePattern = null;
@@ -256,7 +356,6 @@ document.getElementById('globalSearch').addEventListener('input',function(){
     document.querySelectorAll('.cap-item').forEach(c=>{c.classList.remove('hidden','open');});
     document.querySelectorAll('.pattern-card').forEach(c=>c.classList.remove('active','hidden'));
     document.querySelectorAll('.product-content').forEach(pc=>{pc.style.display='';pc.querySelector('.mod-tab')&&(pc.style.display='none');});
-    // Reset to first product visible
     document.querySelectorAll('.detail-panel').forEach(panel=>{
       const first=panel.querySelector('.product-btn');
       if(first){first.click();}
@@ -275,12 +374,10 @@ document.getElementById('globalSearch').addEventListener('input',function(){
     if(m)c.classList.add('open'); else c.classList.remove('open');
   });
 
-  // Hide empty product-content blocks
   document.querySelectorAll('.product-content').forEach(pc=>{
     const vis=pc.querySelectorAll('.cap-item:not(.hidden)').length;
     pc.style.display=vis?'block':'none';
   });
-  // Hide empty panels/cards
   ['nav','info','trans','anal'].forEach((pk,i)=>{
     const panel=document.getElementById('panel-'+pk);
     const vis=panel.querySelectorAll('.cap-item:not(.hidden)').length;
