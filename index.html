@@ -142,6 +142,20 @@
         }
     
     .grayed-out{opacity:0.45;position:relative}.grayed-out:hover{opacity:0.65}
+    .acc-section{margin:.4rem 0;border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:box-shadow .2s}
+    .acc-section:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .acc-header{display:flex;align-items:center;justify-content:space-between;background:var(--card-bg);padding:.6rem 1rem;font-weight:600;font-size:.85rem;cursor:pointer;user-select:none;transition:background .15s}
+    .acc-header:hover{background:#f1f5f9}
+    .acc-header .acc-chevron{transition:transform .25s ease;font-size:.7rem;color:#94a3b8;margin-left:8px;flex-shrink:0}
+    .acc-header.acc-open .acc-chevron{transform:rotate(90deg)}
+    .acc-body{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1),padding .25s ease;padding:0 1rem}
+    .acc-body.acc-expanded{max-height:3000px;padding:.5rem 1rem .6rem}
+    .acc-badges{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+    .acc-mini{font-size:.55rem;padding:1px 5px;border-radius:3px;font-weight:600}
+    .acc-mini-base{background:#e0f2fe;color:#0369a1}
+    .acc-mini-premium{background:#fef3c7;color:#b45309}
+    .acc-mini-beta{background:#ede9fe;color:#7c3aed}
+    .acc-mini-roadmap{background:#fef9c3;color:#854d0e}
     .coming-label{display:block;margin-top:4px;font-size:.65rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
     .pc-agents{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;cursor:pointer}
     .pc-agents h2,.pc-agents p{color:#fff}
@@ -309,7 +323,8 @@ function showPattern(pat) {
   var panel=document.getElementById('capPanel');
   if(!panel){panel=document.createElement('div');panel.id='capPanel';panel.style.cssText='margin-top:1rem;';document.querySelector('.pattern-grid').insertAdjacentElement('afterend',panel);}
   var pL={nav:'Navigational',info:'Informational',trans:'Transactional',anal:'Analytical (SAP Analytics Cloud)',agents:'Joule Agents',skills:'Joule Skills'};
-  var h='<h3 style="margin:.8rem 0 .5rem;font-size:1.1rem;">'+pL[pat]+' Capabilities</h3>';
+  var pColors={nav:'#1565c0',info:'#2e7d32',trans:'#e65100',agents:'#7c3aed',anal:'#6a1b9a',skills:'#0891b2'};
+  var h='<div style="display:flex;align-items:center;gap:.6rem;margin:.8rem 0 .5rem;"><div style="width:4px;height:24px;border-radius:2px;background:'+pColors[pat]+'"></div><h3 style="font-size:1.1rem;margin:0;">'+pL[pat]+' Capabilities</h3><span style="font-size:.72rem;color:#94a3b8;font-weight:400;">'+counts[pat]+' total</span></div>';
   if(pat==='skills'){
     h+='<div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:1rem;margin:.5rem 0;">';
     h+='<p style="color:#0d9488;font-weight:600;">\u{1F9E9} Joule Skills \u2014 Coming Soon</p>';
@@ -323,29 +338,39 @@ function showPattern(pat) {
     h+='<p style="color:#475569;font-size:.85rem;margin-top:.5rem;">Integration with SAC BI and BW/4HANA PCE in the Arkansas architecture will enable cross-module analytics via Joule once configured.</p>';
     h+='</div>';panel.innerHTML=h;return;
   }
+  h+='<p style="font-size:.75rem;color:#94a3b8;margin:0 0 .6rem;">Click any section to expand</p>';
   var secs=Object.keys(DATA);
   for(var si=0;si<secs.length;si++){
     var sec=DATA[secs[si]];var items=sec[pat];if(!items||items.length===0)continue;
-    h+='<div style="margin:.6rem 0;border:1px solid var(--border);border-radius:8px;overflow:hidden;">';
-    h+='<div style="background:var(--card-bg);padding:.5rem .8rem;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);cursor:pointer;" onclick="var n=this.nextElementSibling;n.style.display=n.style.display===\'none\'?\'block\':\'none\'">'+secs[si]+' <span style="color:#94a3b8;font-weight:400;">('+items.length+')</span></div>';
-    h+='<div style="display:block;padding:.4rem .8rem;">';
+    var tb={base:0,premium:0,beta:0,roadmap:0};
+    for(var ii=0;ii<items.length;ii++){var t=items[ii].tier||'base';if(tb[t]!==undefined)tb[t]++;else tb.base++;}
+    var badges='';
+    if(tb.base)badges+='<span class="acc-mini acc-mini-base">'+tb.base+' Base</span>';
+    if(tb.premium)badges+='<span class="acc-mini acc-mini-premium">'+tb.premium+' Premium</span>';
+    if(tb.beta)badges+='<span class="acc-mini acc-mini-beta">'+tb.beta+' Beta</span>';
+    if(tb.roadmap)badges+='<span class="acc-mini acc-mini-roadmap">'+tb.roadmap+' Roadmap</span>';
+    h+='<div class="acc-section">';
+    h+='<div class="acc-header" onclick="toggleAcc(this)"><div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:0;"><span style="font-size:.85rem;">'+secs[si]+'</span><span style="color:#94a3b8;font-size:.75rem;font-weight:400;">('+items.length+')</span><div class="acc-badges">'+badges+'</div></div><span class="acc-chevron">▶</span></div>';
+    h+='<div class="acc-body">';
     for(var ii=0;ii<items.length;ii++){
       var it=items[ii];var tc='cap-tier-'+(it.tier||'base');var tl=(it.tier||'base');tl=tl.charAt(0).toUpperCase()+tl.slice(1);
       var ls=it.link?'<a href="'+it.link+'" target="_blank" class="cap-link">':'';var le=it.link?'</a>':'';
       var qb=it.quarter?' <span class="cap-quarter">'+it.quarter+'</span>':'';
-      h+='<div style="padding:.35rem 0;border-bottom:1px solid #f1f5f9;">';
+      h+='<div style="padding:.4rem 0;border-bottom:1px solid #f1f5f9;">';
       h+='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">';
       h+=ls+'<strong style="font-size:.82rem;">'+it.name+'</strong>'+le;
       h+='<span class="cap-tier '+tc+'">'+tl+'</span>'+qb+'</div>';
-      if(it.prompts&&it.prompts.length>0){h+='<div style="margin-top:2px;">';
-        for(var pi=0;pi<it.prompts.length;pi++){h+='<code style="display:inline-block;font-size:.72rem;background:#f1f5f9;color:#475569;padding:1px 6px;border-radius:3px;margin:1px 2px;">'+it.prompts[pi]+'</code>';}
+      if(it.prompts&&it.prompts.length>0){h+='<div style="margin-top:3px;">';
+        for(var pi=0;pi<it.prompts.length;pi++){h+='<code style="display:inline-block;font-size:.72rem;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;margin:2px 3px 2px 0;">'+it.prompts[pi]+'</code>';}
         h+='</div>';}
       h+='</div>';
     }
     h+='</div></div>';
   }
   panel.innerHTML=h;
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function toggleAcc(el){el.classList.toggle('acc-open');var body=el.nextElementSibling;body.classList.toggle('acc-expanded');}
 
 function hidePattern(pk){document.getElementById('panel-'+pk).classList.remove('visible');document.querySelectorAll('.pattern-card').forEach(function(c){c.classList.remove('active')});activePattern=null;}
 function switchProduct(btn){var panel=btn.closest('.detail-panel');var pk=btn.dataset.pattern;var prod=btn.dataset.product;panel.querySelectorAll('.product-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');panel.querySelectorAll('.product-content').forEach(function(pc){pc.style.display='none'});panel.querySelector('[data-pc="'+pk+'-'+prod+'"]').style.display='block';}
