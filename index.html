@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arkansas To-Be Architecture — Joule Capability Map</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 50%, #2c5f8a 100%);
+            color: white;
+            padding: 2rem 2rem 1.5rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            opacity: 0.85;
+        }
+
+        .subtitle {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            margin-top: 0.6rem;
+            letter-spacing: 0.3px;
+        }
+
+        .design-principles {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .design-principles span {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .pillar {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: box-shadow 0.3s;
+        }
+
+        .pillar:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .pillar-header {
+            padding: 1rem 1.2rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .pillar-header .icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .pillar-header h2 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .pillar-header .count {
+            margin-left: auto;
+            background: rgba(255,255,255,0.25);
+            border-radius: 12px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Pillar colors */
+        .pillar-s4 .pillar-header { background: linear-gradient(135deg, #1565c0, #1976d2); }
+        .pillar-sf .pillar-header { background: linear-gradient(135deg, #2e7d32, #43a047); }
+        .pillar-ariba .pillar-header { background: linear-gradient(135deg, #e65100, #ef6c00); }
+        .pillar-concur .pillar-header { background: linear-gradient(135deg, #6a1b9a, #8e24aa); }
+
+        .pillar-body {
+            padding: 0.5rem;
+        }
+
+        /* Module accordion */
+        .module {
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            margin-bottom: 0.4rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .module:last-child {
+            margin-bottom: 0;
+        }
+
+        .module.open {
+            border-color: #bbb;
+        }
+
+        .module-toggle {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            background: #fafbfc;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            transition: background 0.2s;
+            gap: 0.6rem;
+        }
+
+        .module-toggle:hover {
+            background: #f0f4f8;
+        }
+
+        .module-toggle .arrow {
+            font-size: 0.6rem;
+            transition: transform 0.25s;
+            color: #999;
+            flex-shrink: 0;
+        }
+
+        .module.open .module-toggle .arrow {
+            transform: rotate(90deg);
+        }
+
+        .module-toggle .module-name {
+            flex: 1;
+        }
+
+        .module-toggle .badge {
+            font-size: 0.65rem;
+            font-weight: 500;
+            padding: 0.1rem 0.45rem;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .badge-full {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-partial {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge-2027 {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-size: 0.6rem;
+        }
+
+        .module-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease;
+        }
+
+        .module.open .module-content {
+            max-height: 1200px;
+        }
+
+        .module-inner {
+            padding: 0.5rem 0.9rem 0.9rem;
+        }
+
+        /* Use case groups */
+        .use-case-group {
+            margin-bottom: 0.6rem;
+        }
+
+        .use-case-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .use-case-group h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+        }
+
+        .use-case-group ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .use-case-group li {
+            font-size: 0.8rem;
+            padding: 0.25rem 0 0.25rem 1.1rem;
+            position: relative;
+            color: #444;
+        }
+
+        .use-case-group li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.55rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .pillar-s4 .use-case-group li::before { background: #1976d2; }
+        .pillar-sf .use-case-group li::before { background: #43a047; }
+        .pillar-ariba .use-case-group li::before { background: #ef6c00; }
+        .pillar-concur .use-case-group li::before { background: #8e24aa; }
+
+        .divider {
+            height: 1px;
+            background: #eee;
+            margin: 0.5rem 0;
+        }
+
+        /* Expand/Collapse all */
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .controls button {
+            background: white;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.78rem;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .controls button:hover {
+            background: #f5f5f5;
+            border-color: #aaa;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #999;
+            font-size: 0.75rem;
+        }
+
+        /* Search */
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar input {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .num {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1a3a5c;
+        }
+
+        .stat-item .label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>State of Arkansas — Joule Capability Map</h1>
+    <p>To-Be Architecture (Slide 7) — Foundational After July 2026 Go-Live</p>
+    <div class="subtitle">SAP S/4HANA Cloud, Private Edition — Digital Core</div>
+    <div class="design-principles">
+        <span>Seamless UX</span>
+        <span>One Workflow Inbox</span>
+        <span>End-to-End Process</span>
+        <span>Aligned Domain Models</span>
+        <span>Consistent Security</span>
+        <span>Cross-Product Analytics</span>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="stats">
+        <div class="stat-item"><div class="num">4</div><div class="label">Product Pillars</div></div>
+        <div class="stat-item"><div class="num">19</div><div class="label">Modules</div></div>
+        <div class="stat-item"><div class="num">17</div><div class="label">Full Joule Coverage</div></div>
+        <div class="stat-item"><div class="num">2</div><div class="label">Partial Coverage</div></div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="Search capabilities (e.g. journal entry, expense, sourcing…)">
+    </div>
+
+    <div class="controls">
+        <button onclick="toggleAll(true)">▼ Expand All</button>
+        <button onclick="toggleAll(false)">▲ Collapse All</button>
+    </div>
+
+    <div class="pillar-grid">
+
+        <!-- ==================== S/4HANA ==================== -->
+        <div class="pillar pillar-s4">
+            <div class="pillar-header">
+                <span class="icon">🏛️</span>
+                <h2>SAP S/4HANA Cloud, PCE</h2>
+                <span class="count">8 modules</span>
+            </div>
+            <div class="pillar-body">
+
+                <!-- GL -->
+                <div class="module" data-search="general ledger gl journal entry post park recurring financial statement chart of accounts">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">General Ledger (GL)</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Post General Journal Entry</li>
+                                <li>Park General Journal Entry</li>
+                                <li>Create Recurring Journal Entry</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Display Journal Entry</li>
+                                <li>Navigate to G/L Account Balance</li>
+                                <li>Navigate to Chart of Accounts</li>
+                                <li>Navigate to Journal Entry Analyzer</li>
+                                <li>Navigate to Manage Journal Entries</li>
+                                <li>Navigate to Manage Recurring Journal Entries</li>
+                                <li>Navigate to Display Financial Statement</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Retrieve journal entry details</li>
+                                <li>G/L account balance inquiries</li>
+                                <li>Financial statement queries</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- AR -->
+                <div class="module" data-search="accounts receivable ar customer invoice credit memo payment down payment clear open items aging">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Accounts Receivable (AR)</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Post Customer Invoice</li>
+                                <li>Post Customer Credit Memo</li>
+                                <li>Post Customer Payment</li>
+                                <li>Post Customer Down Payment</li>
+                                <li>Clear Customer Open Items</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Customer Line Items</li>
+                                <li>Navigate to Customer Balance Display</li>
+                                <li>Navigate to Manage Customer Master Data</li>
+                                <li>Navigate to Customer Aging Reports</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Customer balance inquiries</li>
+                                <li>Open items status</li>
+                                <li>Aging analysis</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- AP -->
+                <div class="module" data-search="accounts payable ap vendor invoice credit memo payment down payment clear open items">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Accounts Payable (AP)</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Post Vendor Invoice</li>
+                                <li>Post Vendor Credit Memo</li>
+                                <li>Post Vendor Payment</li>
+                                <li>Post Vendor Down Payment</li>
+                                <li>Clear Vendor Open Items</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Vendor Line Items</li>
+                                <li>Navigate to Vendor Balance Display</li>
+                                <li>Navigate to Manage Vendor Master Data</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Vendor balance inquiries</li>
+                                <li>Open items status</li>
+                                <li>Payment status</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Funds Management -->
+                <div class="module" data-search="funds management budget entry transfer release commitment reservation funds center">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Funds Management</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Create Budget Entry</li>
+                                <li>Transfer Budget</li>
+                                <li>Release Budget</li>
+                                <li>Post Funds Commitment</li>
+                                <li>Post Funds Reservation</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Budget Overview</li>
+                                <li>Navigate to Funds Center Display</li>
+                                <li>Navigate to Commitment/Funds Reservation Display</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Budget availability inquiries</li>
+                                <li>Funds center balance queries</li>
+                                <li>Commitment status</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Project Systems -->
+                <div class="module" data-search="project systems wbs work breakdown structure project cost milestone actual">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Project Systems</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Create Project (WBS elements)</li>
+                                <li>Update Project Status</li>
+                                <li>Assign Budget to WBS</li>
+                                <li>Post Project Actual Costs</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Project Overview</li>
+                                <li>Navigate to WBS Element Display</li>
+                                <li>Navigate to Project Cost Reports</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Project status inquiries</li>
+                                <li>Budget vs. actual queries</li>
+                                <li>Milestone status</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Grants Management -->
+                <div class="module" data-search="grants management grant master data budget sponsored programs consumption">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Grants Management</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Create Grant</li>
+                                <li>Update Grant Master Data</li>
+                                <li>Post Grant Budget</li>
+                                <li>Assign Sponsored Programs</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Grant Overview</li>
+                                <li>Navigate to Grant Budget Display</li>
+                                <li>Navigate to Sponsored Program Display</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Grant balance inquiries</li>
+                                <li>Budget consumption queries</li>
+                                <li>Grant status</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Cash Management -->
+                <div class="module" data-search="cash management cash position liquidity forecast bank statement payment run">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Cash Management</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Create Cash Position entries</li>
+                                <li>Post Bank Statement Items</li>
+                                <li>Create Payment Runs</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Cash Position Overview</li>
+                                <li>Navigate to Liquidity Forecast</li>
+                                <li>Navigate to Bank Account Display</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>Cash position inquiries</li>
+                                <li>Liquidity forecast queries</li>
+                                <li>Bank balance status</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Procurement -->
+                <div class="module" data-search="procurement purchase requisition purchase order goods receipt invoice receipt supplier evaluation contract">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Procurement</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Transactional</h4>
+                            <ul>
+                                <li>Create Purchase Requisition</li>
+                                <li>Create Purchase Order</li>
+                                <li>Approve / Reject Purchase Requisition</li>
+                                <li>Post Goods Receipt</li>
+                                <li>Post Invoice Receipt</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Navigational</h4>
+                            <ul>
+                                <li>Navigate to Purchase Order Display</li>
+                                <li>Navigate to Purchase Requisition Overview</li>
+                                <li>Navigate to Supplier Evaluation</li>
+                                <li>Navigate to Contract Display</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Informational</h4>
+                            <ul>
+                                <li>PO status inquiries</li>
+                                <li>Requisition status</li>
+                                <li>Goods receipt status</li>
+                                <li>Contract utilization</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== SuccessFactors ==================== -->
+        <div class="pillar pillar-sf">
+            <div class="pillar-header">
+                <span class="icon">👥</span>
+                <h2>SAP SuccessFactors</h2>
+                <span class="count">6 modules</span>
+            </div>
+            <div class="pillar-body">
+
+                <!-- Employee Central -->
+                <div class="module" data-search="employee central core hr leave balance org chart time off direct reports offboarding crossboarding">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Employee Central</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Conversational HR inquiries (leave balance, org chart, etc.)</li>
+                                <li>Navigate to employee profile & personal information</li>
+                                <li>Time-off requests via natural language</li>
+                                <li>Manager self-service: view direct reports, approve time-off</li>
+                                <li>Access team analytics and headcount data</li>
+                                <li>Initiate off-boarding & cross-boarding workflows</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Recruiting -->
+                <div class="module" data-search="recruiting requisition candidate interview shortlist hiring talent acquisition">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Recruiting</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Conversational job requisition creation and updates</li>
+                                <li>Candidate search and shortlisting assistance</li>
+                                <li>Interview scheduling support</li>
+                                <li>Requisition status inquiries</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Onboarding -->
+                <div class="module" data-search="onboarding new hire task document collection workflow">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Onboarding</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>New hire task tracking and status</li>
+                                <li>Document collection status inquiries</li>
+                                <li>Onboarding workflow navigation</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Learning -->
+                <div class="module" data-search="learning course enrollment training assignment history completion">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Learning</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Course search and enrollment via natural language</li>
+                                <li>Learning assignment status inquiries</li>
+                                <li>Navigate to learning history and completions</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Performance & Goals -->
+                <div class="module" data-search="performance goals review feedback continuous performance management">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Performance & Goals</span>
+                        <span class="badge badge-full">✅ Full</span>
+                        <span class="badge badge-2027">2027</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Goal creation and updates via conversation</li>
+                                <li>Performance review navigation and status</li>
+                                <li>Feedback request initiation</li>
+                                <li>Continuous performance management queries</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Compensation -->
+                <div class="module" data-search="compensation planning statement worksheet manager">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Compensation</span>
+                        <span class="badge badge-full">✅ Full</span>
+                        <span class="badge badge-2027">2027</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Compensation planning inquiries</li>
+                                <li>Navigate to compensation statements</li>
+                                <li>Compensation worksheet navigation for managers</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== Ariba ==================== -->
+        <div class="pillar pillar-ariba">
+            <div class="pillar-header">
+                <span class="icon">🔗</span>
+                <h2>SAP Ariba</h2>
+                <span class="count">3 modules</span>
+            </div>
+            <div class="pillar-body">
+
+                <!-- Ariba Sourcing -->
+                <div class="module" data-search="ariba sourcing event bid comparison supplier strategic sourcing project">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Sourcing</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Create, manage, and monitor sourcing events via conversation</li>
+                                <li>Supplier bid comparison and analysis</li>
+                                <li>Sourcing project status inquiries</li>
+                                <li>Navigate to sourcing event details</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Ariba SLP -->
+                <div class="module" data-search="ariba supplier lifecycle performance slp qualification scorecard risk onboarding">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Supplier Lifecycle & Performance</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Supplier qualification status inquiries</li>
+                                <li>Supplier performance scorecard queries</li>
+                                <li>Navigate to supplier risk assessments</li>
+                                <li>Supplier onboarding workflow assistance</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Ariba Contracting -->
+                <div class="module" data-search="ariba contracting contract creation workspace compliance expiration">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Contracts Management</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Contract creation assistance via guided conversation</li>
+                                <li>Contract status and expiration inquiries</li>
+                                <li>Navigate to contract workspace details</li>
+                                <li>Contract compliance queries</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== Concur ==================== -->
+        <div class="pillar pillar-concur">
+            <div class="pillar-header">
+                <span class="icon">✈️</span>
+                <h2>SAP Concur</h2>
+                <span class="count">2 modules</span>
+            </div>
+            <div class="pillar-body">
+
+                <!-- Concur T&E -->
+                <div class="module" data-search="concur travel expense trip search flight hotel car rental expense report receipt reimbursement policy booking">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Travel & Expense</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Travel</h4>
+                            <ul>
+                                <li>Conversational trip planning & booking</li>
+                                <li>Search flights, hotels, car rentals using natural language</li>
+                                <li>Multi-city trip support</li>
+                                <li>Policy-aware results with preferred vendors</li>
+                            </ul>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="use-case-group">
+                            <h4>Expense</h4>
+                            <ul>
+                                <li>Create and submit expense reports via conversation</li>
+                                <li>Capture & attach receipts with automatic data extraction</li>
+                                <li>Approve / reject expense reports (managers)</li>
+                                <li>Check expense report & reimbursement status</li>
+                                <li>Travel & expense policy guidance</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+                <!-- Concur Invoice -->
+                <div class="module" data-search="concur invoice submission approval payment status vendor matching exception">
+                    <button class="module-toggle" onclick="toggleModule(this)">
+                        <span class="arrow">▶</span>
+                        <span class="module-name">Invoice Management</span>
+                        <span class="badge badge-full">✅ Full</span>
+                    </button>
+                    <div class="module-content"><div class="module-inner">
+                        <div class="use-case-group">
+                            <h4>Capabilities</h4>
+                            <ul>
+                                <li>Invoice submission assistance via conversation</li>
+                                <li>Approve / reject invoices conversationally</li>
+                                <li>Invoice status inquiries (payment & approval)</li>
+                                <li>Vendor invoice matching & exception handling guidance</li>
+                                <li>Navigate to invoice details and payment history</li>
+                            </ul>
+                        </div>
+                    </div></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div><!-- /pillar-grid -->
+
+</div><!-- /container -->
+
+<footer>
+    Source: Arkansas Application Architecture (June 2025) — Slide 7 · Joule Capabilities Document · Generated March 2026
+</footer>
+
+<script>
+    function toggleModule(btn) {
+        const mod = btn.closest('.module');
+        mod.classList.toggle('open');
+    }
+
+    function toggleAll(open) {
+        document.querySelectorAll('.module').forEach(m => {
+            if (open) m.classList.add('open');
+            else m.classList.remove('open');
+        });
+    }
+
+    // Search
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.module').forEach(m => {
+            if (!q) {
+                m.classList.remove('hidden');
+                return;
+            }
+            const searchData = m.getAttribute('data-search') || '';
+            const text = m.textContent.toLowerCase();
+            const match = searchData.includes(q) || text.includes(q);
+            m.classList.toggle('hidden', !match);
+            if (match) m.classList.add('open');
+        });
+
+        // Hide empty pillars
+        document.querySelectorAll('.pillar').forEach(p => {
+            const visible = p.querySelectorAll('.module:not(.hidden)').length;
+            p.classList.toggle('hidden', q && visible === 0);
+        });
+    });
+</script>
+
+</body>
+</html>
