@@ -3,1026 +3,693 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arkansas To-Be Architecture — Joule Capability Map</title>
+    <title>Joule Capability Guide — Arkansas</title>
     <style>
+        :root {
+            --nav-color: #1565c0;
+            --info-color: #2e7d32;
+            --trans-color: #e65100;
+            --anal-color: #6a1b9a;
+            --bg: #f5f6fa;
+            --card-bg: #fff;
+            --text: #1a1a2e;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --radius: 10px;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
 
-        body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a2e;
-            line-height: 1.6;
-        }
+        /* ── Header ── */
+        header { background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 50%, #2c5f8a 100%); color: #fff; padding: 2rem 1.5rem 1.5rem; text-align: center; }
+        header h1 { font-size: 1.7rem; font-weight: 700; }
+        header p { font-size: .9rem; opacity: .85; margin-top: .2rem; }
+        .tag-row { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem; margin-top: .8rem; }
+        .tag-row span { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 14px; padding: .15rem .65rem; font-size: .68rem; }
 
-        header {
-            background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 50%, #2c5f8a 100%);
-            color: white;
-            padding: 2rem 2rem 1.5rem;
-            text-align: center;
-        }
+        /* ── Search ── */
+        .search-wrap { max-width: 540px; margin: 1.2rem auto .8rem; padding: 0 1rem; }
+        .search-wrap input { width: 100%; padding: .6rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: .85rem; outline: none; }
+        .search-wrap input:focus { border-color: var(--nav-color); box-shadow: 0 0 0 3px rgba(21,101,192,.1); }
 
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.3rem;
-        }
+        /* ── Container ── */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 1rem 2rem; }
 
-        header p {
-            font-size: 0.95rem;
-            opacity: 0.85;
-        }
+        /* ── Pattern Cards (top level) ── */
+        .pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .pattern-card { background: var(--card-bg); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.06); cursor: pointer; transition: transform .2s, box-shadow .2s; }
+        .pattern-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+        .pattern-card.active { box-shadow: 0 0 0 3px var(--accent); }
+        .pc-head { padding: 1rem 1.1rem; color: #fff; }
+        .pc-head h2 { font-size: 1rem; font-weight: 700; }
+        .pc-head p { font-size: .72rem; opacity: .9; margin-top: .2rem; line-height: 1.4; }
+        .pc-head .pc-count { font-size: .7rem; margin-top: .5rem; background: rgba(255,255,255,.22); display: inline-block; padding: .1rem .5rem; border-radius: 10px; }
+        .pc-nav .pc-head { background: linear-gradient(135deg, #1565c0, #42a5f5); }
+        .pc-info .pc-head { background: linear-gradient(135deg, #2e7d32, #66bb6a); }
+        .pc-trans .pc-head { background: linear-gradient(135deg, #e65100, #ff9800); }
+        .pc-anal .pc-head { background: linear-gradient(135deg, #6a1b9a, #ab47bc); }
+        .pc-icon { font-size: 1.6rem; margin-bottom: .3rem; }
 
-        .subtitle {
-            display: inline-block;
-            background: rgba(255,255,255,0.15);
-            border-radius: 20px;
-            padding: 0.3rem 1rem;
-            font-size: 0.8rem;
-            margin-top: 0.6rem;
-            letter-spacing: 0.3px;
-        }
+        /* ── Detail Panel ── */
+        .detail-panel { display: none; background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 12px rgba(0,0,0,.07); margin-bottom: 1.5rem; overflow: hidden; }
+        .detail-panel.visible { display: block; animation: slideDown .3s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .dp-header { padding: 1rem 1.2rem; color: #fff; display: flex; align-items: center; justify-content: space-between; }
+        .dp-header h3 { font-size: 1rem; }
+        .dp-close { background: rgba(255,255,255,.25); border: none; color: #fff; border-radius: 6px; padding: .3rem .7rem; cursor: pointer; font-size: .8rem; }
+        .dp-close:hover { background: rgba(255,255,255,.4); }
 
-        .design-principles {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
+        /* ── Solution Tabs ── */
+        .sol-tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding: .5rem 1rem 0; gap: .3rem; }
+        .sol-tab { padding: .4rem .8rem; font-size: .78rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; color: var(--muted); transition: all .2s; background: transparent; }
+        .sol-tab:hover { background: #f0f4f8; }
+        .sol-tab.active { background: var(--card-bg); border-color: var(--border); color: var(--text); position: relative; }
+        .sol-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--card-bg); }
 
-        .design-principles span {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 0.2rem 0.7rem;
-            font-size: 0.7rem;
-            opacity: 0.9;
-        }
+        /* ── Capability List ── */
+        .sol-content { padding: 1rem 1.2rem; }
+        .sol-pane { display: none; }
+        .sol-pane.active { display: block; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
+        .cap-item { border: 1px solid var(--border); border-radius: 8px; margin-bottom: .5rem; overflow: hidden; }
+        .cap-toggle { display: flex; align-items: center; width: 100%; padding: .6rem .8rem; background: #fafbfc; border: none; cursor: pointer; text-align: left; font-size: .82rem; font-weight: 600; color: var(--text); gap: .5rem; transition: background .2s; }
+        .cap-toggle:hover { background: #f0f4f8; }
+        .cap-toggle .arrow { font-size: .55rem; color: #aaa; transition: transform .25s; flex-shrink: 0; }
+        .cap-item.open .cap-toggle .arrow { transform: rotate(90deg); }
+        .cap-toggle .cap-name { flex: 1; }
+        .cap-body { max-height: 0; overflow: hidden; transition: max-height .3s ease; }
+        .cap-item.open .cap-body { max-height: 600px; }
+        .cap-inner { padding: .4rem .8rem .8rem; }
+        .prompt-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; margin-bottom: .25rem; margin-top: .4rem; }
+        .prompt-label:first-child { margin-top: 0; }
+        .prompt-chip { display: inline-block; background: #f0f4f8; border: 1px solid #e2e6ea; border-radius: 16px; padding: .2rem .65rem; font-size: .76rem; margin: .15rem .2rem .15rem 0; color: #374151; font-style: italic; }
+        .cap-desc { font-size: .78rem; color: #555; margin-bottom: .3rem; }
 
-        .pillar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 0.5rem;
-        }
+        .no-results { text-align: center; padding: 2rem; color: var(--muted); font-size: .9rem; }
 
-        .pillar {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: box-shadow 0.3s;
-        }
+        /* ── Footer ── */
+        footer { text-align: center; padding: 1.5rem; color: #999; font-size: .72rem; }
 
-        .pillar:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-
-        .pillar-header {
-            padding: 1rem 1.2rem;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-        }
-
-        .pillar-header .icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .pillar-header h2 {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .pillar-header .count {
-            margin-left: auto;
-            background: rgba(255,255,255,0.25);
-            border-radius: 12px;
-            padding: 0.15rem 0.6rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        /* Pillar colors */
-        .pillar-s4 .pillar-header { background: linear-gradient(135deg, #1565c0, #1976d2); }
-        .pillar-sf .pillar-header { background: linear-gradient(135deg, #2e7d32, #43a047); }
-        .pillar-ariba .pillar-header { background: linear-gradient(135deg, #e65100, #ef6c00); }
-        .pillar-concur .pillar-header { background: linear-gradient(135deg, #6a1b9a, #8e24aa); }
-
-        .pillar-body {
-            padding: 0.5rem;
-        }
-
-        /* Module accordion */
-        .module {
-            border: 1px solid #e8eaed;
-            border-radius: 8px;
-            margin-bottom: 0.4rem;
-            overflow: hidden;
-            transition: border-color 0.2s;
-        }
-
-        .module:last-child {
-            margin-bottom: 0;
-        }
-
-        .module.open {
-            border-color: #bbb;
-        }
-
-        .module-toggle {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 0.7rem 0.9rem;
-            background: #fafbfc;
-            border: none;
-            cursor: pointer;
-            text-align: left;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #2c3e50;
-            transition: background 0.2s;
-            gap: 0.6rem;
-        }
-
-        .module-toggle:hover {
-            background: #f0f4f8;
-        }
-
-        .module-toggle .arrow {
-            font-size: 0.6rem;
-            transition: transform 0.25s;
-            color: #999;
-            flex-shrink: 0;
-        }
-
-        .module.open .module-toggle .arrow {
-            transform: rotate(90deg);
-        }
-
-        .module-toggle .module-name {
-            flex: 1;
-        }
-
-        .module-toggle .badge {
-            font-size: 0.65rem;
-            font-weight: 500;
-            padding: 0.1rem 0.45rem;
-            border-radius: 10px;
-            flex-shrink: 0;
-        }
-
-        .badge-full {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .badge-partial {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .badge-2027 {
-            background: #e3f2fd;
-            color: #1565c0;
-            font-size: 0.6rem;
-        }
-
-        .module-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.35s ease;
-        }
-
-        .module.open .module-content {
-            max-height: 1200px;
-        }
-
-        .module-inner {
-            padding: 0.5rem 0.9rem 0.9rem;
-        }
-
-        /* Use case groups */
-        .use-case-group {
-            margin-bottom: 0.6rem;
-        }
-
-        .use-case-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .use-case-group h4 {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #888;
-            margin-bottom: 0.3rem;
-            font-weight: 600;
-        }
-
-        .use-case-group ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .use-case-group li {
-            font-size: 0.8rem;
-            padding: 0.25rem 0 0.25rem 1.1rem;
-            position: relative;
-            color: #444;
-        }
-
-        .use-case-group li::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0.55rem;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-        }
-
-        .pillar-s4 .use-case-group li::before { background: #1976d2; }
-        .pillar-sf .use-case-group li::before { background: #43a047; }
-        .pillar-ariba .use-case-group li::before { background: #ef6c00; }
-        .pillar-concur .use-case-group li::before { background: #8e24aa; }
-
-        .divider {
-            height: 1px;
-            background: #eee;
-            margin: 0.5rem 0;
-        }
-
-        /* Expand/Collapse all */
-        .controls {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .controls button {
-            background: white;
-            border: 1px solid #d0d5dd;
-            border-radius: 6px;
-            padding: 0.4rem 0.9rem;
-            font-size: 0.78rem;
-            cursor: pointer;
-            color: #555;
-            transition: all 0.2s;
-        }
-
-        .controls button:hover {
-            background: #f5f5f5;
-            border-color: #aaa;
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: #999;
-            font-size: 0.75rem;
-        }
-
-        /* Search */
-        .search-bar {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-
-        .search-bar input {
-            width: 100%;
-            max-width: 500px;
-            padding: 0.6rem 1rem;
-            border: 1px solid #d0d5dd;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-bar input:focus {
-            border-color: #1976d2;
-            box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* Stats bar */
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-item .num {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #1a3a5c;
-        }
-
-        .stat-item .label {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>State of Arkansas — Joule Capability Map</h1>
-    <p>To-Be Architecture (Slide 7) — Foundational After July 2026 Go-Live</p>
-    <div class="subtitle">SAP S/4HANA Cloud, Private Edition — Digital Core</div>
-    <div class="design-principles">
-        <span>Seamless UX</span>
-        <span>One Workflow Inbox</span>
-        <span>End-to-End Process</span>
-        <span>Aligned Domain Models</span>
-        <span>Consistent Security</span>
-        <span>Cross-Product Analytics</span>
+    <h1>🤖 Joule Capability Guide</h1>
+    <p>State of Arkansas — SAP S/4HANA Transformation</p>
+    <div class="tag-row">
+        <span>S/4HANA Cloud PCE</span>
+        <span>SuccessFactors</span>
+        <span>Ariba</span>
+        <span>Concur</span>
+        <span>Joule AI Assistant</span>
     </div>
 </header>
 
+<div class="search-wrap">
+    <input type="text" id="globalSearch" placeholder="Search all capabilities and prompts (e.g. 'journal entry', 'leave balance', 'sourcing')…">
+</div>
+
 <div class="container">
 
-    <div class="stats">
-        <div class="stat-item"><div class="num">4</div><div class="label">Product Pillars</div></div>
-        <div class="stat-item"><div class="num">19</div><div class="label">Modules</div></div>
-        <div class="stat-item"><div class="num">17</div><div class="label">Full Joule Coverage</div></div>
-        <div class="stat-item"><div class="num">2</div><div class="label">Partial Coverage</div></div>
+    <!-- ═══════ PATTERN CARDS ═══════ -->
+    <div class="pattern-grid">
+        <div class="pattern-card pc-nav" onclick="showPattern('nav')">
+            <div class="pc-head">
+                <div class="pc-icon">🧭</div>
+                <h2>Navigational</h2>
+                <p>Navigate to apps, screens, and pages using natural language</p>
+                <span class="pc-count" id="nav-count"></span>
+            </div>
+        </div>
+        <div class="pattern-card pc-info" onclick="showPattern('info')">
+            <div class="pc-head">
+                <div class="pc-icon">💡</div>
+                <h2>Informational</h2>
+                <p>Ask questions and get answers — read-only queries from the system</p>
+                <span class="pc-count" id="info-count"></span>
+            </div>
+        </div>
+        <div class="pattern-card pc-trans" onclick="showPattern('trans')">
+            <div class="pc-head">
+                <div class="pc-icon">⚡</div>
+                <h2>Transactional</h2>
+                <p>Execute business processes — create, update, approve, post</p>
+                <span class="pc-count" id="trans-count"></span>
+            </div>
+        </div>
+        <div class="pattern-card pc-anal" onclick="showPattern('anal')">
+            <div class="pc-head">
+                <div class="pc-icon">📊</div>
+                <h2>Analytical</h2>
+                <p>Data insights, reports, trends, and KPI analysis</p>
+                <span class="pc-count" id="anal-count"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="search-bar">
-        <input type="text" id="search" placeholder="Search capabilities (e.g. journal entry, expense, sourcing…)">
-    </div>
+    <!-- ═══════ DETAIL PANELS (one per pattern) ═══════ -->
+    <div id="panel-nav" class="detail-panel"></div>
+    <div id="panel-info" class="detail-panel"></div>
+    <div id="panel-trans" class="detail-panel"></div>
+    <div id="panel-anal" class="detail-panel"></div>
 
-    <div class="controls">
-        <button onclick="toggleAll(true)">▼ Expand All</button>
-        <button onclick="toggleAll(false)">▲ Collapse All</button>
-    </div>
-
-    <div class="pillar-grid">
-
-        <!-- ==================== S/4HANA ==================== -->
-        <div class="pillar pillar-s4">
-            <div class="pillar-header">
-                <span class="icon">🏛️</span>
-                <h2>SAP S/4HANA Cloud, PCE</h2>
-                <span class="count">8 modules</span>
-            </div>
-            <div class="pillar-body">
-
-                <!-- GL -->
-                <div class="module" data-search="general ledger gl journal entry post park recurring financial statement chart of accounts">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">General Ledger (GL)</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Post General Journal Entry</li>
-                                <li>Park General Journal Entry</li>
-                                <li>Create Recurring Journal Entry</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Display Journal Entry</li>
-                                <li>Navigate to G/L Account Balance</li>
-                                <li>Navigate to Chart of Accounts</li>
-                                <li>Navigate to Journal Entry Analyzer</li>
-                                <li>Navigate to Manage Journal Entries</li>
-                                <li>Navigate to Manage Recurring Journal Entries</li>
-                                <li>Navigate to Display Financial Statement</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Retrieve journal entry details</li>
-                                <li>G/L account balance inquiries</li>
-                                <li>Financial statement queries</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- AR -->
-                <div class="module" data-search="accounts receivable ar customer invoice credit memo payment down payment clear open items aging">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Accounts Receivable (AR)</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Post Customer Invoice</li>
-                                <li>Post Customer Credit Memo</li>
-                                <li>Post Customer Payment</li>
-                                <li>Post Customer Down Payment</li>
-                                <li>Clear Customer Open Items</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Customer Line Items</li>
-                                <li>Navigate to Customer Balance Display</li>
-                                <li>Navigate to Manage Customer Master Data</li>
-                                <li>Navigate to Customer Aging Reports</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Customer balance inquiries</li>
-                                <li>Open items status</li>
-                                <li>Aging analysis</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- AP -->
-                <div class="module" data-search="accounts payable ap vendor invoice credit memo payment down payment clear open items">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Accounts Payable (AP)</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Post Vendor Invoice</li>
-                                <li>Post Vendor Credit Memo</li>
-                                <li>Post Vendor Payment</li>
-                                <li>Post Vendor Down Payment</li>
-                                <li>Clear Vendor Open Items</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Vendor Line Items</li>
-                                <li>Navigate to Vendor Balance Display</li>
-                                <li>Navigate to Manage Vendor Master Data</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Vendor balance inquiries</li>
-                                <li>Open items status</li>
-                                <li>Payment status</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Funds Management -->
-                <div class="module" data-search="funds management budget entry transfer release commitment reservation funds center">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Funds Management</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Create Budget Entry</li>
-                                <li>Transfer Budget</li>
-                                <li>Release Budget</li>
-                                <li>Post Funds Commitment</li>
-                                <li>Post Funds Reservation</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Budget Overview</li>
-                                <li>Navigate to Funds Center Display</li>
-                                <li>Navigate to Commitment/Funds Reservation Display</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Budget availability inquiries</li>
-                                <li>Funds center balance queries</li>
-                                <li>Commitment status</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Project Systems -->
-                <div class="module" data-search="project systems wbs work breakdown structure project cost milestone actual">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Project Systems</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Create Project (WBS elements)</li>
-                                <li>Update Project Status</li>
-                                <li>Assign Budget to WBS</li>
-                                <li>Post Project Actual Costs</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Project Overview</li>
-                                <li>Navigate to WBS Element Display</li>
-                                <li>Navigate to Project Cost Reports</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Project status inquiries</li>
-                                <li>Budget vs. actual queries</li>
-                                <li>Milestone status</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Grants Management -->
-                <div class="module" data-search="grants management grant master data budget sponsored programs consumption">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Grants Management</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Create Grant</li>
-                                <li>Update Grant Master Data</li>
-                                <li>Post Grant Budget</li>
-                                <li>Assign Sponsored Programs</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Grant Overview</li>
-                                <li>Navigate to Grant Budget Display</li>
-                                <li>Navigate to Sponsored Program Display</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Grant balance inquiries</li>
-                                <li>Budget consumption queries</li>
-                                <li>Grant status</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Cash Management -->
-                <div class="module" data-search="cash management cash position liquidity forecast bank statement payment run">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Cash Management</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Create Cash Position entries</li>
-                                <li>Post Bank Statement Items</li>
-                                <li>Create Payment Runs</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Cash Position Overview</li>
-                                <li>Navigate to Liquidity Forecast</li>
-                                <li>Navigate to Bank Account Display</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>Cash position inquiries</li>
-                                <li>Liquidity forecast queries</li>
-                                <li>Bank balance status</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Procurement -->
-                <div class="module" data-search="procurement purchase requisition purchase order goods receipt invoice receipt supplier evaluation contract">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Procurement</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Transactional</h4>
-                            <ul>
-                                <li>Create Purchase Requisition</li>
-                                <li>Create Purchase Order</li>
-                                <li>Approve / Reject Purchase Requisition</li>
-                                <li>Post Goods Receipt</li>
-                                <li>Post Invoice Receipt</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Navigational</h4>
-                            <ul>
-                                <li>Navigate to Purchase Order Display</li>
-                                <li>Navigate to Purchase Requisition Overview</li>
-                                <li>Navigate to Supplier Evaluation</li>
-                                <li>Navigate to Contract Display</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Informational</h4>
-                            <ul>
-                                <li>PO status inquiries</li>
-                                <li>Requisition status</li>
-                                <li>Goods receipt status</li>
-                                <li>Contract utilization</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ==================== SuccessFactors ==================== -->
-        <div class="pillar pillar-sf">
-            <div class="pillar-header">
-                <span class="icon">👥</span>
-                <h2>SAP SuccessFactors</h2>
-                <span class="count">6 modules</span>
-            </div>
-            <div class="pillar-body">
-
-                <!-- Employee Central -->
-                <div class="module" data-search="employee central core hr leave balance org chart time off direct reports offboarding crossboarding">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Employee Central</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Conversational HR inquiries (leave balance, org chart, etc.)</li>
-                                <li>Navigate to employee profile & personal information</li>
-                                <li>Time-off requests via natural language</li>
-                                <li>Manager self-service: view direct reports, approve time-off</li>
-                                <li>Access team analytics and headcount data</li>
-                                <li>Initiate off-boarding & cross-boarding workflows</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Recruiting -->
-                <div class="module" data-search="recruiting requisition candidate interview shortlist hiring talent acquisition">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Recruiting</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Conversational job requisition creation and updates</li>
-                                <li>Candidate search and shortlisting assistance</li>
-                                <li>Interview scheduling support</li>
-                                <li>Requisition status inquiries</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Onboarding -->
-                <div class="module" data-search="onboarding new hire task document collection workflow">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Onboarding</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>New hire task tracking and status</li>
-                                <li>Document collection status inquiries</li>
-                                <li>Onboarding workflow navigation</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Learning -->
-                <div class="module" data-search="learning course enrollment training assignment history completion">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Learning</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Course search and enrollment via natural language</li>
-                                <li>Learning assignment status inquiries</li>
-                                <li>Navigate to learning history and completions</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Performance & Goals -->
-                <div class="module" data-search="performance goals review feedback continuous performance management">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Performance & Goals</span>
-                        <span class="badge badge-full">✅ Full</span>
-                        <span class="badge badge-2027">2027</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Goal creation and updates via conversation</li>
-                                <li>Performance review navigation and status</li>
-                                <li>Feedback request initiation</li>
-                                <li>Continuous performance management queries</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Compensation -->
-                <div class="module" data-search="compensation planning statement worksheet manager">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Compensation</span>
-                        <span class="badge badge-full">✅ Full</span>
-                        <span class="badge badge-2027">2027</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Compensation planning inquiries</li>
-                                <li>Navigate to compensation statements</li>
-                                <li>Compensation worksheet navigation for managers</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ==================== Ariba ==================== -->
-        <div class="pillar pillar-ariba">
-            <div class="pillar-header">
-                <span class="icon">🔗</span>
-                <h2>SAP Ariba</h2>
-                <span class="count">3 modules</span>
-            </div>
-            <div class="pillar-body">
-
-                <!-- Ariba Sourcing -->
-                <div class="module" data-search="ariba sourcing event bid comparison supplier strategic sourcing project">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Sourcing</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Create, manage, and monitor sourcing events via conversation</li>
-                                <li>Supplier bid comparison and analysis</li>
-                                <li>Sourcing project status inquiries</li>
-                                <li>Navigate to sourcing event details</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Ariba SLP -->
-                <div class="module" data-search="ariba supplier lifecycle performance slp qualification scorecard risk onboarding">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Supplier Lifecycle & Performance</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Supplier qualification status inquiries</li>
-                                <li>Supplier performance scorecard queries</li>
-                                <li>Navigate to supplier risk assessments</li>
-                                <li>Supplier onboarding workflow assistance</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Ariba Contracting -->
-                <div class="module" data-search="ariba contracting contract creation workspace compliance expiration">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Contracts Management</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Contract creation assistance via guided conversation</li>
-                                <li>Contract status and expiration inquiries</li>
-                                <li>Navigate to contract workspace details</li>
-                                <li>Contract compliance queries</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ==================== Concur ==================== -->
-        <div class="pillar pillar-concur">
-            <div class="pillar-header">
-                <span class="icon">✈️</span>
-                <h2>SAP Concur</h2>
-                <span class="count">2 modules</span>
-            </div>
-            <div class="pillar-body">
-
-                <!-- Concur T&E -->
-                <div class="module" data-search="concur travel expense trip search flight hotel car rental expense report receipt reimbursement policy booking">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Travel & Expense</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Travel</h4>
-                            <ul>
-                                <li>Conversational trip planning & booking</li>
-                                <li>Search flights, hotels, car rentals using natural language</li>
-                                <li>Multi-city trip support</li>
-                                <li>Policy-aware results with preferred vendors</li>
-                            </ul>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="use-case-group">
-                            <h4>Expense</h4>
-                            <ul>
-                                <li>Create and submit expense reports via conversation</li>
-                                <li>Capture & attach receipts with automatic data extraction</li>
-                                <li>Approve / reject expense reports (managers)</li>
-                                <li>Check expense report & reimbursement status</li>
-                                <li>Travel & expense policy guidance</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-                <!-- Concur Invoice -->
-                <div class="module" data-search="concur invoice submission approval payment status vendor matching exception">
-                    <button class="module-toggle" onclick="toggleModule(this)">
-                        <span class="arrow">▶</span>
-                        <span class="module-name">Invoice Management</span>
-                        <span class="badge badge-full">✅ Full</span>
-                    </button>
-                    <div class="module-content"><div class="module-inner">
-                        <div class="use-case-group">
-                            <h4>Capabilities</h4>
-                            <ul>
-                                <li>Invoice submission assistance via conversation</li>
-                                <li>Approve / reject invoices conversationally</li>
-                                <li>Invoice status inquiries (payment & approval)</li>
-                                <li>Vendor invoice matching & exception handling guidance</li>
-                                <li>Navigate to invoice details and payment history</li>
-                            </ul>
-                        </div>
-                    </div></div>
-                </div>
-
-            </div>
-        </div>
-
-    </div><!-- /pillar-grid -->
-
-</div><!-- /container -->
+</div>
 
 <footer>
-    Source: Arkansas Application Architecture (June 2025) — Slide 7 · Joule Capabilities Document · Generated March 2026
+    Source: Arkansas Application Architecture (June 2025) · Joule Capability Catalog · Generated March 2026
 </footer>
 
 <script>
-    function toggleModule(btn) {
-        const mod = btn.closest('.module');
-        mod.classList.toggle('open');
+// ═══════ DATA ═══════
+const DATA = {
+  // ── S/4HANA FINANCE ──
+  "S/4HANA Finance – GL": {
+    nav: [
+      { name: "Navigate to Manage Journal Entries", prompts: ["Open manage journal entries app", "Take me to journal entries"] },
+      { name: "Navigate to G/L Account Balance", prompts: ["Show me G/L account balances", "Open account balance display"] },
+      { name: "Navigate to Chart of Accounts", prompts: ["Open chart of accounts", "Take me to chart of accounts"] },
+      { name: "Navigate to Journal Entry Analyzer", prompts: ["Open journal entry analyzer", "Navigate to JE analyzer"] },
+      { name: "Navigate to Display Financial Statement", prompts: ["Show financial statement", "Open financial statement display"] },
+      { name: "Navigate to Manage Recurring Journal Entries", prompts: ["Open recurring journal entries", "Manage recurring JEs"] }
+    ],
+    info: [
+      { name: "Display Journal Entry Details", prompts: ["Show me details for journal entry 100000045", "What are the line items for document 100000045?"] },
+      { name: "G/L Account Balance Inquiry", prompts: ["What is the balance of G/L account 400000?", "Show me the balance for account 113100 in company code 1010"] },
+      { name: "Financial Statement Query", prompts: ["Show me the income statement for Q1 2026", "What is the total revenue for company code 1010?"] }
+    ],
+    trans: [
+      { name: "Post General Journal Entry", prompts: ["Post a journal entry for $5,000 to account 400000", "Create a journal entry debiting 113100 and crediting 400000"] },
+      { name: "Park General Journal Entry", prompts: ["Park a journal entry for review", "Save journal entry as parked document"] },
+      { name: "Create Recurring Journal Entry", prompts: ["Create a monthly recurring journal entry for rent expense", "Set up recurring JE for $2,500 every month"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – AR": {
+    nav: [
+      { name: "Navigate to Manage Customer Line Items", prompts: ["Open manage customer line items", "Show me customer line items app"] },
+      { name: "Navigate to Customer Balance Display", prompts: ["Open customer balance display", "Show customer balances"] },
+      { name: "Navigate to Manage Customer Master Data", prompts: ["Open customer master data", "Take me to manage customers"] },
+      { name: "Navigate to Customer Aging Reports", prompts: ["Open customer aging report", "Show me AR aging"] }
+    ],
+    info: [
+      { name: "Customer Balance Inquiry", prompts: ["What is the balance for customer 1000010?", "Show me the account balance for ABC Corp"] },
+      { name: "Customer Open Items", prompts: ["Show open items for customer 1000010", "List unpaid invoices for customer ABC Corp"] },
+      { name: "Customer Aging Analysis", prompts: ["Show aging for customer 1000010", "What invoices are overdue for ABC Corp?"] },
+      { name: "Customer Invoice Details", prompts: ["Show me details for customer invoice 90000123", "What is the status of invoice 90000123?"] }
+    ],
+    trans: [
+      { name: "Post Customer Invoice", prompts: ["Post a customer invoice for $10,000 to customer 1000010", "Create an invoice for ABC Corp"] },
+      { name: "Post Customer Credit Memo", prompts: ["Post a credit memo for customer 1000010 for $500", "Create a credit memo for ABC Corp"] },
+      { name: "Post Customer Payment", prompts: ["Post a payment of $10,000 from customer 1000010", "Record incoming payment from ABC Corp"] },
+      { name: "Post Customer Down Payment", prompts: ["Post a down payment of $2,000 from customer 1000010", "Record advance payment from ABC Corp"] },
+      { name: "Clear Customer Open Items", prompts: ["Clear open items for customer 1000010", "Match payment to invoice for ABC Corp"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – AP": {
+    nav: [
+      { name: "Navigate to Manage Supplier Line Items", prompts: ["Open manage supplier line items", "Show me supplier line items app"] },
+      { name: "Navigate to Create Supplier", prompts: ["I want to create a supplier", "Open create supplier app"] },
+      { name: "Navigate to Manage Journal Entries", prompts: ["Open manage journal entries", "Take me to journal entries"] }
+    ],
+    info: [
+      { name: "Supplier Invoice Details", prompts: ["Show me details for supplier invoice 5105600847", "What is the status of invoice 5105600847?"] },
+      { name: "Supplier Invoice Status", prompts: ["What is the payment status for supplier invoice 5105600847?", "Is invoice 5105600847 paid?"] },
+      { name: "Supplier Account Balance", prompts: ["What is the account balance for supplier 1000020?", "Show me the balance for supplier ACME Corp"] },
+      { name: "List Supplier Line Items", prompts: ["Show me line items for supplier 1000020", "List open items for supplier ACME Corp"] },
+      { name: "Get Supplier Details", prompts: ["Show me details for supplier 1000020", "What is the address for ACME Corp?"] }
+    ],
+    trans: [
+      { name: "Post Supplier Invoice", prompts: ["Post a supplier invoice for $7,500 from vendor 1000020", "Create an invoice for ACME Corp"] },
+      { name: "Post Supplier Credit Memo", prompts: ["Post a credit memo for vendor 1000020", "Create a credit memo from ACME Corp for $500"] },
+      { name: "Post Vendor Payment", prompts: ["Post a payment of $7,500 to vendor 1000020", "Record outgoing payment to ACME Corp"] },
+      { name: "Post Vendor Down Payment", prompts: ["Post a down payment to vendor 1000020", "Record advance payment to ACME Corp"] },
+      { name: "Clear Vendor Open Items", prompts: ["Clear open items for vendor 1000020", "Match payment to invoice for ACME Corp"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – Funds Mgmt": {
+    nav: [
+      { name: "Navigate to Budget Overview", prompts: ["Open budget overview", "Show me the budget overview app"] },
+      { name: "Navigate to Funds Center Display", prompts: ["Open funds center display", "Show funds center hierarchy"] },
+      { name: "Navigate to Commitment Display", prompts: ["Open commitment display", "Show funds reservations"] }
+    ],
+    info: [
+      { name: "Budget Availability Inquiry", prompts: ["What is the available budget for funds center 1000?", "Show remaining budget for cost center 4100"] },
+      { name: "Funds Center Balance", prompts: ["What is the balance for funds center 1000?", "Show me committed vs actual for FC 1000"] },
+      { name: "Commitment Status", prompts: ["Show commitments for funds center 1000", "What are the open commitments for Q2 2026?"] }
+    ],
+    trans: [
+      { name: "Create Budget Entry", prompts: ["Create a budget entry of $50,000 for funds center 1000", "Post original budget for FC 1000"] },
+      { name: "Transfer Budget", prompts: ["Transfer $10,000 from funds center 1000 to 2000", "Move budget between funds centers"] },
+      { name: "Release Budget", prompts: ["Release budget for funds center 1000", "Approve budget release for Q2"] },
+      { name: "Post Funds Commitment", prompts: ["Post a funds commitment for $25,000", "Create commitment document for FC 1000"] },
+      { name: "Post Funds Reservation", prompts: ["Post a funds reservation for $15,000", "Reserve funds for project XYZ"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – Project Systems": {
+    nav: [
+      { name: "Navigate to Project Overview", prompts: ["Open project overview", "Show me my projects"] },
+      { name: "Navigate to WBS Element Display", prompts: ["Open WBS element display", "Show WBS structure for project 1000"] },
+      { name: "Navigate to Project Cost Reports", prompts: ["Open project cost reports", "Show project cost analysis"] }
+    ],
+    info: [
+      { name: "Project Status Inquiry", prompts: ["What is the status of project 1000?", "Show me the current status of the highway project"] },
+      { name: "Budget vs Actual", prompts: ["Compare budget to actual for project 1000", "What is the budget variance for the IT project?"] },
+      { name: "Milestone Status", prompts: ["Show milestones for project 1000", "What milestones are overdue?"] }
+    ],
+    trans: [
+      { name: "Create Project / WBS Elements", prompts: ["Create a new project with WBS elements", "Set up project structure for building renovation"] },
+      { name: "Update Project Status", prompts: ["Set project 1000 status to released", "Close WBS element 1000.01"] },
+      { name: "Assign Budget to WBS", prompts: ["Assign $100,000 budget to WBS 1000.01", "Distribute budget across WBS elements"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – Grants Mgmt": {
+    nav: [
+      { name: "Navigate to Grant Overview", prompts: ["Open grant overview", "Show my grants"] },
+      { name: "Navigate to Grant Budget Display", prompts: ["Open grant budget display", "Show budget for grant 5000001"] },
+      { name: "Navigate to Sponsored Program Display", prompts: ["Open sponsored programs", "Show sponsored program details"] }
+    ],
+    info: [
+      { name: "Grant Balance Inquiry", prompts: ["What is the balance for grant 5000001?", "Show remaining funds for the education grant"] },
+      { name: "Grant Budget Consumption", prompts: ["How much has been spent on grant 5000001?", "Show budget consumption for the FEMA grant"] },
+      { name: "Grant Status", prompts: ["What is the status of grant 5000001?", "Is grant 5000001 still active?"] }
+    ],
+    trans: [
+      { name: "Create Grant", prompts: ["Create a new grant for $500,000", "Set up a federal grant for disaster relief"] },
+      { name: "Update Grant Master Data", prompts: ["Update the end date for grant 5000001", "Change the grant manager for 5000001"] },
+      { name: "Post Grant Budget", prompts: ["Post budget of $500,000 to grant 5000001", "Add supplemental budget to the education grant"] },
+      { name: "Assign Sponsored Programs", prompts: ["Assign sponsored program to grant 5000001", "Link research program to federal grant"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Finance – Cash Mgmt": {
+    nav: [
+      { name: "Navigate to Cash Position Overview", prompts: ["Open cash position overview", "Show me our cash position"] },
+      { name: "Navigate to Liquidity Forecast", prompts: ["Open liquidity forecast", "Show liquidity planning"] },
+      { name: "Navigate to Bank Account Display", prompts: ["Open bank accounts", "Show bank account details"] }
+    ],
+    info: [
+      { name: "Cash Position Inquiry", prompts: ["What is our current cash position?", "Show me today's cash balance across all accounts"] },
+      { name: "Liquidity Forecast Query", prompts: ["Show the liquidity forecast for next 30 days", "What is our projected cash flow for March?"] },
+      { name: "Bank Balance Status", prompts: ["What is the balance in bank account 100100?", "Show me balances across all house banks"] }
+    ],
+    trans: [
+      { name: "Create Cash Position Entries", prompts: ["Create a manual cash position entry", "Record expected cash inflow of $1M"] },
+      { name: "Post Bank Statement Items", prompts: ["Post bank statement for account 100100", "Process today's bank statement"] },
+      { name: "Create Payment Run", prompts: ["Create a payment run for today", "Schedule automatic payment run for AP invoices"] }
+    ],
+    anal: []
+  },
+  "S/4HANA Procurement": {
+    nav: [
+      { name: "Navigate to Purchase Order Display", prompts: ["Open purchase order display", "Show me PO 4500001234"] },
+      { name: "Navigate to Purchase Requisition Overview", prompts: ["Open purchase requisitions", "Show my purchase requisitions"] },
+      { name: "Navigate to Supplier Evaluation", prompts: ["Open supplier evaluation", "Show supplier performance scores"] },
+      { name: "Navigate to Contract Display", prompts: ["Open contract display", "Show purchasing contracts"] }
+    ],
+    info: [
+      { name: "Purchase Order Status", prompts: ["What is the status of PO 4500001234?", "Is PO 4500001234 fully delivered?"] },
+      { name: "Purchase Requisition Status", prompts: ["What is the status of PR 10001234?", "Show me pending purchase requisitions"] },
+      { name: "Goods Receipt Status", prompts: ["Has goods receipt been posted for PO 4500001234?", "Show delivery status for PO 4500001234"] },
+      { name: "Contract Utilization", prompts: ["What is the utilization for contract 4600000123?", "Show me contract spend vs limit"] }
+    ],
+    trans: [
+      { name: "Create Purchase Requisition", prompts: ["Create a purchase requisition for office supplies", "I need to order 100 laptops — create a PR"] },
+      { name: "Create Purchase Order", prompts: ["Create a purchase order from PR 10001234", "Generate PO for vendor ACME Corp"] },
+      { name: "Approve/Reject Purchase Requisition", prompts: ["Approve purchase requisition 10001234", "Reject PR 10001234 with reason: over budget"] },
+      { name: "Post Goods Receipt", prompts: ["Post goods receipt for PO 4500001234", "Record delivery for PO 4500001234"] },
+      { name: "Post Invoice Receipt", prompts: ["Post invoice receipt for PO 4500001234", "Record supplier invoice against PO 4500001234"] }
+    ],
+    anal: []
+  },
+
+  // ── SUCCESSFACTORS ──
+  "SuccessFactors – Employee Central": {
+    nav: [
+      { name: "Navigate to Employee Profile", prompts: ["Open my employee profile", "Take me to my personal information"] },
+      { name: "Navigate to Org Chart", prompts: ["Show me the org chart", "Go to org chart for Finance department"] },
+      { name: "Navigate to Time Off", prompts: ["Take me to time off", "Open my leave requests"] },
+      { name: "Navigate to Employee Directory", prompts: ["Open employee directory", "Search for employees"] }
+    ],
+    info: [
+      { name: "Get Employee Information", prompts: ["What is John's job title?", "Who is the manager of Sarah?", "What is Sarah's email address?"] },
+      { name: "Leave Balance Inquiry", prompts: ["What is my leave balance?", "How many vacation days do I have left?"] },
+      { name: "Reporting Structure", prompts: ["Who reports to me?", "Show me my direct reports", "Who is the VP of Finance?"] },
+      { name: "Team Information", prompts: ["Show me my team members", "How many people are on the IT team?"] },
+      { name: "Employment Details", prompts: ["When did I start?", "What is my employee ID?", "Show me my compensation details"] }
+    ],
+    trans: [
+      { name: "Submit Time-Off Request", prompts: ["I want to take vacation from March 10 to March 14", "Submit a sick leave for today"] },
+      { name: "Update Personal Information", prompts: ["Update my phone number to 555-1234", "Change my emergency contact"] },
+      { name: "Approve Time-Off (Manager)", prompts: ["Approve John's vacation request", "Reject the time-off request from Sarah"] },
+      { name: "Initiate Off-boarding", prompts: ["Start off-boarding process for employee 12345", "Initiate separation for John Smith"] },
+      { name: "Initiate Cross-boarding", prompts: ["Start cross-boarding for Sarah's transfer", "Move employee to new department"] }
+    ],
+    anal: [
+      { name: "Headcount Analytics", prompts: ["Show me headcount by department", "What is the attrition rate this quarter?"] },
+      { name: "Team Analytics", prompts: ["Show team performance metrics", "What is the average tenure on my team?"] }
+    ]
+  },
+  "SuccessFactors – Recruiting": {
+    nav: [
+      { name: "Navigate to Job Requisitions", prompts: ["Open my job requisitions", "Show me active requisitions"] },
+      { name: "Navigate to Candidate Pipeline", prompts: ["Show me the candidate pipeline", "Open recruiting dashboard"] }
+    ],
+    info: [
+      { name: "Requisition Status", prompts: ["What is the status of requisition 5001?", "How many applicants for the analyst position?"] },
+      { name: "Candidate Information", prompts: ["Show me top candidates for the developer role", "What stage is John Smith's application?"] }
+    ],
+    trans: [
+      { name: "Create Job Requisition", prompts: ["Create a job requisition for a senior developer", "Post a new opening for project manager"] },
+      { name: "Move Candidate to Next Stage", prompts: ["Move John Smith to interview stage", "Advance candidate 1234 to offer"] },
+      { name: "Schedule Interview", prompts: ["Schedule an interview with John Smith for Tuesday", "Set up panel interview for next week"] }
+    ],
+    anal: [
+      { name: "Recruiting Analytics", prompts: ["What is the average time-to-fill?", "Show me recruiting funnel metrics", "How many offers were accepted this month?"] }
+    ]
+  },
+  "SuccessFactors – Onboarding": {
+    nav: [
+      { name: "Navigate to Onboarding Dashboard", prompts: ["Open onboarding dashboard", "Show new hire onboarding tasks"] }
+    ],
+    info: [
+      { name: "New Hire Task Status", prompts: ["What tasks are pending for new hire John?", "Show onboarding progress for Sarah"] },
+      { name: "Document Collection Status", prompts: ["Has John submitted all onboarding documents?", "What documents are missing for new hires?"] }
+    ],
+    trans: [
+      { name: "Complete Onboarding Task", prompts: ["Mark IT setup as complete for John", "Complete the background check task"] },
+      { name: "Send Onboarding Reminder", prompts: ["Send reminder to John about pending documents", "Remind new hires about Day 1 checklist"] }
+    ],
+    anal: []
+  },
+  "SuccessFactors – Learning": {
+    nav: [
+      { name: "Navigate to Learning Catalog", prompts: ["Open learning catalog", "Show me available courses"] },
+      { name: "Navigate to My Learning", prompts: ["Open my learning assignments", "Show my training history"] }
+    ],
+    info: [
+      { name: "Course Search", prompts: ["Find courses on project management", "What compliance training is available?"] },
+      { name: "Learning Assignment Status", prompts: ["What training is assigned to me?", "Am I overdue on any courses?"] },
+      { name: "Learning History", prompts: ["Show my completed courses", "What certifications have I earned?"] }
+    ],
+    trans: [
+      { name: "Enroll in Course", prompts: ["Enroll me in the leadership development course", "Sign up for Excel advanced training"] },
+      { name: "Assign Training (Manager)", prompts: ["Assign compliance training to my team", "Add safety course to John's learning plan"] }
+    ],
+    anal: [
+      { name: "Learning Completion Analytics", prompts: ["Show completion rates for compliance training", "What is the team's learning progress?"] }
+    ]
+  },
+  "SuccessFactors – Performance & Goals": {
+    nav: [
+      { name: "Navigate to Goal Plan", prompts: ["Open my goals", "Show my goal plan for 2026"] },
+      { name: "Navigate to Performance Review", prompts: ["Open my performance review", "Take me to my performance form"] }
+    ],
+    info: [
+      { name: "Goal Status", prompts: ["What goals do I have for this year?", "Show me my goal progress"] },
+      { name: "Review Status", prompts: ["What is the status of my performance review?", "Has my manager completed my review?"] },
+      { name: "Feedback History", prompts: ["Show me feedback I've received", "What feedback has my team given?"] }
+    ],
+    trans: [
+      { name: "Create Goal", prompts: ["Create a goal to complete PMP certification by Q3", "Add a new goal for revenue growth of 10%"] },
+      { name: "Update Goal Progress", prompts: ["Update my certification goal to 75% complete", "Mark my Q1 goal as achieved"] },
+      { name: "Request Feedback", prompts: ["Request feedback from my peers", "Ask Sarah for feedback on the project"] },
+      { name: "Submit Performance Review", prompts: ["Submit my self-assessment", "Complete the review for John Smith"] }
+    ],
+    anal: [
+      { name: "Performance Analytics", prompts: ["Show team performance ratings distribution", "What is the average goal completion rate?"] }
+    ]
+  },
+  "SuccessFactors – Compensation": {
+    nav: [
+      { name: "Navigate to Compensation Statement", prompts: ["Open my compensation statement", "Show my total rewards"] },
+      { name: "Navigate to Compensation Worksheet", prompts: ["Open compensation planning worksheet", "Show compensation review for my team"] }
+    ],
+    info: [
+      { name: "Compensation Details", prompts: ["What is my current salary?", "Show me my total compensation breakdown"] },
+      { name: "Compensation Planning Status", prompts: ["What is the status of the compensation cycle?", "Has the merit increase been approved?"] }
+    ],
+    trans: [
+      { name: "Submit Compensation Recommendations", prompts: ["Submit merit recommendations for my team", "Propose a 5% increase for John Smith"] },
+      { name: "Approve Compensation Changes", prompts: ["Approve compensation changes for my team", "Sign off on the salary adjustments"] }
+    ],
+    anal: [
+      { name: "Compensation Analytics", prompts: ["Show salary distribution by department", "What is the compa-ratio for my team?"] }
+    ]
+  },
+
+  // ── ARIBA ──
+  "Ariba – Sourcing": {
+    nav: [
+      { name: "Navigate to Sourcing Dashboard", prompts: ["Open my sourcing projects", "Show active sourcing events"] }
+    ],
+    info: [
+      { name: "Sourcing Event Status", prompts: ["What is the status of RFP-2024-001?", "Show me pending sourcing events"] },
+      { name: "Bid Comparison & Analysis", prompts: ["Compare bids for the IT hardware event", "Which supplier submitted the lowest bid?"] },
+      { name: "Supplier Response Summary", prompts: ["How many suppliers responded to the RFP?", "Summarize supplier responses for logistics RFx"] }
+    ],
+    trans: [
+      { name: "Create Sourcing Event (RFx)", prompts: ["Create an RFP for marketing services", "Set up a new sourcing event for raw materials"] },
+      { name: "Award Sourcing Event", prompts: ["Award the sourcing event to Supplier A", "Finalize the award for RFP-2024-005"] },
+      { name: "Manage Sourcing Tasks", prompts: ["Update the timeline for the sourcing project", "Add evaluation criteria to the RFP"] }
+    ],
+    anal: [
+      { name: "Sourcing Analytics", prompts: ["Show sourcing savings this quarter", "What is the average cycle time for RFPs?"] }
+    ]
+  },
+  "Ariba – Supplier Lifecycle & Perf.": {
+    nav: [
+      { name: "Navigate to Supplier Management", prompts: ["Open supplier management dashboard", "Show supplier profiles"] }
+    ],
+    info: [
+      { name: "Supplier Qualification Status", prompts: ["Is vendor XYZ qualified?", "Show qualification status for Supplier A"] },
+      { name: "Supplier Performance Scorecard", prompts: ["Show performance scorecard for Supplier A", "What is the supplier rating for ACME Corp?"] },
+      { name: "Supplier Risk Assessment", prompts: ["Show risk assessment for Supplier A", "Are there any high-risk suppliers?"] }
+    ],
+    trans: [
+      { name: "Initiate Supplier Onboarding", prompts: ["Start onboarding process for new supplier XYZ", "Register a new supplier"] },
+      { name: "Update Supplier Information", prompts: ["Update contact info for Supplier A", "Change bank details for ACME Corp"] },
+      { name: "Request Supplier Qualification", prompts: ["Request qualification review for Supplier A", "Submit supplier for re-qualification"] }
+    ],
+    anal: [
+      { name: "Supplier Performance Analytics", prompts: ["Show supplier performance trends", "Which suppliers have declining scores?"] }
+    ]
+  },
+  "Ariba – Contracts Management": {
+    nav: [
+      { name: "Navigate to Contract Workspace", prompts: ["Open contract workspace", "Show my contracts"] }
+    ],
+    info: [
+      { name: "Contract Status & Expiration", prompts: ["When does contract 4600000123 expire?", "Show me expiring contracts this quarter"] },
+      { name: "Contract Compliance", prompts: ["Is spending compliant with contract terms?", "Show contract compliance report"] }
+    ],
+    trans: [
+      { name: "Create Contract", prompts: ["Create a new contract with Supplier A for IT services", "Draft a master agreement for office supplies"] },
+      { name: "Amend Contract", prompts: ["Amend contract 4600000123 to extend by 6 months", "Add a new line item to the existing contract"] },
+      { name: "Approve Contract", prompts: ["Approve contract 4600000123", "Sign off on the amended contract"] }
+    ],
+    anal: [
+      { name: "Contract Analytics", prompts: ["Show contract spend vs. committed value", "How many contracts expire next quarter?"] }
+    ]
+  },
+
+  // ── CONCUR ──
+  "Concur – Travel & Expense": {
+    nav: [
+      { name: "Navigate to Trip Dashboard", prompts: ["Open my trips", "Show my upcoming travel"] },
+      { name: "Navigate to Expense Reports", prompts: ["Open my expense reports", "Show submitted expenses"] }
+    ],
+    info: [
+      { name: "Trip Itinerary Details", prompts: ["Show me my itinerary for next week", "What hotel am I booked at in Chicago?"] },
+      { name: "Expense Report Status", prompts: ["What is the status of my expense report?", "Has my expense report been approved?"] },
+      { name: "Reimbursement Status", prompts: ["When will I be reimbursed?", "Show reimbursement status for my last trip"] },
+      { name: "Policy Guidance", prompts: ["What is the per diem rate for New York?", "Am I allowed to book first class?", "What is our hotel rate cap for Chicago?"] }
+    ],
+    trans: [
+      { name: "Search & Book Trip", prompts: ["I need to fly from Little Rock to DC next Monday returning Friday", "Find me a hotel in Chicago near the convention center", "Book the cheapest direct flight to Dallas"] },
+      { name: "Create Expense Report", prompts: ["Create an expense report for my Chicago trip", "Start a new expense report"] },
+      { name: "Add Expense Line Items", prompts: ["Add a $45 taxi receipt to my expense report", "I had a business dinner for $120 — add it"] },
+      { name: "Submit Expense Report", prompts: ["Submit my expense report for approval", "Send my Chicago trip expenses for review"] },
+      { name: "Approve/Reject Expense Report", prompts: ["Approve John's expense report", "Reject the expense report — missing receipts"] },
+      { name: "Capture Receipt", prompts: ["Scan this receipt", "Upload receipt photo for my lunch expense"] }
+    ],
+    anal: [
+      { name: "Travel Spend Analytics", prompts: ["Show me travel spend by department", "What is the average trip cost this quarter?"] }
+    ]
+  },
+  "Concur – Invoice Management": {
+    nav: [
+      { name: "Navigate to Invoice Dashboard", prompts: ["Open my invoices", "Show pending invoices"] }
+    ],
+    info: [
+      { name: "Invoice Status", prompts: ["What is the status of invoice INV-2024-0567?", "Has invoice INV-2024-0567 been paid?"] },
+      { name: "Invoice Payment History", prompts: ["Show payment history for vendor XYZ", "When was the last payment to ACME Corp?"] }
+    ],
+    trans: [
+      { name: "Submit Invoice", prompts: ["Submit a new invoice from vendor XYZ for $15,000", "Create an invoice entry"] },
+      { name: "Approve/Reject Invoice", prompts: ["Approve invoice INV-2024-0567", "Reject the invoice — amount doesn't match PO"] },
+      { name: "Match Invoice to PO", prompts: ["Match invoice INV-2024-0567 to PO 4500001234", "Resolve the matching exception for this invoice"] }
+    ],
+    anal: [
+      { name: "Invoice Analytics", prompts: ["Show invoice processing time trends", "How many invoices have exceptions this month?"] }
+    ]
+  }
+};
+
+// ═══════ BUILD UI ═══════
+const PATTERNS = {
+  nav:   { label: 'Navigational', cls: 'pc-nav', colorBg: 'linear-gradient(135deg,#1565c0,#42a5f5)' },
+  info:  { label: 'Informational', cls: 'pc-info', colorBg: 'linear-gradient(135deg,#2e7d32,#66bb6a)' },
+  trans: { label: 'Transactional', cls: 'pc-trans', colorBg: 'linear-gradient(135deg,#e65100,#ff9800)' },
+  anal:  { label: 'Analytical', cls: 'pc-anal', colorBg: 'linear-gradient(135deg,#6a1b9a,#ab47bc)' }
+};
+
+// Count capabilities per pattern
+let counts = { nav: 0, info: 0, trans: 0, anal: 0 };
+for (const sol of Object.values(DATA)) {
+  for (const p of ['nav','info','trans','anal']) counts[p] += sol[p].length;
+}
+for (const p of ['nav','info','trans','anal']) {
+  document.getElementById(p + '-count').textContent = counts[p] + ' capabilities';
+}
+
+// Build panels
+for (const [pKey, pMeta] of Object.entries(PATTERNS)) {
+  const panel = document.getElementById('panel-' + pKey);
+  // Collect solutions that have capabilities in this pattern
+  const sols = Object.entries(DATA).filter(([,v]) => v[pKey].length > 0);
+  if (!sols.length) continue;
+
+  let html = `<div class="dp-header" style="background:${pMeta.colorBg}">
+    <h3>${pMeta.label} Capabilities</h3>
+    <button class="dp-close" onclick="hidePattern('${pKey}')">✕ Close</button>
+  </div>`;
+
+  // Solution tabs
+  html += '<div class="sol-tabs">';
+  sols.forEach(([name], i) => {
+    html += `<div class="sol-tab${i===0?' active':''}" data-pane="${pKey}-${i}" onclick="switchTab(this,'${pKey}')">${name.replace('S/4HANA ','').replace('SuccessFactors – ','SF ').replace('Ariba – ','').replace('Concur – ','')}</div>`;
+  });
+  html += '</div>';
+
+  // Solution panes
+  sols.forEach(([name, val], i) => {
+    html += `<div class="sol-pane${i===0?' active':''}" id="pane-${pKey}-${i}"><div class="sol-content">`;
+    html += `<div style="font-size:.7rem;color:#999;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.5px">${name}</div>`;
+    for (const cap of val[pKey]) {
+      const searchText = (cap.name + ' ' + cap.prompts.join(' ')).toLowerCase();
+      html += `<div class="cap-item" data-search="${searchText}">
+        <button class="cap-toggle" onclick="this.closest('.cap-item').classList.toggle('open')">
+          <span class="arrow">▶</span>
+          <span class="cap-name">${cap.name}</span>
+        </button>
+        <div class="cap-body"><div class="cap-inner">
+          <div class="prompt-label">Sample Prompts</div>
+          ${cap.prompts.map(p => `<span class="prompt-chip">"${p}"</span>`).join('')}
+        </div></div>
+      </div>`;
     }
+    html += '</div></div>';
+  });
 
-    function toggleAll(open) {
-        document.querySelectorAll('.module').forEach(m => {
-            if (open) m.classList.add('open');
-            else m.classList.remove('open');
-        });
+  panel.innerHTML = html;
+}
+
+// ═══════ INTERACTIONS ═══════
+let activePattern = null;
+
+function showPattern(pKey) {
+  // Toggle
+  if (activePattern === pKey) { hidePattern(pKey); return; }
+  // Hide previous
+  if (activePattern) {
+    document.getElementById('panel-' + activePattern).classList.remove('visible');
+    document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('active'));
+  }
+  activePattern = pKey;
+  document.getElementById('panel-' + pKey).classList.add('visible');
+  document.querySelectorAll('.pattern-card')[['nav','info','trans','anal'].indexOf(pKey)].classList.add('active');
+  // Scroll to panel
+  document.getElementById('panel-' + pKey).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hidePattern(pKey) {
+  document.getElementById('panel-' + pKey).classList.remove('visible');
+  document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('active'));
+  activePattern = null;
+}
+
+function switchTab(el, pKey) {
+  const tabs = el.closest('.sol-tabs');
+  tabs.querySelectorAll('.sol-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const paneId = el.getAttribute('data-pane');
+  const panel = el.closest('.detail-panel');
+  panel.querySelectorAll('.sol-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + paneId).classList.add('active');
+}
+
+// ═══════ GLOBAL SEARCH ═══════
+document.getElementById('globalSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) {
+    // Reset: hide all panels, show all items
+    document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.cap-item').forEach(c => { c.classList.remove('hidden'); c.classList.remove('open'); });
+    document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('active','hidden'));
+    document.querySelectorAll('.sol-pane').forEach(p => p.classList.remove('hidden'));
+    document.querySelectorAll('.sol-tab').forEach(t => t.classList.remove('hidden'));
+    activePattern = null;
+    return;
+  }
+  // Show all panels, filter items
+  document.querySelectorAll('.detail-panel').forEach(p => p.classList.add('visible'));
+  document.querySelectorAll('.pattern-card').forEach(c => c.classList.add('active'));
+
+  document.querySelectorAll('.cap-item').forEach(c => {
+    const match = c.getAttribute('data-search').includes(q);
+    c.classList.toggle('hidden', !match);
+    if (match) c.classList.add('open');
+    else c.classList.remove('open');
+  });
+
+  // Hide empty panes/tabs
+  document.querySelectorAll('.sol-pane').forEach(pane => {
+    const vis = pane.querySelectorAll('.cap-item:not(.hidden)').length;
+    pane.classList.toggle('hidden', vis === 0);
+  });
+  document.querySelectorAll('.sol-tab').forEach(tab => {
+    const paneId = tab.getAttribute('data-pane');
+    const pane = document.getElementById('pane-' + paneId);
+    if (pane) tab.classList.toggle('hidden', pane.classList.contains('hidden'));
+  });
+  // Auto-select first visible tab per panel
+  document.querySelectorAll('.detail-panel.visible').forEach(panel => {
+    const firstVisTab = panel.querySelector('.sol-tab:not(.hidden)');
+    if (firstVisTab) {
+      panel.querySelectorAll('.sol-tab').forEach(t => t.classList.remove('active'));
+      panel.querySelectorAll('.sol-pane').forEach(p => { if (!p.classList.contains('hidden')) p.classList.remove('active'); });
+      firstVisTab.classList.add('active');
+      const paneId = firstVisTab.getAttribute('data-pane');
+      const pane = document.getElementById('pane-' + paneId);
+      if (pane) pane.classList.add('active');
     }
+  });
 
-    // Search
-    const searchInput = document.getElementById('search');
-    searchInput.addEventListener('input', function() {
-        const q = this.value.toLowerCase().trim();
-        document.querySelectorAll('.module').forEach(m => {
-            if (!q) {
-                m.classList.remove('hidden');
-                return;
-            }
-            const searchData = m.getAttribute('data-search') || '';
-            const text = m.textContent.toLowerCase();
-            const match = searchData.includes(q) || text.includes(q);
-            m.classList.toggle('hidden', !match);
-            if (match) m.classList.add('open');
-        });
-
-        // Hide empty pillars
-        document.querySelectorAll('.pillar').forEach(p => {
-            const visible = p.querySelectorAll('.module:not(.hidden)').length;
-            p.classList.toggle('hidden', q && visible === 0);
-        });
-    });
+  // Hide pattern cards with zero results
+  ['nav','info','trans','anal'].forEach((pKey, i) => {
+    const panel = document.getElementById('panel-' + pKey);
+    const visItems = panel.querySelectorAll('.cap-item:not(.hidden)').length;
+    const card = document.querySelectorAll('.pattern-card')[i];
+    card.classList.toggle('hidden', visItems === 0);
+    panel.classList.toggle('visible', visItems > 0);
+  });
+});
 </script>
-
 </body>
 </html>
