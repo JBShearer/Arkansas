@@ -30,11 +30,7 @@
         .pc-head h2 { font-size:1rem; font-weight:700; }
         .pc-head p { font-size:.72rem; opacity:.9; margin-top:.2rem; line-height:1.4; }
         .pc-head .pc-count { font-size:.7rem; margin-top:.5rem; background:rgba(255,255,255,.22); display:inline-block; padding:.1rem .5rem; border-radius:10px; }
-        .pc-nav .pc-head { background:linear-gradient(135deg,#1565c0,#42a5f5); }
-        .pc-info .pc-head { background:linear-gradient(135deg,#2e7d32,#66bb6a); }
-        .pc-trans .pc-head { background:linear-gradient(135deg,#e65100,#ff9800); }
-        .pc-anal .pc-head { background:linear-gradient(135deg,#6a1b9a,#ab47bc); }
-        .pc-icon { font-size:1.6rem; margin-bottom:.3rem; }
+        .pc-nav .pc-head, .pc-info .pc-head, .pc-trans .pc-head, .pc-anal .pc-head { background:linear-gradient(135deg,#1a3a5c,#2c5f8a); }
         .detail-panel { display:none; background:var(--card-bg); border-radius:var(--radius); box-shadow:0 2px 12px rgba(0,0,0,.07); margin-bottom:1.5rem; overflow:hidden; }
         .detail-panel.visible { display:block; animation:slideDown .3s ease; }
         @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
@@ -157,10 +153,8 @@
     .acc-mini-beta{background:#ede9fe;color:#7c3aed}
     .acc-mini-roadmap{background:#fef9c3;color:#854d0e}
     .coming-label{display:block;margin-top:4px;font-size:.65rem;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-    .pc-agents{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;cursor:pointer}
-    .pc-agents h2,.pc-agents p{color:#fff}
-    .pc-skills{background:linear-gradient(135deg,#0891b2,#06b6d4);color:#fff;cursor:pointer}
-    .pc-skills h2,.pc-skills p{color:#fff}
+    .pc-agents .pc-head{background:linear-gradient(135deg,#1a3a5c,#2c5f8a)}
+    .pc-skills .pc-head{background:linear-gradient(135deg,#1a3a5c,#2c5f8a)}
     .cap-tier{display:inline-block;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
     .cap-tier-base{background:#e0f2fe;color:#0369a1}
     .cap-tier-premium{background:#fef3c7;color:#b45309}
@@ -175,7 +169,7 @@
 <body>
 
 <header>
-    <h1>🤖 Joule Capability Guide</h1>
+    <h1>Joule Capability Guide</h1>
     <p>State of Arkansas — SAP S/4HANA Transformation</p>
     <div class="tag-row">
         <span>S/4HANA Cloud PCE</span>
@@ -188,9 +182,9 @@
 
 <div class="container">
     <div class="section-tabs">
-        <div class="section-tab active" onclick="switchSection('copilot')">🤖 Joule Copilot Prompts</div>
-        <div class="section-tab" onclick="switchSection('discovery')">🌐 Discovery Center AI Features</div>
-        <div class="section-tab" onclick="switchSection('roadmap')">🔮 Coming Soon</div>
+        <div class="section-tab active" onclick="switchSection('copilot')">Joule Copilot Prompts</div>
+        <div class="section-tab" onclick="switchSection('discovery')">Discovery Center AI Features</div>
+        <div class="section-tab" onclick="switchSection('roadmap')">Coming Soon</div>
     </div>
 
     <div class="main-section active" id="section-copilot">
@@ -203,12 +197,12 @@
             <div class="ll-item"><span class="tier-badge tier-coming">Coming</span> On SAP roadmap</div><div class="ll-item"><span class="cap-tier cap-tier-roadmap" style="margin-left:0">Roadmap</span> Planned feature</div>
         </div>
         <div class="pattern-grid">
-        <div class="pattern-card pc-nav" onclick="showPattern('nav')"><div class="pc-head"><div class="pc-icon">🧭</div><h2>Navigational</h2><p>Navigate to apps, screens, and pages using natural language</p><span class="pc-count" id="nav-count"></span></div></div>
-        <div class="pattern-card pc-info" onclick="showPattern('info')"><div class="pc-head"><div class="pc-icon">💡</div><h2>Informational</h2><p>Ask questions and get answers — read-only queries</p><span class="pc-count" id="info-count"></span></div></div>
-        <div class="pattern-card pc-trans" onclick="showPattern('trans')"><div class="pc-head"><div class="pc-icon">⚡</div><h2>Transactional</h2><p>Execute business processes — create, update, approve, post</p><span class="pc-count" id="trans-count"></span></div></div>
-        <div class="pattern-card pc-agents grayed-out" onclick="showPattern('agents')"><div class="pc-head"><div class="pc-icon">🤖</div><h2>Joule Agents</h2><p>Autonomous AI agents that execute multi-step workflows</p><span class="pc-count" id="agents-count"></span><span class="coming-label">Early Adopter</span></div></div>
-        <div class="pattern-card pc-anal grayed-out" onclick="showPattern('anal')"><div class="pc-head"><div class="pc-icon">📊</div><h2>Analytical</h2><p>SAP Analytics Cloud integration — embedded insights</p><span class="pc-count" id="anal-count"></span><span class="coming-label">Coming Soon</span></div></div>
-        <div class="pattern-card pc-skills grayed-out" onclick="showPattern('skills')"><div class="pc-head"><div class="pc-icon">🧩</div><h2>Joule Skills</h2><p>Custom extensions via Joule Studio Skill Builder</p><span class="pc-count" id="skills-count"></span><span class="coming-label">Coming Soon</span></div></div>
+        <div class="pattern-card pc-nav" onclick="showPattern('nav')"><div class="pc-head"><h2>Navigational</h2><p>Navigate to apps, screens, and pages using natural language</p><span class="pc-count" id="nav-count"></span></div></div>
+        <div class="pattern-card pc-info" onclick="showPattern('info')"><div class="pc-head"><h2>Informational</h2><p>Ask questions and get answers — read-only queries</p><span class="pc-count" id="info-count"></span></div></div>
+        <div class="pattern-card pc-trans" onclick="showPattern('trans')"><div class="pc-head"><h2>Transactional</h2><p>Execute business processes — create, update, approve, post</p><span class="pc-count" id="trans-count"></span></div></div>
+        <div class="pattern-card pc-agents grayed-out" onclick="showPattern('agents')"><div class="pc-head"><h2>Joule Agents</h2><p>Autonomous AI agents that execute multi-step workflows</p><span class="pc-count" id="agents-count"></span><span class="coming-label">Early Adopter</span></div></div>
+        <div class="pattern-card pc-anal grayed-out" onclick="showPattern('anal')"><div class="pc-head"><h2>Analytical</h2><p>SAP Analytics Cloud integration — embedded insights</p><span class="pc-count" id="anal-count"></span><span class="coming-label">Coming Soon</span></div></div>
+        <div class="pattern-card pc-skills grayed-out" onclick="showPattern('skills')"><div class="pc-head"><h2>Joule Skills</h2><p>Custom extensions via Joule Studio Skill Builder</p><span class="pc-count" id="skills-count"></span><span class="coming-label">Coming Soon</span></div></div>
     </div>
         <div id="panel-nav" class="detail-panel"></div>
         <div id="panel-info" class="detail-panel"></div>
@@ -219,7 +213,7 @@
     <div class="main-section" id="section-discovery">
         <div class="dc-wrapper">
             <div class="dc-header">
-                <h3>🌐 SAP Discovery Center AI Features</h3>
+                <h3>SAP Discovery Center AI Features</h3>
                 <p>115 Arkansas-relevant AI features from the SAP Discovery Center — click any feature for details</p>
             </div>
             <div class="dc-controls">
@@ -228,7 +222,7 @@
                 <button class="dc-filter-btn" data-filter="base" onclick="dcFilter(this)">Base</button>
                 <button class="dc-filter-btn" data-filter="premium" onclick="dcFilter(this)">Premium</button>
                 <button class="dc-filter-btn" data-filter="beta" onclick="dcFilter(this)">Beta</button>
-                <button class="dc-filter-btn" data-filter="joule" onclick="dcFilter(this)">🤖 Joule</button>
+                <button class="dc-filter-btn" data-filter="joule" onclick="dcFilter(this)">Joule</button>
             </div>
             <div class="dc-stats" id="dcStats"></div>
             <div id="dcBody"></div>
@@ -257,7 +251,7 @@ var PRODUCTS = [
   { key:"ariba", label:"Ariba", cls:"pb-ariba" },
   { key:"concur", label:"Concur", cls:"pb-concur" }
 ];
-var PATTERNS = { nav:{label:'Navigational',bg:'linear-gradient(135deg,#1565c0,#42a5f5)'}, info:{label:'Informational',bg:'linear-gradient(135deg,#2e7d32,#66bb6a)'}, trans:{label:'Transactional',bg:'linear-gradient(135deg,#e65100,#ff9800)'}, anal:{label:'Analytical',bg:'linear-gradient(135deg,#6a1b9a,#ab47bc)'} };
+var PATTERNS = { nav:{label:'Navigational',bg:'linear-gradient(135deg,#1a3a5c,#2c5f8a)'}, info:{label:'Informational',bg:'linear-gradient(135deg,#1a3a5c,#2c5f8a)'}, trans:{label:'Transactional',bg:'linear-gradient(135deg,#1a3a5c,#2c5f8a)'}, anal:{label:'Analytical',bg:'linear-gradient(135deg,#1a3a5c,#2c5f8a)'} };
 
 var COMING_SOON = [];
 
@@ -305,7 +299,7 @@ for(var pei=0;pei<patternEntries.length;pei++){
   var quarters=Object.keys(qSet).sort();
   var prodLabels={s4:'S/4HANA',sf:'SuccessFactors',ariba:'Ariba',concur:'Concur',joule:'Joule Platform'};
   var prodCls={s4:'cs-prod-s4',sf:'cs-prod-sf',ariba:'cs-prod-ariba',concur:'cs-prod-concur',joule:'cs-prod-joule'};
-  var h='<div class="cs-header"><h3>🔮 Coming Soon — SAP Joule Roadmap</h3><span class="cs-badge">'+COMING_SOON.length+' planned items</span></div><div class="cs-body">';
+  var h='<div class="cs-header"><h3>Coming Soon — SAP Joule Roadmap</h3><span class="cs-badge">'+COMING_SOON.length+' planned items</span></div><div class="cs-body">';
   for(var qi=0;qi<quarters.length;qi++){var q=quarters[qi];var items=COMING_SOON.filter(function(it){return it.q===q});
     h+='<div class="cs-quarter"><div class="cs-quarter-label">'+q+'</div>';
     for(var ii=0;ii<items.length;ii++){var it=items[ii];var comm=it.commercial?'<span class="cs-commercial tier-badge '+(it.commercial==='premium'?'tier-premium':'tier-base')+'">'+it.commercial+'</span>':'';
@@ -323,7 +317,7 @@ function showPattern(pat) {
   var panel=document.getElementById('capPanel');
   if(!panel){panel=document.createElement('div');panel.id='capPanel';panel.style.cssText='margin-top:1rem;';document.querySelector('.pattern-grid').insertAdjacentElement('afterend',panel);}
   var pL={nav:'Navigational',info:'Informational',trans:'Transactional',anal:'Analytical (SAP Analytics Cloud)',agents:'Joule Agents',skills:'Joule Skills'};
-  var pColors={nav:'#1565c0',info:'#2e7d32',trans:'#e65100',agents:'#7c3aed',anal:'#6a1b9a',skills:'#0891b2'};
+  var pColors={nav:'#1a3a5c',info:'#1a3a5c',trans:'#1a3a5c',agents:'#1a3a5c',anal:'#1a3a5c',skills:'#1a3a5c'};
   var pDesc={
     nav:'The Joule Action Bar provides unified navigational assistance across your SAP environment. Users can navigate to any SAP Fiori application using natural language — across S/4HANA, SuccessFactors, Ariba, and Concur. The upcoming Joule Action Bar (Early Adopter Care) extends this to third-party apps as well. Joule also provides access to SAP Help documentation and understands documents you ground for your organization.',
     info:'Joule\u2019s informational capabilities let you retrieve data, get explanations, and ask questions about your SAP environment using natural language. This includes access to SAP Help content, grounded organizational documents, and real-time system data across all modules. Ask about balances, statuses, employee details, policy questions, and more.',
@@ -336,13 +330,13 @@ function showPattern(pat) {
   if(pDesc[pat]) h+='<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem 1rem;margin:0 0 .8rem;font-size:.82rem;color:#475569;line-height:1.5;">'+pDesc[pat]+'</div>';
   if(pat==='skills'){
     h+='<div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:1rem;margin:.5rem 0;">';
-    h+='<p style="color:#0d9488;font-weight:600;">\u{1F9E9} Joule Skills \u2014 Coming Soon</p>';
+    h+='<p style="color:#0d9488;font-weight:600;">Joule Skills \u2014 Coming Soon</p>';
     h+='<p style="color:#475569;font-size:.85rem;">Custom Joule skills built with <a href="https://discovery-center.cloud.sap/ai-feature/e93aa292-e7f4-449d-9586-f1a8510d5ab6/" target="_blank" style="color:#0d9488;">Joule Studio Skill Builder</a> allow you to extend Joule with capabilities tailored to your organization\u2019s unique processes. Arkansas can build custom skills once the platform is configured.</p>';
     h+='</div>';panel.innerHTML=h;return;
   }
   if(pat==='anal'){
     h+='<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:1rem;margin:.5rem 0;">';
-    h+='<p style="color:#b45309;font-weight:600;">\u{1F4CA} Analytical \u2014 Coming Soon</p>';
+    h+='<p style="color:#b45309;font-weight:600;">Analytical \u2014 Coming Soon</p>';
     h+='<p style="color:#475569;font-size:.85rem;">The Analytical pattern integrates Joule with <a href="https://discovery-center.cloud.sap/ai-feature/b354ca6f-3bbc-43d0-9c83-b3140b925962/" target="_blank" style="color:#b45309;">SAP Analytics Cloud (SAC)</a> to provide embedded analytical insights via natural language. This includes <strong>Analytical Insights</strong> \u2014 ask questions about dashboards, KPIs, and reports across all SAP applications using Joule.</p>';
     h+='<p style="color:#475569;font-size:.85rem;margin-top:.5rem;">Integration with SAC BI and BW/4HANA PCE in the Arkansas architecture will enable cross-module analytics via Joule once configured.</p>';
     h+='</div>';panel.innerHTML=h;return;
@@ -377,7 +371,6 @@ function showPattern(pat) {
     h+='</div></div>';
   }
   panel.innerHTML=h;
-  panel.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function toggleAcc(el){el.classList.toggle('acc-open');var body=el.nextElementSibling;body.classList.toggle('acc-expanded');}
 
@@ -387,11 +380,56 @@ function switchModule(tab){var wrap=tab.closest('.product-content');wrap.querySe
 
 document.getElementById('globalSearch').addEventListener('input',function(){
   var q=this.value.toLowerCase().trim();
-  if(!q){document.querySelectorAll('.detail-panel').forEach(function(p){p.classList.remove('visible')});document.querySelectorAll('.cap-item').forEach(function(c){c.classList.remove('hidden','open')});document.querySelectorAll('.pattern-card').forEach(function(c){c.classList.remove('active','hidden')});document.querySelectorAll('.product-content').forEach(function(pc){pc.style.display='';if(pc.querySelector('.mod-tab'))pc.style.display='none'});document.querySelectorAll('.detail-panel').forEach(function(panel){var first=panel.querySelector('.product-btn');if(first)first.click()});activePattern=null;return;}
-  document.querySelectorAll('.detail-panel').forEach(function(p){p.classList.add('visible')});document.querySelectorAll('.pattern-card').forEach(function(c){c.classList.add('active')});document.querySelectorAll('.product-content').forEach(function(pc){pc.style.display='block'});document.querySelectorAll('.sol-pane').forEach(function(p){p.classList.add('active')});
-  document.querySelectorAll('.cap-item').forEach(function(c){var m=c.getAttribute('data-search').indexOf(q)>=0;c.classList.toggle('hidden',!m);if(m)c.classList.add('open');else c.classList.remove('open')});
-  document.querySelectorAll('.product-content').forEach(function(pc){var vis=pc.querySelectorAll('.cap-item:not(.hidden)').length;pc.style.display=vis?'block':'none'});
-  ['nav','info','trans','anal'].forEach(function(pk,i){var panel=document.getElementById('panel-'+pk);var vis=panel.querySelectorAll('.cap-item:not(.hidden)').length;document.querySelectorAll('.pattern-card')[i].classList.toggle('hidden',!vis);panel.classList.toggle('visible',vis>0)});
+  var panel=document.getElementById('capPanel');
+  if(!q){
+    if(panel) panel.innerHTML='';
+    document.querySelectorAll('.pattern-card').forEach(function(c){c.classList.remove('active-card')});
+    return;
+  }
+  /* Search across all patterns and sections */
+  var patList=['nav','info','trans','agents','skills','anal'];
+  var pL={nav:'Navigational',info:'Informational',trans:'Transactional',anal:'Analytical',agents:'Joule Agents',skills:'Joule Skills'};
+  if(!panel){panel=document.createElement('div');panel.id='capPanel';panel.style.cssText='margin-top:1rem;';document.querySelector('.pattern-grid').insertAdjacentElement('afterend',panel);}
+  document.querySelectorAll('.pattern-card').forEach(function(c){c.classList.remove('active-card')});
+  var h='<div style="display:flex;align-items:center;gap:.6rem;margin:.8rem 0 .5rem;"><div style="width:4px;height:24px;border-radius:2px;background:#1a3a5c"></div><h3 style="font-size:1.1rem;margin:0;">Search Results</h3></div>';
+  var totalMatches=0;
+  var secs=Object.keys(DATA);
+  for(var pi=0;pi<patList.length;pi++){
+    var pat=patList[pi]; var patMatches=[];
+    for(var si=0;si<secs.length;si++){
+      var sec=DATA[secs[si]]; var items=sec[pat]; if(!items||items.length===0) continue;
+      var matched=[];
+      for(var ii=0;ii<items.length;ii++){
+        var it=items[ii]; var txt=(it.name+' '+secs[si]+' '+(it.prompts?it.prompts.join(' '):'')).toLowerCase();
+        if(txt.indexOf(q)>=0) matched.push({item:it,section:secs[si]});
+      }
+      if(matched.length) patMatches=patMatches.concat(matched);
+    }
+    if(!patMatches.length) continue;
+    totalMatches+=patMatches.length;
+    h+='<div class="acc-section" style="margin-bottom:.5rem;"><div class="acc-header acc-open" onclick="toggleAcc(this)"><div style="display:flex;align-items:center;gap:.5rem;flex:1;"><span style="font-size:.85rem;">'+pL[pat]+'</span><span style="color:#94a3b8;font-size:.75rem;font-weight:400;">('+patMatches.length+' matches)</span></div><span class="acc-chevron" style="transform:rotate(90deg)">▶</span></div>';
+    h+='<div class="acc-body acc-expanded">';
+    for(var mi=0;mi<patMatches.length;mi++){
+      var it=patMatches[mi].item; var secName=patMatches[mi].section;
+      var tc='cap-tier-'+(it.tier||'base'); var tl=(it.tier||'base'); tl=tl.charAt(0).toUpperCase()+tl.slice(1);
+      var ls=it.link?'<a href="'+it.link+'" target="_blank" class="cap-link">':''; var le=it.link?'</a>':'';
+      var qb=it.quarter?' <span class="cap-quarter">'+it.quarter+'</span>':'';
+      h+='<div style="padding:.4rem 0;border-bottom:1px solid #f1f5f9;">';
+      h+='<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">';
+      h+=ls+'<strong style="font-size:.82rem;">'+it.name+'</strong>'+le;
+      h+='<span class="cap-tier '+tc+'">'+tl+'</span>'+qb;
+      h+='<span style="font-size:.6rem;color:#94a3b8;margin-left:4px;">'+secName+'</span>';
+      h+='</div>';
+      if(it.prompts&&it.prompts.length>0){h+='<div style="margin-top:3px;">';
+        for(var pi2=0;pi2<it.prompts.length;pi2++){h+='<code style="display:inline-block;font-size:.72rem;background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;margin:2px 3px 2px 0;">'+it.prompts[pi2]+'</code>';}
+        h+='</div>';}
+      h+='</div>';
+    }
+    h+='</div></div>';
+  }
+  if(!totalMatches) h+='<p style="text-align:center;color:#94a3b8;padding:2rem;">No capabilities match your search.</p>';
+  else h='<div style="display:flex;align-items:center;gap:.6rem;margin:.8rem 0 .5rem;"><div style="width:4px;height:24px;border-radius:2px;background:#1a3a5c"></div><h3 style="font-size:1.1rem;margin:0;">Search Results</h3><span style="font-size:.72rem;color:#94a3b8;">'+totalMatches+' matches</span></div>'+h.substring(h.indexOf('<div class="acc-section"'));
+  panel.innerHTML=h;
 });
 
 /* ==================== DISCOVERY CENTER ==================== */
@@ -399,7 +437,7 @@ var DC=[{"n":"AI-Assisted Writing","t":"AI Feature","c":"premium","p":"SAP Succe
 
 var DC_GROUPS_ORDER=['s4','sf','ariba','concur','platform'];
 var DC_GROUP_COLORS={'s4':'#1565c0','sf':'#00897b','ariba':'#ef6c00','concur':'#7b1fa2','platform':'#c62828'};
-var DC_GROUP_ICONS={'s4':'🏢','sf':'👥','ariba':'🛒','concur':'✈️','platform':'🤖'};
+var DC_GROUP_ICONS={'s4':'','sf':'','ariba':'','concur':'','platform':''};
 var DC_GROUP_LABELS={'s4':'S/4HANA Cloud PCE','sf':'SuccessFactors','ariba':'Ariba','concur':'Concur','platform':'Platform & Joule'};
 
 var dcFilterMode='all';
@@ -429,7 +467,7 @@ function renderDC(){
     '<div class="dc-stat"><span class="tier-badge tier-base">Base</span> '+baseCount+'</div>'+
     '<div class="dc-stat"><span class="tier-badge tier-premium">Premium</span> '+premCount+'</div>'+
     '<div class="dc-stat"><span class="tier-badge tier-beta">Beta</span> '+betaCount+'</div>'+
-    '<div class="dc-stat"><span style="font-size:.6rem;font-weight:700;padding:.12rem .45rem;border-radius:4px;background:#fff3e0;color:#e65100;border:1px solid #ffe0b2">🤖 Joule</span> '+filtered.filter(function(f){return f.j}).length+'</div>';
+    '<div class="dc-stat"><span style="font-size:.6rem;font-weight:700;padding:.12rem .45rem;border-radius:4px;background:#fff3e0;color:#e65100;border:1px solid #ffe0b2">Joule</span> '+filtered.filter(function(f){return f.j}).length+'</div>';
 
   var groups={};
   for(var i=0;i<filtered.length;i++){var f=filtered[i];if(!groups[f.g])groups[f.g]=[];groups[f.g].push(f);}
@@ -466,7 +504,7 @@ function renderDC(){
         html+='<div class="dc-feat-badges">';
         html+='<span class="tier-badge '+tierCls+'">'+tierLabel+'</span>';
         html+='<span class="dc-type-badge '+typeCls+'">'+f.t+'</span>';
-        if(f.j) html+='<span class="dc-type-badge" style="background:#fff3e0;color:#e65100">🤖 Joule</span>';
+        if(f.j) html+='<span class="dc-type-badge" style="background:#fff3e0;color:#e65100">Joule</span>';
         html+='</div>';
         html+='</div>';
       }
