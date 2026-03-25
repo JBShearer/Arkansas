@@ -264,7 +264,8 @@ NOTE_CONTAINS = [
 _RESPONSE_OPTION_RE = re.compile(
     r'^(?:Submit|Cancel|Retype|Save Draft|Reject|Approve|Confirm|Discard|'
     r'Close|Accept|Decline|Go Back|Try Again|Skip|Continue|Proceed|Retry|'
-    r'Undo|Submit with Governance|Save Draft Governance Process)'
+    r'Undo|Submit with Governance|Save Draft Governance Process|'
+    r'Confirm Creation|Confirm with Governance|Confirm [\w\s]+)'
     r'\s*[:–—]',
     re.IGNORECASE
 )
@@ -289,6 +290,11 @@ def _is_note(text):
         return True
     # "Note that..." anywhere
     if t.startswith("Note that ") or t.startswith("Note: "):
+        return True
+    # Instructional phrases: "Choose the X of your choice", "Provide all the required..."
+    if re.match(r'^Choose the\b.*\byour choice\b', t, re.IGNORECASE):
+        return True
+    if re.match(r'^Provide (?:all )?the (?:required|following|necessary)\b', t, re.IGNORECASE):
         return True
     # Starts with note patterns
     for start in NOTE_STARTS:

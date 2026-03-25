@@ -142,7 +142,7 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .uc-notes summary {{ cursor: pointer; color: #7b6d00; font-weight: 600; font-size: 0.78rem; }}
 .uc-notes summary:hover {{ color: #5a4f00; }}
 .uc-notes .note-item {{ display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.78rem; color: #555; line-height: 1.4; }}
-.uc-notes .note-item::before {{ content: 'ℹ️'; flex-shrink: 0; }}
+.uc-notes .note-item::before {{ content: ''; }}
 .uc-params {{ width: 100%; padding: 0.15rem 0 0.3rem 4.5rem; }}
 .uc-params .param-list {{ display: flex; flex-wrap: wrap; gap: 0.3rem; }}
 .uc-params .param-tag {{ font-size: 0.72rem; background: #f5f0e0; color: #7b6d00; padding: 0.15rem 0.55rem; border-radius: 10px; border: 1px solid #e8e0c0; }}
@@ -412,7 +412,7 @@ function renderChildUseCase(uc) {{
   if (notes.length > 0) {{
     html += '<div style="padding:0.15rem 0 0 1.2rem;font-size:0.78rem;color:#666;line-height:1.5;">';
     notes.forEach(n => {{
-      html += '<div style="display:flex;align-items:flex-start;gap:0.3rem;padding:0.1rem 0;">ℹ️ <span>' + n + '</span></div>';
+      html += '<div style="display:flex;align-items:flex-start;gap:0.3rem;padding:0.1rem 0;"><span>' + n + '</span></div>';
     }});
     html += '</div>';
   }}
@@ -431,10 +431,10 @@ function renderChildUseCase(uc) {{
   if (hasSubs) {{
     html += '<div class="uc-child-prompts">';
     Object.keys(subcategories).forEach(cat => {{
-      html += '<div style="margin:0.4rem 0 0.15rem 0;font-size:0.78rem;font-weight:600;color:#555;">📂 ' + cat + '</div>';
-      html += '<ul>';
+      html += '<div style="margin:0.5rem 0 0.2rem 0;font-size:0.8rem;font-weight:600;color:#444;border-bottom:1px solid #e8e8e8;padding-bottom:0.2rem;">' + cat + '</div>';
+      html += '<ul style="list-style:none;display:flex;flex-wrap:wrap;gap:0.35rem;">';
       subcategories[cat].forEach(p => {{
-        html += '<li>' + p + '</li>';
+        html += '<li style="font-size:0.78rem;color:#333;background:#f4f6f8;padding:0.25rem 0.7rem;border-radius:6px;border:1px solid #dde2e8;">' + p + '</li>';
       }});
       html += '</ul>';
     }});
