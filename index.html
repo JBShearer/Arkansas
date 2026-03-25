@@ -426,39 +426,47 @@ function renderTree(caps) {
     html += '</div>';
     html += '<div class="product-body' + (isOpen ? ' open' : '') + '">';
     
+    /* Helper: render area contents (items + subareas) without wrapper */
+    function renderAreaContents(areaData) {
+      let h = '';
+      areaData.items.forEach(c => { h += renderUseCase(c); });
+      Object.keys(areaData.subareas).sort().forEach(sa => {
+        const saItems = areaData.subareas[sa];
+        h += '<div class="sub-area-header" onclick="toggleSection(this)">';
+        h += '<span class="tree-expand">\u25B6</span>';
+        h += '<h5>' + sa + '</h5>';
+        h += '<span class="count">' + saItems.length + '</span>';
+        h += '</div>';
+        h += '<div class="sub-area-body">';
+        saItems.forEach(c => { h += renderUseCase(c); });
+        h += '</div>';
+      });
+      return h;
+    }
+
+    /* Skip the BA level when there's only "(General)" or a single area */
+    const skipBA = areaNames.length === 1;
+
     areaNames.forEach(area => {
       const areaData = pt.areas[area];
       const areaTotal = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
       if (areaTotal === 0) return;
       
-      const areaOpen = areaNames.length <= 3 || !!activeType;
-      html += '<div class="ba-section">';
-      html += '<div class="ba-header" onclick="toggleSection(this)">';
-      html += '<span class="tree-expand">' + (areaOpen ? '\u25BC' : '\u25B6') + '</span>';
-      html += '<h4>' + area + '</h4>';
-      html += '<span class="count">' + areaTotal + '</span>';
-      html += '</div>';
-      html += '<div class="ba-body' + (areaOpen ? ' open' : '') + '">';
-      
-      areaData.items.forEach(c => {
-        html += renderUseCase(c);
-      });
-      
-      Object.keys(areaData.subareas).sort().forEach(sa => {
-        const saItems = areaData.subareas[sa];
-        html += '<div class="sub-area-header" onclick="toggleSection(this)">';
-        html += '<span class="tree-expand">\u25B6</span>';
-        html += '<h5>' + sa + '</h5>';
-        html += '<span class="count">' + saItems.length + '</span>';
+      if (skipBA) {
+        /* Render items directly under the product — no BA header */
+        html += renderAreaContents(areaData);
+      } else {
+        const areaOpen = areaNames.length <= 3 || !!activeType;
+        html += '<div class="ba-section">';
+        html += '<div class="ba-header" onclick="toggleSection(this)">';
+        html += '<span class="tree-expand">' + (areaOpen ? '\u25BC' : '\u25B6') + '</span>';
+        html += '<h4>' + area + '</h4>';
+        html += '<span class="count">' + areaTotal + '</span>';
         html += '</div>';
-        html += '<div class="sub-area-body">';
-        saItems.forEach(c => {
-          html += renderUseCase(c);
-        });
-        html += '</div>';
-      });
-      
-      html += '</div></div>';
+        html += '<div class="ba-body' + (areaOpen ? ' open' : '') + '">';
+        html += renderAreaContents(areaData);
+        html += '</div></div>';
+      }
     });
     
     html += '</div></div>';
