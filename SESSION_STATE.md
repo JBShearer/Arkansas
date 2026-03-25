@@ -1,183 +1,48 @@
-# Session State — SAP Business AI / Joule Capabilities Website
+# Session State — SAP Business AI / Joule Capabilities Explorer
 
 ## Project Overview
-Website at **easyassap.com** (Arkansas folder) explaining SAP Business AI features including Joule, Embedded AI, and recommended projects for the State of Arkansas. Crawl/Walk/Run approach.
-
-## Repository
-- **GitHub**: https://github.com/JBShearer/Arkansas
-- **Branch**: main
-- **Remote**: origin → Arkansas repo
-- **Site URL**: https://easyassap.com (GitHub Pages via `site/` folder + root `index.html`)
-- **Latest Commit**: Fix SuccessFactors category-column tables — proper subcategory rendering
+Building easyassap.com — a website explaining SAP Business AI features (Joule, Embedded AI, recommended projects) for the State of Arkansas using a crawl/walk/run adoption framework. All content is generated via a Python pipeline from SAP Help Portal data.
 
 ## Architecture
-
-### Pipeline (Python + Node.js)
 ```
 pipeline/
-├── sources/
-│   ├── toc_tree.txt          # TOC from SAP Help Portal (raw hierarchy)
-│   ├── scrape_help.js        # Puppeteer scraper for SAP Help use case tables
-│   ├── scrape_joule.py       # Python scraper (alternative)
-│   ├── loader.py             # Data loading utilities
-│   └── __init__.py
-├── data/
-│   ├── scraped_use_cases.json # Raw scraped data (172 pages, 170 with tables)
-│   └── joule_capabilities_raw.json  # Enriched output (216 capabilities)
-├── analysis/
-│   ├── analyzer.py           # Analysis utilities
-│   └── __init__.py
-├── generators/
-│   ├── site_generator.py     # HTML site generator (hierarchical drilldown)
-│   └── __init__.py
-├── enrich_toc.py             # Main enrichment pipeline (TOC → JSON with scraped data)
-├── main.py                   # Pipeline orchestrator
-└── __init__.py
+  sources/        — Data acquisition (scrape_help.js, scrape_joule.py, toc_tree.txt)
+  data/           — Generated JSON (scraped_use_cases.json → joule_capabilities_raw.json)
+  analysis/       — Analyzers
+  generators/     — site_generator.py → site/index.html
+site/             — GitHub Pages output (index.html, CNAME)
+index.html        — Root copy for GitHub Pages
 ```
 
-### Site Output
-```
-site/
-├── index.html                # Generated single-page app (~492KB)
-└── CNAME                     # easyassap.com
-index.html                    # Copy of site/index.html for GitHub Pages root
-```
+## Key Pipeline Steps
+1. `node pipeline/sources/scrape_help.js` — Scrapes SAP Help Portal → scraped_use_cases.json
+2. `python3 -m pipeline.enrich_toc` — Enriches TOC tree with scraped data → joule_capabilities_raw.json
+3. `python3 -m pipeline.generators.site_generator` — Generates site/index.html
+4. `cp site/index.html index.html && git push` — Deploy to GitHub Pages
 
-### Key Commands
-```bash
-# Full pipeline (enrich → generate → deploy)
-make all
+## Data Quality Rules (enrich_toc.py)
+- **Response descriptions**: Text starting with "Joule displays", "Provides", "Recommends", etc. is NOT split into prompts — detected by `_is_response_description()`
+- **Prompt preference**: Real prompts from the prompts column are PREFERRED over response-extracted splits
+- **Fragment filter**: Prompts < 15 chars rejected unless they start with action verbs (`_looks_like_prompt()`)
+- **Empty scrapes**: Pages with many rows but ALL empty prompts/response rejected by `is_good_scraped_data()`
+- **Category-column tables**: SuccessFactors-style tables where column 2 has category labels (not prompts) detected by `_is_category_column_table()` — extracts real prompts from response field, groups by subcategory
+- **Misaligned tables**: Ariba-style tables where column 2 has capability types detected by `_is_misaligned_table()`
+- **Note classification**: `_is_note()` detects instructional text vs prompts
+- **Parameter classification**: `_is_parameter()` detects field names vs prompts
 
-# Individual steps
-node pipeline/sources/scrape_help.js          # Scrape SAP Help (172 pages, ~8 min)
-python3 -m pipeline.enrich_toc                # Enrich with scraped data
-python3 -m pipeline.generators.site_generator # Generate HTML
-cp site/index.html index.html                 # Copy to root for GitHub Pages
-git add -A && git commit -m "msg" && git push # Deploy
+## Rendering (site_generator.py)
+- Notes shown **inline** alongside use case descriptions (ℹ️ items), not in collapsible drilldowns
+- Subcategories rendered with 📂 headers when 2+ categories exist
+- Type badges for capability types (Informational, Transactional, Navigational, Analytical)
+- Single-product single-capability flattened to avoid unnecessary nesting
 
-# Local preview
-make serve   # → http://localhost:4000
-```
+## Current Status (2025-03-25)
+- **Commit**: b7623bf — Major data quality fix
+- **Entries**: 216 total, 171 use cases, 18 products
+- **With prompts**: 100 capabilities have sample prompts
+- **Data source**: 100 scraped, 116 title-only
 
-## Data Quality (v9)
-- **216 total capabilities** (no "Mixed" type)
-- **4 capability types**: Informational (59), Transactional (123), Navigational (27), Analytical (7)
-- **18 SAP products** covered
-- **103 pages with verified real scraped data** (out of 167 scraped)
-- **103 capabilities with actual SAP-provided sample prompts**
-- **102 capabilities with use case details**
-- False positives filtered: sidebar nav captures, sidebar link captures
-
-## Scraper Details
-- Uses Puppeteer (headless Chrome) to render JavaScript-heavy SAP Help pages
-- Targets `<table>` elements with use case rows
-- Extracts: use case name, sample prompts, expected response
-- False positive detection:
-  - 233 use cases = sidebar navigation (skip)
-  - 1 use case + "What's New" in prompts = sidebar links (skip)
-  - 1 use case + 30+ prompts = sidebar content (skip)
-
-## Ariba Misaligned Table Handling
-SAP Ariba pages have a different table structure than other products:
-- Standard: `Name | Sample Prompts | Response` 
-- Ariba: `Sub-Product | Capability Type | Description`
-
-The scraper maps columns as: `name → Sub-Product`, `prompts → [Capability Type]`, `response → Description`
-
-**Detection** (`_is_misaligned_table` in `enrich_toc.py`):
-- If >80% of rows have a single prompt value that's a capability type string → misaligned
-- If any row's `name` is literally a capability type (e.g., "Transactional") → misaligned
-
-**Restructuring**:
-- Groups rows by sub-product name
-- Aggregates capability types as badges
-- Uses description text as actual prompts/capabilities
-- For Intake Management edge case: if `name` is a type, `prompts[0]` becomes the use case name
-
-**Result**: SAP Ariba Solutions → 6 grouped sub-products, 39 total capabilities with real prompts
-
-## URL Handling
-- **Scraped URLs**: Real URLs from SAP Help Portal are captured during scraping and carried through enrichment via `page_data.get("url", "")`
-- **Fallback URLs**: For pages without scraped data, generated from slug: `https://help.sap.com/docs/joule/capabilities-guide/{slug}`
-
-## Site Generator Features
-- **ucCount**: Counts total individual capabilities (sum of prompts across use_cases)
-- **Flattened products**: Single-capability products skip intermediate hierarchy levels
-- **renderChildUseCase**: Shows sub-product name (bold), type badges, parameters (⚙️ gold tags), prompts (💬 blue pills), notes (📝 collapsible)
-- **Type badges**: Description field parsed — if all comma-separated values are capability types, rendered as colored badges
-
-## Smart Prompt Classification (v8)
-The enrichment pipeline (`enrich_toc.py`) classifies each scraped row into three categories:
-
-**Parameters** (`is_parameter`): Recognized by parenthetical options, key/value patterns, field-like names
-- Pattern: words with `(option1/option2/...)` or `(field1, field2, ...)`
-- Examples: "JobSelection (all/my/team/open)", "Plant (workcenter plant, maintenance plant, planning plant)"
-
-**Notes** (`is_note`): Instructional/explanatory text, not actionable prompts
-- Sentence-like (starts with article/pronoun/adverb, contains verbs like "can", "should", "must")
-- Long text (>120 chars), starts with "Note:", "Currently,", "As a workaround"
-- Examples: "You can get the list of jobs based on the following attributes:", "The date should be between the earliest scheduled start date and latest scheduled finish date"
-
-**Prompts**: Everything that isn't a note or parameter — actual natural language commands
-- Examples: "Show my jobs", "Display calendar with open jobs", "Pick the second job"
-
-**Visual rendering**:
-- ⚙️ Parameters → gold/yellow tags at top of use case
-- 💬 Prompts → blue clickable-style pills (main display)
-- 📝 Notes → collapsible `<details>` section ("📝 N notes") with ℹ️ items inside
-
-## Classification Rules (No Mixed)
-Priority order: Analytical > Navigational > Transactional > Informational
-- **Analytical**: Insights, forecasts, anomaly detection, AI-assisted, optimization
-- **Navigational**: Find apps, launch, navigate, open, Siri, requesting access
-- **Transactional**: Create, change, manage, process, execute, update, delete, transfer
-- **Informational**: Display, show, view, search, list, check, fetch, summarize
-
-## Crawl/Walk/Run Strategy (Arkansas)
-- **Crawl**: Unified Joule + high-value, low-risk features
-- **Walk**: Embedded AI features, broader adoption
-- **Run**: Advanced AI projects, custom implementations
-
-## Dependencies
-- Python 3.x (no pip packages needed for core pipeline)
-- Node.js + Puppeteer (`npm install` in project root)
-- Git + GitHub CLI (gh)
-
-## Key Design Decisions
-1. **Single-page app**: All data embedded in `index.html` as JSON — no server needed
-2. **Hierarchical drilldown**: Product → Business Area → Sub-Area → Use Cases with collapsible tree
-3. **Sample prompts always visible**: Shown as blue pills below each use case (no toggle needed)
-4. **Type filtering**: Click type cards or use dropdown to filter by Informational/Transactional/Navigational/Analytical
-5. **Scraped URLs preferred**: `enrich_toc.py` carries through actual SAP Help URLs from scrape data
-6. **Grouped sub-products**: Ariba-style tables auto-detected and restructured into grouped display
-
-## SuccessFactors Category-Column Table Handling (v9)
-SAP SuccessFactors "Use Cases" pages have a different table structure:
-- Standard: `Use Case | Sample Prompt | Response`
-- SuccessFactors: `Use Case (repeated) | Feature Area | Sample Prompt`
-
-The scraper maps columns as: `name → Use Case`, `prompts → [Feature Area fragments]`, `response → Sample Prompt`
-
-**Detection** (`_is_category_column_table` in `enrich_toc.py`):
-- Joins split prompt fragments (e.g., `['Rewards and', 'Recognition']` → `'Rewards and Recognition'`)
-- If >70% of rows have prompts that form a short (1-5 word) non-verb label with a response → category column
-
-**Restructuring**:
-- Groups rows by use case name, then by category label
-- Real prompts extracted from the `response` field
-- Subcategories rendered when a use case has 2+ distinct categories
-- Single-category use cases display prompts directly (no subcategory grouping)
-
-**Sample prompts derivation**:
-- Always prefers prompts from structured use_cases over raw `extract_prompts_from_scraped`
-- Prevents broken category labels ("Employee Central", "Payroll") from appearing as pills
-
-**Result**: Compensation Use Cases → subcategories "Rewards and Recognition" + "Compensation" with real prompts
-
-## What's Next
-- Add Embedded AI features (non-Joule AI capabilities)
-- Add recommended projects section with crawl/walk/run classification
-- Enhance site design with better filtering and navigation
-- Add data freshness indicators and auto-update workflow
-- Consider splitting large products into sub-pages for performance
-- Further refine classification heuristics as more edge cases discovered
+## Known Remaining Issues
+- Signavio: 59 name-only rows in scrape (empty prompts/response) → falls back to title-only. Needs re-scrape with Puppeteer for JS-rendered content.
+- Some products still have limited prompt coverage (title-only entries)
+- Rendering could further distinguish between description-only entries and prompt-rich entries

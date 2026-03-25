@@ -378,7 +378,15 @@ function renderChildUseCase(uc) {{
   const name = uc.name || 'Use Case';
   const desc = uc.description || '';
   const prompts = uc.prompts || [];
-  const notes = uc.notes || [];
+  const notes = (uc.notes || []).filter(n => {{
+    const nl = n.toLowerCase();
+    if (nl.includes('you can choose one of the following')) return false;
+    if (nl.includes('you can choose') && nl.endsWith(':')) return false;
+    if (/^(?:Submit|Cancel|Retype|Save Draft|Reject|Approve|Confirm|Discard|Close|Accept|Decline|Go Back|Try Again|Submit with Governance|Save Draft Governance Process)\\s*[:–—]/i.test(n)) return false;
+    if (/^(?:Show|Perform|Do) the following\\s*:?\\s*$/i.test(n)) return false;
+    if (/^(?:Ask for example|For example)\\s*:?\\s*$/i.test(n)) return false;
+    return true;
+  }});
   const params = uc.parameters || [];
   const subcategories = uc.subcategories || {{}};
   const resp = uc.response_summary || '';

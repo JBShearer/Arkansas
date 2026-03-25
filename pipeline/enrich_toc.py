@@ -246,18 +246,50 @@ NOTE_STARTS = [
     "Action on ", "Requested data", "Note:", "Important:", "As a workaround",
     "The ", "If the ", "Only ", "This ", "After ", "Before ", "Once ",
     "In case ", "For more ", "Please ", "Make sure ",
+    "Joule displays ", "Joule shows ", "Joule prompts ",
+    "Joule creates ", "Joule cancels ", "Joule updates ",
+    "Approval of ", "Note that ",
 ]
 
 NOTE_CONTAINS = [
     "is validated", "can only be", "not supported", "as a workaround",
     "is posted after", "are not provided", "should be between",
     "is activated after", "cannot be", "is not available",
+    "you can choose", "you can either", "along with quick replies",
 ]
+
+# Patterns for response-option descriptions: "Submit: Joule updates...",
+# "Cancel: Joule cancels...", "Retype: Joule prompts..."
+# These describe button behaviors, NOT user prompts
+_RESPONSE_OPTION_RE = re.compile(
+    r'^(?:Submit|Cancel|Retype|Save Draft|Reject|Approve|Confirm|Discard|'
+    r'Close|Accept|Decline|Go Back|Try Again|Skip|Continue|Proceed|Retry|'
+    r'Undo|Submit with Governance|Save Draft Governance Process)'
+    r'\s*[:–—]',
+    re.IGNORECASE
+)
+
+# Instructional prefixes that should be stripped from prompts
+_INSTRUCTIONAL_PREFIX_RE = re.compile(
+    r'^(?:Ask for example\s*:\s*|For example\s*:\s*|Example\s*:\s*)',
+    re.IGNORECASE
+)
 
 
 def _is_note(text):
     """Check if text is a note/instruction rather than an example prompt."""
     t = text.strip()
+    if not t:
+        return False
+    # Response option descriptions (button behavior)
+    if _RESPONSE_OPTION_RE.match(t):
+        return True
+    # Pure instructional prefix with no content
+    if t.lower().rstrip(':') in ('ask for example', 'for example', 'example'):
+        return True
+    # "Note that..." anywhere
+    if t.startswith("Note that ") or t.startswith("Note: "):
+        return True
     # Starts with note patterns
     for start in NOTE_STARTS:
         if t.startswith(start) and len(t) > 40:
@@ -267,8 +299,11 @@ def _is_note(text):
     for phrase in NOTE_CONTAINS:
         if phrase in t_lower:
             return True
-    # Ends with colon → intro sentence
-    if t.endswith(":") or t.endswith("attributes:") or t.endswith("attributes."):
+    # "X the following:" pattern → always a note, even if starts with verb
+    if re.match(r'^.{1,30}\bthe following\s*:', t):
+        return True
+    # Ends with colon → intro sentence (but not if it starts with a verb like "Show" and is a real prompt)
+    if t.endswith(":") and not re.match(r'^(?:Show|Display|Create|Get|List|Find|Search|View|Check)\b.{10,}', t):
         return True
     return False
 
@@ -290,7 +325,8 @@ def _is_parameter(text):
             "Add", "Assign", "Start", "Pause", "Resume", "Complete", "Record",
             "Pick", "Select", "Book", "Filter", "Navigate", "Go", "What",
             "How", "Where", "Which", "Who", "Set", "Run", "View", "Close",
-            "Cancel", "Reverse", "Post", "Release", "Approve",
+            "Cancel", "Reverse", "Post", "Release", "Approve", "See",
+            "Award", "Reject", "Publish", "Simply",
         )
         if not any(t.startswith(v) for v in prompt_verbs):
             return True
@@ -340,6 +376,9 @@ def _split_response_into_prompts(response_text):
     SAP Help response columns often concatenate example prompts without
     delimiters: "Show my jobsShow team jobs" → ["Show my jobs", "Show team jobs"]
 
+    Also re-joins lines that were broken mid-sentence by the scraper:
+    "Show all warehouses in the\\nsystem." → "Show all warehouses in the system."
+
     Returns empty list if the response is a description (not prompts).
     """
     if not response_text or len(response_text.strip()) < 5:
@@ -351,11 +390,33 @@ def _split_response_into_prompts(response_text):
     if _is_response_description(text):
         return []
 
-    # First split on newlines
-    parts = text.split("\n")
+    # Strip instructional prefixes from the whole response
+    text = re.sub(r'^(?:Ask for example|For example|Example)\s*:\s*', '', text, flags=re.IGNORECASE).strip()
+    text = re.sub(r'^(?:Perform the following|Show the following|Do the following)\s*:\s*', '', text, flags=re.IGNORECASE).strip()
+
+    # Re-join lines that were broken mid-sentence:
+    # A line NOT ending in sentence terminator (.!?) followed by a line NOT starting
+    # with a prompt verb → join them
+    lines = text.split("\n")
+    rejoined = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        # Strip bare instructional prefixes
+        if re.match(r'^(?:Ask for example|For example|Perform the following|Show the following)\s*:?\s*$', line, re.IGNORECASE):
+            continue
+        if rejoined and not rejoined[-1].rstrip().endswith(('.', '!', '?', ':')):
+            # Previous line didn't end with terminator — check if this line starts
+            # with a prompt verb (meaning it's a NEW prompt) or is a continuation
+            if not re.match(_PROMPT_VERBS_RE, line):
+                # Continuation — join with previous
+                rejoined[-1] = rejoined[-1].rstrip() + ' ' + line
+                continue
+        rejoined.append(line)
 
     prompts = []
-    for part in parts:
+    for part in rejoined:
         part = part.strip()
         if not part:
             continue
@@ -558,6 +619,26 @@ def extract_use_cases_from_scraped(page_data):
             final_prompts = response_prompts
         else:
             final_prompts = []
+
+        # Strip instructional prefixes ("Ask for example: Show...")
+        cleaned = []
+        for p in final_prompts:
+            m = _INSTRUCTIONAL_PREFIX_RE.match(p)
+            if m:
+                rest = p[m.end():].strip()
+                if rest and len(rest) > 10:
+                    cleaned.append(rest)
+                # else: discard bare "Ask for example:" with no content
+            else:
+                cleaned.append(p)
+        final_prompts = cleaned
+
+        # Filter continuation fragments (start lowercase or "to ...")
+        final_prompts = [
+            p for p in final_prompts
+            if not (p[0].islower() and len(p) < 40)  # "to 25th July 2001."
+            and not re.match(r'^(?:to |and |or |of |in |for |with )\w', p, re.IGNORECASE)
+        ]
 
         # Filter out fragment prompts (too short to be useful)
         final_prompts = [p for p in final_prompts if len(p) >= 15 or _looks_like_prompt(p)]
