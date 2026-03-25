@@ -221,8 +221,16 @@ const TYPE_INFO = {
 let activeType = null;
 
 function ucCount(c) {
-  // If a capability has use_cases, count those; otherwise count as 1
-  return (c.use_cases && c.use_cases.length > 1) ? c.use_cases.length : 1;
+  // If a capability has use_cases, count total individual capabilities
+  if (c.use_cases && c.use_cases.length > 0) {
+    let total = 0;
+    c.use_cases.forEach(uc => {
+      // Each prompt is an individual capability; at minimum count the use case itself
+      total += (uc.prompts && uc.prompts.length > 0) ? uc.prompts.length : 1;
+    });
+    return total > 1 ? total : 1;
+  }
+  return 1;
 }
 
 function buildTree(caps) {
@@ -327,18 +335,26 @@ function renderChildUseCase(uc) {
   const desc = uc.description || '';
   const prompts = uc.prompts || [];
   const resp = uc.response_summary || '';
+  const CAP_TYPES = ['Informational','Transactional','Navigational','Analytical'];
   
   let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
-  html += '<span class="uc-name">' + name + '</span>';
-  html += '</div>';
+  html += '<span class="uc-name"><strong>' + name + '</strong></span>';
+  // Render description as type badges if it contains capability type names
   if (desc) {
-    html += '<div class="uc-child .uc-desc" style="width:100%;font-size:0.78rem;color:#666;padding-left:0;line-height:1.4;margin-top:0.2rem;">' + desc.substring(0, 200) + '</div>';
+    const parts = desc.split(',').map(s => s.trim()).filter(Boolean);
+    const allTypes = parts.every(p => CAP_TYPES.includes(p));
+    if (allTypes) {
+      parts.forEach(t => { html += ' ' + getTypeBadge(t); });
+    } else {
+      html += '<span style="font-size:0.78rem;color:#666;margin-left:0.5rem;">' + desc.substring(0, 200) + '</span>';
+    }
   }
+  html += '</div>';
   html += '</div>';
   if (prompts.length > 0) {
     html += '<div class="uc-child-prompts"><ul>';
-    prompts.slice(0, 5).forEach(p => {
+    prompts.forEach(p => {
       html += '<li>' + p + '</li>';
     });
     html += '</ul></div>';
