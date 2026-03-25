@@ -27,10 +27,12 @@
 
 ### Stats
 - **Deliverable ID:** `d0750ba6-6e30-455c-a879-af14f1054a14`
-- **202 pages** (150 leaves, 52 branches), **82 with table entries**
-- **366 deduplicated capabilities** (420 raw, 54 removed as duplicates from slug collisions)
-- **26 pages with 0 content** (navigation-only or sub-article pages)
-- **94 pages** with content but no table entries (text-only documentation)
+- **228 pages** (183 leaves, 45 branches), **~95 with table entries**
+- **366 deduplicated capabilities** (418 raw, 52 removed as duplicates from slug collisions)
+- **S/4HANA = 267 capabilities (73% of total)**
+  - S/4 Public Edition: 70 (Finance 21, Sales 14, Finding Apps 17, etc.)
+  - S/4 Private Edition: 197 (Sales 30, Finance 43, Supply Chain 20, Service 18, Procurement 17, BRIM 16, Manufacturing 15, etc.)
+- **Other products: 99** (SuccessFactors 57, Concur 10, Ariba 9, Analytics 11, etc.)
 
 ### Data fields (per capability)
 - `use_case`, `description`, `important_notes`, `capability_type`
