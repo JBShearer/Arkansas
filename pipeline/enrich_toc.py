@@ -187,6 +187,35 @@ def _is_misaligned_table(use_cases_raw):
     return False
 
 
+def _merge_duplicate_use_cases(use_cases):
+    """Merge use cases that share the same name into a single grouped entry.
+
+    When scraped tables have one row per prompt (e.g., Concur Expense × 11,
+    SuccessFactors Employee Central × 63), this groups them into a single
+    use case with all prompts collected together.
+    """
+    from collections import OrderedDict
+    groups = OrderedDict()
+    for uc in use_cases:
+        name = uc["name"]
+        if name not in groups:
+            groups[name] = {
+                "name": name,
+                "description": uc.get("description", ""),
+                "prompts": [],
+                "response_summary": uc.get("response_summary", ""),
+            }
+        # Merge prompts — avoid duplicates
+        for p in uc.get("prompts", []):
+            if p and p not in groups[name]["prompts"]:
+                groups[name]["prompts"].append(p)
+        # Keep first non-empty description
+        if not groups[name]["description"] and uc.get("description"):
+            groups[name]["description"] = uc["description"]
+
+    return list(groups.values())
+
+
 def extract_use_cases_from_scraped(page_data):
     """Extract use case names from scraped data."""
     use_cases = []
@@ -254,6 +283,10 @@ def extract_use_cases_from_scraped(page_data):
                            if p.strip() and "What's New" not in p and len(p.strip()) > 5],
                 "response_summary": uc.get("response", "")[:200],
             })
+
+    # ── Global dedup: merge use cases with the same name ─────────
+    use_cases = _merge_duplicate_use_cases(use_cases)
+
     return use_cases
 
 
