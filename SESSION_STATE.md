@@ -8,7 +8,7 @@ Website at **easyassap.com** (Arkansas folder) explaining SAP Business AI featur
 - **Branch**: main
 - **Remote**: origin → Arkansas repo
 - **Site URL**: https://easyassap.com (GitHub Pages via `site/` folder + root `index.html`)
-- **Latest Commit**: Smart prompt classification — separate notes, parameters, and sample prompts
+- **Latest Commit**: Fix SuccessFactors category-column tables — proper subcategory rendering
 
 ## Architecture
 
@@ -59,12 +59,12 @@ git add -A && git commit -m "msg" && git push # Deploy
 make serve   # → http://localhost:4000
 ```
 
-## Data Quality (v7)
+## Data Quality (v9)
 - **216 total capabilities** (no "Mixed" type)
 - **4 capability types**: Informational (59), Transactional (123), Navigational (27), Analytical (7)
-- **19 SAP products** covered
+- **18 SAP products** covered
 - **103 pages with verified real scraped data** (out of 167 scraped)
-- **100 capabilities with actual SAP-provided sample prompts**
+- **103 capabilities with actual SAP-provided sample prompts**
 - **102 capabilities with use case details**
 - False positives filtered: sidebar nav captures, sidebar link captures
 
@@ -150,6 +150,29 @@ Priority order: Analytical > Navigational > Transactional > Informational
 4. **Type filtering**: Click type cards or use dropdown to filter by Informational/Transactional/Navigational/Analytical
 5. **Scraped URLs preferred**: `enrich_toc.py` carries through actual SAP Help URLs from scrape data
 6. **Grouped sub-products**: Ariba-style tables auto-detected and restructured into grouped display
+
+## SuccessFactors Category-Column Table Handling (v9)
+SAP SuccessFactors "Use Cases" pages have a different table structure:
+- Standard: `Use Case | Sample Prompt | Response`
+- SuccessFactors: `Use Case (repeated) | Feature Area | Sample Prompt`
+
+The scraper maps columns as: `name → Use Case`, `prompts → [Feature Area fragments]`, `response → Sample Prompt`
+
+**Detection** (`_is_category_column_table` in `enrich_toc.py`):
+- Joins split prompt fragments (e.g., `['Rewards and', 'Recognition']` → `'Rewards and Recognition'`)
+- If >70% of rows have prompts that form a short (1-5 word) non-verb label with a response → category column
+
+**Restructuring**:
+- Groups rows by use case name, then by category label
+- Real prompts extracted from the `response` field
+- Subcategories rendered when a use case has 2+ distinct categories
+- Single-category use cases display prompts directly (no subcategory grouping)
+
+**Sample prompts derivation**:
+- Always prefers prompts from structured use_cases over raw `extract_prompts_from_scraped`
+- Prevents broken category labels ("Employee Central", "Payroll") from appearing as pills
+
+**Result**: Compensation Use Cases → subcategories "Rewards and Recognition" + "Compensation" with real prompts
 
 ## What's Next
 - Add Embedded AI features (non-Joule AI capabilities)

@@ -187,6 +187,49 @@ def _is_misaligned_table(use_cases_raw):
     return False
 
 
+def _is_category_column_table(use_cases_raw):
+    """Detect pages where column 2 has category labels instead of sample prompts.
+
+    SuccessFactors-style tables have columns:
+        Use Case | Feature Area | Sample Prompt
+    but the scraper maps them as:
+        name     | prompts      | response
+
+    Pattern: most rows have prompts that form a short category label
+    (1-4 words, no action verb), and the response contains the real prompt.
+    Note: the scraper may split multi-word labels like "Rewards and Recognition"
+    into multiple array elements ['Rewards and', 'Recognition'].
+    """
+    if not use_cases_raw or len(use_cases_raw) < 3:
+        return False
+
+    category_rows = 0
+    prompt_verbs = {
+        "show", "display", "create", "get", "search", "find", "list",
+        "check", "manage", "open", "delete", "update", "view", "go",
+        "approve", "add", "assign", "start", "complete", "navigate",
+        "what", "how", "where", "which", "who", "set", "run", "close",
+        "cancel", "reverse", "post", "release", "pick", "select",
+    }
+
+    for uc in use_cases_raw:
+        prompts = uc.get("prompts", [])
+        response = (uc.get("response", "") or "").strip()
+        if not prompts:
+            continue
+        # Join all prompt fragments into one label (scraper may split on whitespace)
+        label = " ".join(p.strip() for p in prompts).strip()
+        words = label.split()
+        # Category label: 1-5 words, no action verb, has a response
+        if (1 <= len(words) <= 5
+                and not any(w.lower() in prompt_verbs for w in words)
+                and len(response) > 3):
+            category_rows += 1
+
+    # If >70% of rows match the category pattern → category column table
+    return category_rows > len(use_cases_raw) * 0.7
+
+
 # ── Note / Parameter / Prompt classification ─────────────────────
 
 NOTE_STARTS = [
@@ -334,6 +377,44 @@ def extract_use_cases_from_scraped(page_data):
         return use_cases
 
     raw_ucs = page_data.get("useCases", [])
+
+    # ── Handle category-column tables (SuccessFactors style) ─────
+    if _is_category_column_table(raw_ucs):
+        # Column 2 has category labels, Column 3 has actual prompts
+        from collections import OrderedDict
+        groups = OrderedDict()  # name → { categories: { label: [prompts] } }
+        for uc in raw_ucs:
+            name = uc.get("name", "").strip()
+            raw_p = uc.get("prompts", [])
+            # Join split fragments: ['Rewards and', 'Recognition'] → 'Rewards and Recognition'
+            category = " ".join(p.strip() for p in raw_p).strip() if raw_p else ""
+            prompt = (uc.get("response", "") or "").strip()
+            if not name or not prompt:
+                continue
+            if name not in groups:
+                groups[name] = OrderedDict()
+            if category not in groups[name]:
+                groups[name][category] = []
+            if prompt not in groups[name][category]:
+                groups[name][category].append(prompt)
+
+        for name, categories in groups.items():
+            all_prompts = []
+            subcategories = {}
+            for cat, prompts in categories.items():
+                if cat:
+                    subcategories[cat] = prompts
+                all_prompts.extend(prompts)
+            use_cases.append({
+                "name": name,
+                "description": "",
+                "notes": [],
+                "parameters": [],
+                "prompts": all_prompts,
+                "subcategories": subcategories if len(subcategories) > 1 else {},
+                "response_summary": "",
+            })
+        return use_cases
 
     # ── Handle misaligned Ariba-style tables ─────────────────────
     if _is_misaligned_table(raw_ucs):
@@ -650,8 +731,18 @@ def enrich():
         if has_good_data:
             good_scraped += 1
             use_cases = extract_use_cases_from_scraped(page_data)
-            sample_prompts = extract_prompts_from_scraped(page_data)
             description = (page_data.get("description") or "").strip()
+
+            # Prefer prompts from structured use_cases (handles category-column
+            # tables and other cases where raw extraction gives bad labels)
+            uc_prompts = []
+            for uc in use_cases:
+                uc_prompts.extend(uc.get("prompts", []))
+            if uc_prompts:
+                sample_prompts = uc_prompts
+            else:
+                sample_prompts = extract_prompts_from_scraped(page_data)
+
             # Limit to reasonable number of prompts for display
             if len(sample_prompts) > 10:
                 sample_prompts = sample_prompts[:10]

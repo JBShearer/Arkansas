@@ -380,8 +380,10 @@ function renderChildUseCase(uc) {{
   const prompts = uc.prompts || [];
   const notes = uc.notes || [];
   const params = uc.parameters || [];
+  const subcategories = uc.subcategories || {{}};
   const resp = uc.response_summary || '';
   const CAP_TYPES = ['Informational','Transactional','Navigational','Analytical'];
+  const hasSubs = Object.keys(subcategories).length > 0;
   
   let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
@@ -396,6 +398,7 @@ function renderChildUseCase(uc) {{
       html += '<span style="font-size:0.78rem;color:#666;margin-left:0.5rem;">' + desc.substring(0, 200) + '</span>';
     }}
   }}
+  html += '<span style="font-size:0.78rem;color:#888;margin-left:0.4rem;">' + prompts.length + ' prompts</span>';
   html += '</div>';
   html += '</div>';
 
@@ -408,8 +411,20 @@ function renderChildUseCase(uc) {{
     html += '</div></div>';
   }}
 
-  // Sample prompts as pills
-  if (prompts.length > 0) {{
+  // If subcategories exist, group prompts under category headers
+  if (hasSubs) {{
+    html += '<div class="uc-child-prompts">';
+    Object.keys(subcategories).forEach(cat => {{
+      html += '<div style="margin:0.4rem 0 0.15rem 0;font-size:0.78rem;font-weight:600;color:#555;">📂 ' + cat + '</div>';
+      html += '<ul>';
+      subcategories[cat].forEach(p => {{
+        html += '<li>' + p + '</li>';
+      }});
+      html += '</ul>';
+    }});
+    html += '</div>';
+  }} else if (prompts.length > 0) {{
+    // Flat prompt list
     html += '<div class="uc-child-prompts"><ul>';
     prompts.forEach(p => {{
       html += '<li>' + p + '</li>';
@@ -437,7 +452,7 @@ function renderUseCase(c) {{
     ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>' 
     : c.title;
   
-  const hasChildUCs = c.use_cases && c.use_cases.length > 1;
+  const hasChildUCs = c.use_cases && (c.use_cases.length > 1 || (c.use_cases.length === 1 && c.use_cases[0].subcategories && Object.keys(c.use_cases[0].subcategories).length > 0));
   const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
   const hasNote = c.special_note;
   
