@@ -179,23 +179,33 @@ class TableExtractor(HTMLParser):
 # Helpers
 # ---------------------------------------------------------------------------
 
-def fetch_json(url, retries=5):
-    """Fetch JSON with SSL workaround and retry."""
+HEADERS = {
+    "Accept": "application/json, text/html, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/131.0.0.0 Safari/537.36",
+    "Referer": "https://help.sap.com/docs/joule/capabilities-guide/",
+}
+
+
+def fetch_json(url, retries=6):
+    """Fetch JSON with SSL workaround, browser headers, and retry."""
     for attempt in range(retries):
         try:
-            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            req = urllib.request.Request(url, headers=HEADERS)
             resp = urllib.request.urlopen(req, timeout=30, context=SSL_CTX)
             data = resp.read()
             if data[:1] == b"<":
-                wait = 3 + attempt * 5
-                print(f"    ⏳ Rate limited, waiting {wait}s...", flush=True)
+                wait = 5 + attempt * 10
+                print(f" ⏳ html({attempt+1},{wait}s)", end="", flush=True)
                 time.sleep(wait)
                 continue
             return json.loads(data.decode("utf-8"))
         except Exception as e:
             if attempt < retries - 1:
-                wait = 3 + attempt * 5
-                print(f"    ⏳ Error ({e}), retrying in {wait}s...", flush=True)
+                wait = 5 + attempt * 10
+                print(f" ⏳ err({attempt+1},{wait}s)", end="", flush=True)
                 time.sleep(wait)
             else:
                 raise
