@@ -8,7 +8,7 @@ Website at **easyassap.com** (Arkansas folder) explaining SAP Business AI featur
 - **Branch**: main
 - **Remote**: origin → Arkansas repo
 - **Site URL**: https://easyassap.com (GitHub Pages via `site/` folder + root `index.html`)
-- **Latest Commit**: `d36ff23` — Fix Ariba rendering: show grouped sub-products with type badges, count total prompts
+- **Latest Commit**: Smart prompt classification — separate notes, parameters, and sample prompts
 
 ## Architecture
 
@@ -103,8 +103,28 @@ The scraper maps columns as: `name → Sub-Product`, `prompts → [Capability Ty
 ## Site Generator Features
 - **ucCount**: Counts total individual capabilities (sum of prompts across use_cases)
 - **Flattened products**: Single-capability products skip intermediate hierarchy levels
-- **renderChildUseCase**: Shows sub-product name (bold), type badges (Navigational/Transactional), and all prompts as pills
+- **renderChildUseCase**: Shows sub-product name (bold), type badges, parameters (⚙️ gold tags), prompts (💬 blue pills), notes (📝 collapsible)
 - **Type badges**: Description field parsed — if all comma-separated values are capability types, rendered as colored badges
+
+## Smart Prompt Classification (v8)
+The enrichment pipeline (`enrich_toc.py`) classifies each scraped row into three categories:
+
+**Parameters** (`is_parameter`): Recognized by parenthetical options, key/value patterns, field-like names
+- Pattern: words with `(option1/option2/...)` or `(field1, field2, ...)`
+- Examples: "JobSelection (all/my/team/open)", "Plant (workcenter plant, maintenance plant, planning plant)"
+
+**Notes** (`is_note`): Instructional/explanatory text, not actionable prompts
+- Sentence-like (starts with article/pronoun/adverb, contains verbs like "can", "should", "must")
+- Long text (>120 chars), starts with "Note:", "Currently,", "As a workaround"
+- Examples: "You can get the list of jobs based on the following attributes:", "The date should be between the earliest scheduled start date and latest scheduled finish date"
+
+**Prompts**: Everything that isn't a note or parameter — actual natural language commands
+- Examples: "Show my jobs", "Display calendar with open jobs", "Pick the second job"
+
+**Visual rendering**:
+- ⚙️ Parameters → gold/yellow tags at top of use case
+- 💬 Prompts → blue clickable-style pills (main display)
+- 📝 Notes → collapsible `<details>` section ("📝 N notes") with ℹ️ items inside
 
 ## Classification Rules (No Mixed)
 Priority order: Analytical > Navigational > Transactional > Informational
@@ -137,3 +157,4 @@ Priority order: Analytical > Navigational > Transactional > Informational
 - Enhance site design with better filtering and navigation
 - Add data freshness indicators and auto-update workflow
 - Consider splitting large products into sub-pages for performance
+- Further refine classification heuristics as more edge cases discovered
