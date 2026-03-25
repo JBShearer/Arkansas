@@ -400,6 +400,14 @@ function renderChildUseCase(uc) {{
   }}
   html += '<span style="font-size:0.78rem;color:#888;margin-left:0.4rem;">' + prompts.length + ' prompts</span>';
   html += '</div>';
+  // Notes inline alongside description (not in separate drilldown)
+  if (notes.length > 0) {{
+    html += '<div style="padding:0.15rem 0 0 1.2rem;font-size:0.78rem;color:#666;line-height:1.5;">';
+    notes.forEach(n => {{
+      html += '<div style="display:flex;align-items:flex-start;gap:0.3rem;padding:0.1rem 0;">ℹ️ <span>' + n + '</span></div>';
+    }});
+    html += '</div>';
+  }}
   html += '</div>';
 
   // Parameters as compact tags
@@ -432,15 +440,7 @@ function renderChildUseCase(uc) {{
     html += '</ul></div>';
   }}
 
-  // Notes in collapsible section
-  if (notes.length > 0) {{
-    html += '<div class="uc-notes"><details>';
-    html += '<summary>📝 ' + notes.length + ' note' + (notes.length > 1 ? 's' : '') + '</summary>';
-    notes.forEach(n => {{
-      html += '<div class="note-item">' + n + '</div>';
-    }});
-    html += '</details></div>';
-  }}
+  // Notes already rendered inline above — no separate section needed
 
   return html;
 }}

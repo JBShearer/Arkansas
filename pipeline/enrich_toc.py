@@ -132,6 +132,14 @@ def is_good_scraped_data(page_data):
         # Also check for very high prompt count (likely sidebar)
         if len(prompts) > 30:
             return False
+    # False positive: many rows but ALL have empty prompts AND empty response
+    # (e.g., Signavio with 59 name-only rows from failed scrape)
+    non_empty = sum(
+        1 for uc in ucs
+        if (uc.get("prompts") or uc.get("response", "").strip())
+    )
+    if non_empty == 0:
+        return False
     return True
 
 
@@ -299,16 +307,49 @@ _PROMPT_VERBS_RE = (
 )
 
 
+# Patterns that indicate a response is a DESCRIPTION of what Joule does,
+# not a list of example prompts a user would type
+_DESCRIPTION_STARTS = re.compile(
+    r'^(?:Joule (?:displays?|shows?|provides?|returns?|lists?|creates?|opens?)|'
+    r'Delivers |Provides |Recommends |Available |Supports |Enables |'
+    r'Allows |Returns |Generates |Retrieves |Processes |'
+    r'This (?:scenario|feature|capability|function)|'
+    r'The (?:system|assistant|AI|bot)|'
+    r'Based on |Reads? |Uses? |Analyzes? |'
+    r'You (?:can|will|may|should)|'
+    r'(?:For|In) (?:each|every|all|the) )',
+    re.IGNORECASE
+)
+
+
+def _is_response_description(response_text):
+    """Check if response text is a description of what Joule does vs example prompts."""
+    if not response_text:
+        return False
+    text = response_text.strip()
+    # Check first line
+    first_line = text.split("\n")[0].strip()
+    if _DESCRIPTION_STARTS.match(first_line):
+        return True
+    return False
+
+
 def _split_response_into_prompts(response_text):
     """Split concatenated response text into individual example prompts.
 
     SAP Help response columns often concatenate example prompts without
     delimiters: "Show my jobsShow team jobs" → ["Show my jobs", "Show team jobs"]
+
+    Returns empty list if the response is a description (not prompts).
     """
     if not response_text or len(response_text.strip()) < 5:
         return []
 
     text = response_text.strip()
+
+    # Skip description responses — these describe what Joule does, not user prompts
+    if _is_response_description(text):
+        return []
 
     # First split on newlines
     parts = text.split("\n")
@@ -329,6 +370,20 @@ def _split_response_into_prompts(response_text):
                 prompts.append(s)
 
     return prompts
+
+
+def _looks_like_prompt(text):
+    """Check if a short text (<15 chars) still looks like a valid prompt."""
+    t = text.strip()
+    if not t:
+        return False
+    # Must start with a prompt-style verb or question word
+    prompt_starts = (
+        "Show", "Display", "Create", "Get", "Search", "Find", "List",
+        "Check", "Manage", "Open", "Delete", "Update", "View", "Go",
+        "What", "How", "Where", "Which", "Who", "Set", "Run",
+    )
+    return any(t.startswith(v) for v in prompt_starts)
 
 
 def _merge_duplicate_use_cases(use_cases):
@@ -491,14 +546,21 @@ def extract_use_cases_from_scraped(page_data):
         response_prompts = _split_response_into_prompts(response_text)
 
         # Decide which prompts to show:
-        # If we got real prompts from the response field, prefer those
-        # (they're actual example prompts users would type)
-        if response_prompts:
-            final_prompts = response_prompts
-        elif real_prompts:
+        # Prefer real prompts from the prompts column when they exist;
+        # only fall back to response-extracted prompts when there are none
+        if real_prompts:
             final_prompts = real_prompts
+            # Also add response prompts that aren't duplicates
+            for rp in response_prompts:
+                if rp not in final_prompts:
+                    final_prompts.append(rp)
+        elif response_prompts:
+            final_prompts = response_prompts
         else:
             final_prompts = []
+
+        # Filter out fragment prompts (too short to be useful)
+        final_prompts = [p for p in final_prompts if len(p) >= 15 or _looks_like_prompt(p)]
 
         use_cases.append({
             "name": name,
