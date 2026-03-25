@@ -351,11 +351,34 @@ function getFilteredCaps() {
 
 let promptCounter = 0;
 
+function isExplanatoryText(text) {
+  // Detect explanatory/instructional text that was misclassified as a prompt
+  const t = text.trim();
+  const tl = t.toLowerCase();
+  // Explanatory starters — sentences describing behavior, not commands
+  if (/^(?:You need to|You can |You must |If you |If no |If the |If a |If several |When Joule|When you |Joule (?:automatically|checks|creates|displays|supports|adjusts|uses|shows|will)|Note that |Please note|This (?:feature|function|capability)|The (?:system|app)|In (?:this|the) )/i.test(t)) return true;
+  // Long multi-sentence explanations (>120 chars with at least one period mid-text)
+  if (t.length > 120 && /\.\s+[A-Z]/.test(t)) return true;
+  return false;
+}
+
 function renderChildUseCase(uc) {
   const name = uc.name || 'Use Case';
   const desc = uc.description || '';
-  const prompts = uc.prompts || [];
-  const notes = (uc.notes || []).filter(n => {
+  const rawPrompts = uc.prompts || [];
+  
+  // Separate real prompts from explanatory text misclassified as prompts
+  const prompts = [];
+  const promptNotes = [];
+  rawPrompts.forEach(p => {
+    if (isExplanatoryText(p)) {
+      promptNotes.push(p);
+    } else {
+      prompts.push(p);
+    }
+  });
+  
+  const notes = (uc.notes || []).concat(promptNotes).filter(n => {
     const nl = n.toLowerCase();
     if (nl.includes('you can choose one of the following')) return false;
     if (nl.includes('you can choose') && nl.endsWith(':')) return false;
