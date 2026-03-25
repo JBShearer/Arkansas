@@ -36,7 +36,7 @@ PRODUCT_MAP = {
     "Joule in SAP Signavio Solutions": "SAP Signavio Solutions",
     "Joule in SAP Concur Solutions": "SAP Concur Solutions",
     "Joule in SAP Ariba Solutions": "SAP Ariba Solutions",
-    "Joule in SAP Ariba Intake Management": "SAP Ariba Intake Management",
+    "Joule in SAP Ariba Intake Management": "SAP Ariba Solutions",
     "Joule in SAP Field Service Management": "SAP Field Service Management",
     "Joule in SAP Build Work Zone, advanced edition": "SAP Build Work Zone",
     "Joule in SAP Batch Release Hub for Life Sciences": "SAP Batch Release Hub",
