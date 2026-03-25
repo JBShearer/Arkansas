@@ -127,6 +127,8 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .badge-trans {{ background: #e6f4ea; color: #1e7e34; }}
 .badge-anal {{ background: #fff3e0; color: #e65100; }}
 .badge-mixed {{ background: #f0f0f0; color: #555; }}
+.badge-pending {{ font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 600; white-space: nowrap; background: #f0f0f0; color: #999; font-style: italic; }}
+.title-only-entry {{ opacity: 0.7; }}
 .help-link {{ font-size: 0.75rem; color: #0a6ed1; text-decoration: none; white-space: nowrap; }}
 .help-link:hover {{ text-decoration: underline; }}
 
@@ -518,8 +520,21 @@ function renderUseCase(c) {{
   const hasChildUCs = c.use_cases && (c.use_cases.length > 1 || (c.use_cases.length === 1 && c.use_cases[0].subcategories && Object.keys(c.use_cases[0].subcategories).length > 0));
   const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
   const hasNote = c.special_note;
+  const isTitleOnly = c.data_source === 'title-only';
   
   let html = '';
+  
+  if (isTitleOnly && !hasChildUCs && !hasPrompts) {{
+    // Title-only entry with no real content
+    html += '<div class="use-case title-only-entry">';
+    html += '<div class="uc-main">';
+    html += '<span class="uc-title">' + titleText + '</span>';
+    html += '<span class="badge-pending">📋 Documentation Pending</span>';
+    html += link;
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }}
   
   if (hasChildUCs) {{
     // Render as collapsible group with child use cases
