@@ -158,12 +158,91 @@ def extract_prompts_from_scraped(page_data):
     return prompts
 
 
+CAPABILITY_TYPES_SET = {"Informational", "Transactional", "Navigational", "Analytical"}
+
+
+def _is_misaligned_table(use_cases_raw):
+    """Detect pages where column 2 contains capability types instead of prompts.
+
+    Ariba-style tables have columns: Solution | Capability Type | Description
+    but the scraper maps them as:       name   | prompts         | response
+    """
+    if not use_cases_raw:
+        return False
+    type_count = 0
+    name_is_type = 0
+    for uc in use_cases_raw:
+        prompts = uc.get("prompts", [])
+        if prompts and len(prompts) == 1 and prompts[0].strip() in CAPABILITY_TYPES_SET:
+            type_count += 1
+        name = uc.get("name", "").strip()
+        if name in CAPABILITY_TYPES_SET:
+            name_is_type += 1
+    # If >80% of rows have a single-value prompts that is a type string → misaligned
+    if type_count > len(use_cases_raw) * 0.8:
+        return True
+    # Or if any row's name is literally a capability type → misaligned
+    if name_is_type > 0:
+        return True
+    return False
+
+
 def extract_use_cases_from_scraped(page_data):
     """Extract use case names from scraped data."""
     use_cases = []
     if not page_data:
         return use_cases
-    for uc in page_data.get("useCases", []):
+
+    raw_ucs = page_data.get("useCases", [])
+
+    # ── Handle misaligned Ariba-style tables ─────────────────────
+    if _is_misaligned_table(raw_ucs):
+        # Group rows by sub-product name; response field is the actual use case
+        from collections import OrderedDict
+        groups = OrderedDict()
+        for uc in raw_ucs:
+            sub_product = uc.get("name", "").strip().replace("\n", " ")
+            # Clean up multi-line names
+            sub_product = " ".join(sub_product.split())
+            cap_type = (uc.get("prompts", [""])[0] or "").strip()
+            description = (uc.get("response", "") or "").strip().replace("\n", " ")
+            description = " ".join(description.split())
+
+            if not sub_product or not description:
+                continue
+            # If "name" is actually a capability type (Intake Management pattern)
+            if sub_product in CAPABILITY_TYPES_SET:
+                # prompts[0] is the actual use case name, response is description
+                actual_name = cap_type  # cap_type here is actually the use case name
+                if actual_name and len(actual_name) > 3:
+                    use_cases.append({
+                        "name": actual_name,
+                        "description": description,
+                        "prompts": [],
+                        "response_summary": description[:200],
+                    })
+                continue
+
+            if sub_product not in groups:
+                groups[sub_product] = {"items": [], "types": set()}
+            groups[sub_product]["items"].append(description)
+            if cap_type in CAPABILITY_TYPES_SET:
+                groups[sub_product]["types"].add(cap_type)
+
+        for sub_product, data in groups.items():
+            # Each sub-product becomes a use case with child descriptions
+            unique_items = list(dict.fromkeys(data["items"]))  # deduplicate, keep order
+            type_str = ", ".join(sorted(data["types"])) if data["types"] else ""
+            use_cases.append({
+                "name": sub_product,
+                "description": type_str,
+                "prompts": unique_items,  # actual use case descriptions as "prompts"
+                "response_summary": f"{len(unique_items)} capabilities",
+            })
+        return use_cases
+
+    # ── Standard table parsing ───────────────────────────────────
+    for uc in raw_ucs:
         name = uc.get("name", "").strip()
         # Support both 'prompts' and 'samplePrompts' keys
         raw_prompts = uc.get("prompts", []) or uc.get("samplePrompts", [])
