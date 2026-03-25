@@ -67,6 +67,7 @@ make serve     # Local preview on port 4000
 - Subcategory grouping (e.g., SuccessFactors Feature Areas)
 - Notes and parameters displayed inline
 - Links to SAP Help Portal for each capability
+- "Documentation Pending" badge for title-only entries (no misleading type badges)
 - Responsive design for mobile/tablet
 - Crawl → Walk → Run adoption framework header
 
@@ -81,6 +82,7 @@ make serve     # Local preview on port 4000
 - SAP Analytics Cloud: 3 entries (11 capabilities)
 
 ## Recent Changes
+- v11: Title-only entries show "📋 Documentation Pending" badge instead of misleading Navigational tag; dimmed styling for placeholder entries
 - v10: Data quality audit — fuzzy title matching (fixes Work Zone), Logistics prompts cleanup, Ariba hierarchy, Batch Release/Field Service description swap, "Search X as follows:" and "By X" parameter patterns
 - v9: Remove prompt counts, notes always on new line left-aligned, cautions separated from info notes with ⚠️ warning style
 - v8: Verified and redeployed with latest enriched data
