@@ -26,9 +26,11 @@ site/
 ## Key Commands
 ```bash
 make enrich    # Enrich TOC with scraped data
-make site      # Generate site HTML
+make generate  # Generate site HTML + copy to root
 make deploy    # Git add/commit/push
-make all       # Full pipeline: enrich → site → deploy
+make all       # Full pipeline: enrich → generate → deploy
+make scrape    # Re-scrape SAP Help Portal (requires Puppeteer, ~8 min)
+make serve     # Local preview on port 4000
 ```
 
 ## Data Pipeline
@@ -51,12 +53,46 @@ make all       # Full pipeline: enrich → site → deploy
 ## Stats (Current)
 - 216 total entries, 171 use cases, 18 products
 - 100 pages with real scraped data, 116 title-only
-- 1,564 total prompts across all use cases
+- 100 capabilities with sample prompts, 99 with use case details
 - 4 capability types: Informational (59), Transactional (123), Navigational (27), Analytical (7)
 
+## Site Features
+- Hierarchical tree-based drilldown: Product → Business Area → Sub-Area → Use Cases
+- Type filter cards: Informational, Transactional, Analytical, Navigational
+- Search bar with text search across titles, hierarchies, and use case names
+- Product and Business Area dropdown filters
+- Sample prompts shown as pill badges with 💬 prefix
+- Collapsible capability groups with child use cases
+- Subcategory grouping (e.g., SuccessFactors Feature Areas)
+- Notes and parameters displayed inline
+- Links to SAP Help Portal for each capability
+- Responsive design for mobile/tablet
+- Crawl → Walk → Run adoption framework header
+
+## Key Products & Capability Counts
+- SAP S/4HANA Cloud Private Edition: 140 entries (1,067 individual capabilities)
+- SAP SuccessFactors: 15 entries (313 capabilities)
+- SAP S/4HANA Cloud Public Edition: 43 entries (87 capabilities)
+- SAP Logistics Management: 1 entry (62 capabilities)
+- SAP Ariba Solutions: 2 entries (40 capabilities)
+- SAP Concur Solutions: 1 entry (24 capabilities)
+- SAP Batch Release Hub: 1 entry (17 capabilities)
+- SAP Analytics Cloud: 3 entries (11 capabilities)
+
 ## Recent Changes
+- v8: Verified and redeployed with latest enriched data
 - v7: Response line rejoining, note suppression, fragment filtering, f-string fix
 - v6: Response-option detection, verb exclusions, continuation fragments
 - v5: Note/parameter/prompt separation, category-column tables, misaligned tables
 - v4: Real scraped data integration, no Mixed type
 - v3: Tree-based UI with drilldown
+
+## How to Continue Working in New Sessions
+1. Read this file first: `SESSION_STATE.md`
+2. Key files to review:
+   - `pipeline/enrich_toc.py` — data enrichment logic
+   - `pipeline/generators/site_generator.py` — HTML generation
+   - `pipeline/sources/toc_tree.txt` — TOC hierarchy
+   - `pipeline/data/joule_capabilities_raw.json` — enriched data
+3. To regenerate: `make all` (enrich → generate → deploy)
+4. To re-scrape from SAP Help: `make scrape` then `make all`
