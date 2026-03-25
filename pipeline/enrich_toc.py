@@ -141,7 +141,9 @@ def extract_prompts_from_scraped(page_data):
     if not page_data:
         return prompts
     for uc in page_data.get("useCases", []):
-        for p in uc.get("prompts", []):
+        # Support both 'prompts' and 'samplePrompts' keys
+        raw_prompts = uc.get("prompts", []) or uc.get("samplePrompts", [])
+        for p in raw_prompts:
             # Clean up prompt text
             clean = p.strip()
             # Skip sidebar items
@@ -163,10 +165,13 @@ def extract_use_cases_from_scraped(page_data):
         return use_cases
     for uc in page_data.get("useCases", []):
         name = uc.get("name", "").strip()
+        # Support both 'prompts' and 'samplePrompts' keys
+        raw_prompts = uc.get("prompts", []) or uc.get("samplePrompts", [])
         if name and len(name) > 3 and "What's New" not in name:
             use_cases.append({
                 "name": name,
-                "prompts": [p.strip() for p in uc.get("prompts", [])
+                "description": uc.get("description", ""),
+                "prompts": [p.strip() for p in raw_prompts
                            if p.strip() and "What's New" not in p and len(p.strip()) > 5],
                 "response_summary": uc.get("response", "")[:200],
             })
@@ -379,6 +384,9 @@ def enrich():
         page_data = scraped.get(title)
         has_good_data = is_good_scraped_data(page_data)
 
+        # Use actual scraped URL if available, otherwise generate from slug
+        scraped_url = page_data.get("url", "") if page_data else ""
+
         use_cases = []
         sample_prompts = []
         description = ""
@@ -405,7 +413,7 @@ def enrich():
             "depth": depth,
             "hierarchy": path_str,
             "slug": slug,
-            "sap_help_url": f"https://help.sap.com/docs/joule/capabilities-guide/{slug}",
+            "sap_help_url": scraped_url if scraped_url else f"https://help.sap.com/docs/joule/capabilities-guide/{slug}",
             "children_count": len(children_map[i]),
             "description": description,
             "use_cases": use_cases,
