@@ -150,6 +150,26 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .sub-area-body .use-case {{ padding-left: 4.5rem; }}
 .sub-area-body .sample-prompts {{ padding-left: 4.5rem; }}
 
+/* Capability group (parent with multiple use cases) */
+.cap-group-header {{ display: flex; align-items: center; padding: 0.6rem 1.5rem 0.6rem 3.5rem; cursor: pointer; gap: 0.8rem; border-bottom: 1px solid #f5f5f5; }}
+.cap-group-header:hover {{ background: #f5f8ff; }}
+.cap-group-header .cg-title {{ flex: 1; font-size: 0.85rem; font-weight: 600; }}
+.cap-group-header .cg-title a {{ color: #1a1a2e; text-decoration: none; }}
+.cap-group-header .cg-title a:hover {{ color: #0a6ed1; text-decoration: underline; }}
+.cap-group-body {{ display: none; }}
+.cap-group-body.open {{ display: block; }}
+.cap-group-body .use-case {{ padding-left: 4.5rem; border-left: 2px solid #e0e8f0; margin-left: 3.5rem; padding-left: 1rem; }}
+.cap-group-body .sample-prompts {{ padding-left: 4.5rem; }}
+.uc-child {{ display: flex; align-items: flex-start; padding: 0.5rem 1.5rem 0.5rem 4.5rem; border-bottom: 1px solid #f8f8f8; gap: 0.6rem; flex-wrap: wrap; }}
+.uc-child:hover {{ background: #fafcff; }}
+.uc-child .uc-main {{ display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 200px; }}
+.uc-child .uc-name {{ font-size: 0.82rem; flex: 1; }}
+.uc-child .uc-desc {{ width: 100%; font-size: 0.78rem; color: #666; padding-left: 0; line-height: 1.4; margin-top: 0.2rem; }}
+.uc-child-prompts {{ width: 100%; padding: 0.2rem 0 0.3rem 4.5rem; }}
+.uc-child-prompts ul {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.3rem; }}
+.uc-child-prompts li {{ font-size: 0.75rem; color: #0a6ed1; background: #e8f4f8; padding: 0.2rem 0.6rem; border-radius: 12px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
+.uc-child-prompts li::before {{ content: '💬 '; }}
+
 .empty {{ padding: 3rem; text-align: center; color: #999; }}
 .footer {{ text-align: center; padding: 2rem; color: #999; font-size: 0.8rem; }}
 
@@ -232,6 +252,11 @@ const TYPE_INFO = {{
 
 let activeType = null;
 
+function ucCount(c) {{
+  // If a capability has use_cases, count those; otherwise count as 1
+  return (c.use_cases && c.use_cases.length > 1) ? c.use_cases.length : 1;
+}}
+
 function buildTree(caps) {{
   const tree = {{}};
   caps.forEach(c => {{
@@ -247,7 +272,7 @@ function buildTree(caps) {{
       }} else {{
         tree[prod].areas[ba].items.push(c);
       }}
-      tree[prod].count++;
+      tree[prod].count += ucCount(c);
     }}
   }});
   return tree;
@@ -315,7 +340,11 @@ function getFilteredCaps() {{
   const type = document.getElementById('typeFilter').value;
   
   if (activeType) caps = caps.filter(c => c.capability_type === activeType);
-  if (search) caps = caps.filter(c => c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search));
+  if (search) caps = caps.filter(c => {{
+    if (c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search)) return true;
+    if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search));
+    return false;
+  }});
   if (product) caps = caps.filter(c => c.product === product);
   if (area) caps = caps.filter(c => c.business_area === area);
   if (type) caps = caps.filter(c => c.capability_type === type);
@@ -325,32 +354,76 @@ function getFilteredCaps() {{
 
 let promptCounter = 0;
 
-function renderUseCase(c) {{
-  const badge = getTypeBadge(c.capability_type);
-  const link = c.sap_help_url ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
-  const title = c.sap_help_url 
-    ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>' 
-    : c.title;
+function renderChildUseCase(uc) {{
+  const name = uc.name || 'Use Case';
+  const desc = uc.description || '';
+  const prompts = uc.prompts || [];
+  const resp = uc.response_summary || '';
   
-  const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
-  const hasNote = c.special_note;
-  const pid = 'prompts-' + (promptCounter++);
-  
-  let html = '<div class="use-case">';
+  let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
-  html += '<span class="uc-title">' + title + '</span>';
-  html += badge;
-  html += link;
+  html += '<span class="uc-name">' + name + '</span>';
   html += '</div>';
-  if (hasPrompts) {{
-    html += '<div class="sample-prompts">';
-    html += '<ul>';
-    c.sample_prompts.forEach(p => {{
+  if (desc) {{
+    html += '<div class="uc-child .uc-desc" style="width:100%;font-size:0.78rem;color:#666;padding-left:0;line-height:1.4;margin-top:0.2rem;">' + desc.substring(0, 200) + '</div>';
+  }}
+  html += '</div>';
+  if (prompts.length > 0) {{
+    html += '<div class="uc-child-prompts"><ul>';
+    prompts.slice(0, 5).forEach(p => {{
       html += '<li>' + p + '</li>';
     }});
     html += '</ul></div>';
   }}
-  html += '</div>';
+  return html;
+}}
+
+function renderUseCase(c) {{
+  const badge = getTypeBadge(c.capability_type);
+  const link = c.sap_help_url ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
+  const titleText = c.sap_help_url 
+    ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>' 
+    : c.title;
+  
+  const hasChildUCs = c.use_cases && c.use_cases.length > 1;
+  const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
+  const hasNote = c.special_note;
+  
+  let html = '';
+  
+  if (hasChildUCs) {{
+    // Render as collapsible group with child use cases
+    const gid = 'capgroup-' + (promptCounter++);
+    html += '<div class="cap-group-header" onclick="toggleSection(this)">';
+    html += '<span class="tree-expand">\\u25B6</span>';
+    html += '<span class="cg-title">' + titleText + '</span>';
+    html += badge;
+    html += '<span class="count">' + c.use_cases.length + ' use cases</span>';
+    html += link;
+    html += '</div>';
+    html += '<div class="cap-group-body">';
+    c.use_cases.forEach(uc => {{
+      html += renderChildUseCase(uc);
+    }});
+    html += '</div>';
+  }} else {{
+    // Render as simple row
+    html += '<div class="use-case">';
+    html += '<div class="uc-main">';
+    html += '<span class="uc-title">' + titleText + '</span>';
+    html += badge;
+    html += link;
+    html += '</div>';
+    if (hasPrompts) {{
+      html += '<div class="sample-prompts">';
+      html += '<ul>';
+      c.sample_prompts.forEach(p => {{
+        html += '<li>' + p + '</li>';
+      }});
+      html += '</ul></div>';
+    }}
+    html += '</div>';
+  }}
   
   if (hasNote) {{
     html += '<div class="special-note"><div class="note-box">';
