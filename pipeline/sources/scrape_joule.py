@@ -1,7 +1,10 @@
 """Scrape Joule Capabilities Guide from SAP Help Portal.
 
 The Capabilities Guide (d0750ba6...) is the single source of truth for all
-Joule capabilities across products. Each leaf page has a rich table with:
+Joule capabilities across products. EVERY node in the TOC tree is scraped —
+both branch pages and leaf pages can contain use-case tables.
+
+Each page may have a rich table with:
   Use Case, Description, Important Notes, Capability Type,
   Sample Prompts, Commercial Model, On Mobile App?, Best Practices
 
@@ -145,21 +148,21 @@ def cell_to_str(cell):
     return cell
 
 
-def collect_leaves(nodes, parent_title=""):
-    """Recursively collect all leaf pages from TOC."""
-    leaves = []
+def collect_all_pages(nodes, parent_title=""):
+    """Recursively collect EVERY page (branch and leaf) from TOC."""
+    pages = []
     for node in nodes:
         title = node["title"].strip()
         full_path = f"{parent_title} > {title}" if parent_title else title
         children = node.get("children", [])
+        pages.append({
+            "id": node["id"], "title": title,
+            "path": full_path, "parent": parent_title,
+            "is_leaf": not children,
+        })
         if children:
-            leaves.extend(collect_leaves(children, full_path))
-        else:
-            leaves.append({
-                "id": node["id"], "title": title,
-                "path": full_path, "parent": parent_title,
-            })
-    return leaves
+            pages.extend(collect_all_pages(children, full_path))
+    return pages
 
 
 # Column-name mapping for the use-case tables
@@ -239,7 +242,7 @@ def extract_entries(html, page_title, parent_product):
 # ---------------------------------------------------------------------------
 
 def main():
-    print("🔍 Scraping Joule Capabilities Guide")
+    print("🔍 Scraping Joule Capabilities Guide — ALL pages")
     print(f"   {BASE}/docs/joule/capabilities-guide/")
     print(f"   Deliverable: {DELIVERABLE_ID}\n")
 
@@ -250,8 +253,13 @@ def main():
     toc = fetch_json(f"{BASE}/docs/meta/{DELIVERABLE_ID}/toc")
     root = toc[0] if isinstance(toc, list) else toc
     root_id = root["id"]
-    leaves = collect_leaves(root.get("children", []))
-    print(f"   {len(leaves)} leaf pages + 1 root\n")
+
+    # Collect every page in the tree (branch + leaf), excluding the root itself
+    all_pages = collect_all_pages(root.get("children", []))
+    leaves = [p for p in all_pages if p["is_leaf"]]
+    branches = [p for p in all_pages if not p["is_leaf"]]
+    print(f"   {len(all_pages)} total pages ({len(leaves)} leaves, {len(branches)} branches)")
+    print(f"   + 1 root page\n")
 
     # 2. Scrape root page (What's New + Changes)
     print("📰 Root page (What's New)...")
@@ -260,51 +268,62 @@ def main():
     whats_new, root_sections = extract_entries(root_html, "What's New", "Overview")
     print(f"   → {len(whats_new)} entries\n")
 
-    # 3. Scrape all leaf pages
+    # 3. Scrape EVERY page in the tree
     all_entries = []
     pages_info = []
 
-    for i, leaf in enumerate(leaves):
-        print(f"   [{i+1}/{len(leaves)}] {leaf['title']}", end="", flush=True)
+    for i, page in enumerate(all_pages):
+        kind = "leaf" if page["is_leaf"] else "BRANCH"
+        print(f"   [{i+1}/{len(all_pages)}] {page['title']} ({kind})", end="", flush=True)
         try:
             entries = []
             sections = []
-            page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{leaf['id']}"
+            page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{page['id']}"
 
-            # Try up to 3 times — rate limiting can return empty/truncated content
-            for attempt in range(3):
+            # Try up to 5 times — rate limiting can return empty/truncated content
+            for attempt in range(5):
                 data = fetch_json(page_url)
                 html = data.get("topicContent", "")
                 if not html:
-                    wait = 5 + attempt * 5
-                    print(f" ⏳ empty({attempt+1})", end="", flush=True)
-                    time.sleep(wait)
-                    continue
-                entries, sections = extract_entries(html, leaf["title"], leaf["parent"])
-                if entries:
+                    if page["is_leaf"]:
+                        # Leaves should always have content
+                        wait = 8 + attempt * 8
+                        print(f" ⏳ empty({attempt+1})", end="", flush=True)
+                        time.sleep(wait)
+                        continue
+                    else:
+                        # Branch pages may legitimately have no content
+                        break
+                entries, sections = extract_entries(html, page["title"], page["parent"])
+                if entries or not page["is_leaf"]:
+                    # Got entries, or it's a branch (may have 0 use-case entries)
                     break
-                # Got HTML but 0 entries — may be truncated
-                wait = 5 + attempt * 5
+                # Leaf with 0 entries from non-empty HTML — may be truncated
+                wait = 8 + attempt * 8
                 print(f" ⏳ retry({attempt+1})", end="", flush=True)
                 time.sleep(wait)
 
             pages_info.append({
-                "id": leaf["id"], "title": leaf["title"],
-                "path": leaf["path"], "parent": leaf["parent"],
+                "id": page["id"], "title": page["title"],
+                "path": page["path"], "parent": page["parent"],
+                "is_leaf": page["is_leaf"],
                 "entries_count": len(entries),
                 "sections": sections,
             })
 
             for e in entries:
-                e["page_id"] = leaf["id"]
+                e["page_id"] = page["id"]
             all_entries.extend(entries)
 
-            print(f" → {len(entries)} entries")
+            if entries:
+                print(f" → {len(entries)} entries")
+            else:
+                print(f" → 0")
         except Exception as e:
             print(f" ⚠️ {e}")
             pages_info.append({
-                "id": leaf["id"], "title": leaf["title"],
-                "path": leaf["path"], "error": str(e),
+                "id": page["id"], "title": page["title"],
+                "path": page["path"], "error": str(e),
             })
         time.sleep(0.5)
 
@@ -315,7 +334,9 @@ def main():
             "deliverable_id": DELIVERABLE_ID,
             "url": f"{BASE}/docs/joule/capabilities-guide/",
             "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "total_leaf_pages": len(leaves),
+            "total_pages_scraped": len(all_pages),
+            "total_leaves": len(leaves),
+            "total_branches": len(branches),
             "total_whats_new": len(whats_new),
             "total_capabilities": len(all_entries),
         },
@@ -323,6 +344,46 @@ def main():
         "pages": pages_info,
         "capabilities": all_entries,
     }
+
+    # Check for pages with 0 entries that likely have content (retry pass)
+    zero_pages = [p for p in pages_info
+                  if p.get("entries_count", 0) == 0 and p.get("is_leaf", True)
+                  and "error" not in p]
+    if zero_pages:
+        print(f"\n🔄 Retry pass for {len(zero_pages)} pages with 0 entries...")
+        time.sleep(10)  # Cool down before retry
+        for p in zero_pages:
+            print(f"   Retrying: {p['title']}", end="", flush=True)
+            try:
+                page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{p['id']}"
+                for attempt in range(5):
+                    data = fetch_json(page_url)
+                    html = data.get("topicContent", "")
+                    if not html:
+                        wait = 10 + attempt * 10
+                        print(f" ⏳ ({attempt+1})", end="", flush=True)
+                        time.sleep(wait)
+                        continue
+                    entries, sections = extract_entries(html, p["title"], p["parent"])
+                    if entries:
+                        p["entries_count"] = len(entries)
+                        p["sections"] = sections
+                        for e in entries:
+                            e["page_id"] = p["id"]
+                        all_entries.extend(entries)
+                        print(f" → {len(entries)} entries")
+                        break
+                    wait = 10 + attempt * 10
+                    print(f" ⏳ ({attempt+1})", end="", flush=True)
+                    time.sleep(wait)
+                else:
+                    print(f" → still 0")
+            except Exception as e:
+                print(f" ⚠️ {e}")
+            time.sleep(3)
+
+    # Update metadata with final count
+    output["metadata"]["total_capabilities"] = len(all_entries)
 
     out_path = DATA_DIR / "joule_capabilities_raw.json"
     with open(out_path, "w") as f:
@@ -334,7 +395,7 @@ def main():
     print("SUMMARY")
     print(f"{'='*60}")
     print(f"What's New entries: {len(whats_new)}")
-    print(f"Leaf capabilities:  {len(all_entries)}")
+    print(f"Page capabilities:  {len(all_entries)}")
     print(f"Total combined:     {len(whats_new) + len(all_entries)}\n")
 
     by_page = {}
