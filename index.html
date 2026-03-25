@@ -444,9 +444,34 @@ function renderTree(caps) {
       return h;
     }
 
-    /* Skip the BA level when there's only "(General)" or a single area */
+    /* Skip the BA level when there's only a single area */
     const skipBA = areaNames.length === 1;
 
+    /* Also: if single area has exactly 1 item with use_cases, flatten completely —
+       render child use cases directly under the product header */
+    let flattenedToProduct = false;
+    if (skipBA) {
+      const areaData = pt.areas[areaNames[0]];
+      const totalItems = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
+      if (totalItems === 1 && areaData.items.length === 1) {
+        const singleCap = areaData.items[0];
+        if (singleCap.use_cases && singleCap.use_cases.length > 1) {
+          /* Render use cases directly — skip the capability header */
+          flattenedToProduct = true;
+          const link = singleCap.sap_help_url ? '<a href="' + singleCap.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \u2192</a>' : '';
+          const badge = getTypeBadge(singleCap.capability_type);
+          html += '<div style="padding:0.5rem 1.5rem 0.3rem;display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">' + badge + link + '</div>';
+          singleCap.use_cases.forEach(uc => {
+            html += renderChildUseCase(uc);
+          });
+          if (singleCap.special_note) {
+            html += '<div class="special-note"><div class="note-box"><strong>🔮 Coming Soon:</strong> ' + singleCap.special_note + '</div></div>';
+          }
+        }
+      }
+    }
+
+    if (!flattenedToProduct) {
     areaNames.forEach(area => {
       const areaData = pt.areas[area];
       const areaTotal = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
@@ -468,6 +493,7 @@ function renderTree(caps) {
         html += '</div></div>';
       }
     });
+    } /* end if !flattenedToProduct */
     
     html += '</div></div>';
   });
