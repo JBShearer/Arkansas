@@ -143,6 +143,15 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .uc-notes summary:hover {{ color: #5a4f00; }}
 .uc-notes .note-item {{ display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.78rem; color: #555; line-height: 1.4; }}
 .uc-notes .note-item::before {{ content: ''; }}
+
+/* Caution boxes — limitations/warnings rendered below prompts */
+.uc-caution {{ width: 100%; padding: 0.3rem 0 0.3rem 4.5rem; }}
+.caution-box {{ background: #fff8e1; border-left: 3px solid #f9a825; border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.76rem; color: #5d4037; line-height: 1.4; }}
+.caution-box::before {{ content: '⚠️ '; }}
+
+/* Info notes — descriptive text rendered above prompts */
+.uc-info-note {{ width: 100%; padding: 0.2rem 0 0.2rem 4.5rem; }}
+.info-note-text {{ font-size: 0.78rem; color: #555; line-height: 1.5; padding: 0.2rem 0; }}
 .uc-params {{ width: 100%; padding: 0.15rem 0 0.3rem 4.5rem; }}
 .uc-params .param-list {{ display: flex; flex-wrap: wrap; gap: 0.3rem; }}
 .uc-params .param-tag {{ font-size: 0.72rem; background: #f5f0e0; color: #7b6d00; padding: 0.15rem 0.55rem; border-radius: 10px; border: 1px solid #e8e0c0; }}
@@ -393,6 +402,23 @@ function renderChildUseCase(uc) {{
   const CAP_TYPES = ['Informational','Transactional','Navigational','Analytical'];
   const hasSubs = Object.keys(subcategories).length > 0;
   
+  // Classify notes into info notes vs cautions
+  const infoNotes = [];
+  const cautions = [];
+  notes.forEach(n => {{
+    const nl = n.toLowerCase();
+    if (nl.startsWith('currently') || nl.startsWith('note:') || nl.startsWith('note that') ||
+        nl.startsWith('only ') || nl.startsWith('please note') || nl.startsWith('this feature') ||
+        nl.includes('not supported') || nl.includes('not available') || nl.includes('limitation') ||
+        nl.includes('currently') || nl.includes('restricted to') || nl.includes('does not') ||
+        nl.includes('cannot') || nl.includes('only available') || nl.includes('only supported') ||
+        nl.includes('make sure') || nl.includes('ensure that') || nl.includes('be aware')) {{
+      cautions.push(n);
+    }} else {{
+      infoNotes.push(n);
+    }}
+  }});
+
   let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
   html += '<span class="uc-name"><strong>' + name + '</strong></span>';
@@ -406,17 +432,15 @@ function renderChildUseCase(uc) {{
       html += '<span style="font-size:0.78rem;color:#666;margin-left:0.5rem;">' + desc.substring(0, 200) + '</span>';
     }}
   }}
-  html += '<span style="font-size:0.78rem;color:#888;margin-left:0.4rem;">' + prompts.length + ' prompts</span>';
   html += '</div>';
-  // Notes inline alongside description (not in separate drilldown)
-  if (notes.length > 0) {{
-    html += '<div style="padding:0.15rem 0 0 1.2rem;font-size:0.78rem;color:#666;line-height:1.5;">';
-    notes.forEach(n => {{
-      html += '<div style="display:flex;align-items:flex-start;gap:0.3rem;padding:0.1rem 0;"><span>' + n + '</span></div>';
+  // Info notes — always on new line, left-aligned, full width
+  if (infoNotes.length > 0) {{
+    html += '<div class="uc-info-note">';
+    infoNotes.forEach(n => {{
+      html += '<div class="info-note-text">' + n + '</div>';
     }});
     html += '</div>';
   }}
-  html += '</div>';
 
   // Parameters as compact tags
   if (params.length > 0) {{
@@ -448,8 +472,16 @@ function renderChildUseCase(uc) {{
     html += '</ul></div>';
   }}
 
-  // Notes already rendered inline above — no separate section needed
+  // Cautions — rendered below prompts with warning style
+  if (cautions.length > 0) {{
+    html += '<div class="uc-caution">';
+    cautions.forEach(n => {{
+      html += '<div class="caution-box">' + n + '</div>';
+    }});
+    html += '</div>';
+  }}
 
+  html += '</div>'; // close uc-child
   return html;
 }}
 
