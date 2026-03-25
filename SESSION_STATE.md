@@ -41,6 +41,7 @@ make serve     # Local preview on port 4000
 
 ## Data Quality Features (Current)
 - **No Mixed type** — all capabilities get exactly one type (Informational/Transactional/Navigational/Analytical)
+- **Fuzzy title matching** — scraped page titles matched to TOC titles even with suffixes (e.g., "Work Zone, advanced edition")
 - **Category-column detection** — SuccessFactors tables with Feature Area column handled correctly
 - **Misaligned table detection** — Ariba tables with swapped columns handled correctly
 - **Note/Parameter/Prompt separation** — intelligent classification of scraped text
@@ -52,8 +53,8 @@ make serve     # Local preview on port 4000
 
 ## Stats (Current)
 - 216 total entries, 171 use cases, 18 products
-- 100 pages with real scraped data, 116 title-only
-- 100 capabilities with sample prompts, 99 with use case details
+- 108 pages with real scraped data, 108 title-only
+- 108 capabilities with sample prompts, 107 with use case details
 - 4 capability types: Informational (59), Transactional (123), Navigational (27), Analytical (7)
 
 ## Site Features
@@ -80,6 +81,7 @@ make serve     # Local preview on port 4000
 - SAP Analytics Cloud: 3 entries (11 capabilities)
 
 ## Recent Changes
+- v10: Data quality audit — fuzzy title matching (fixes Work Zone), Logistics prompts cleanup, Ariba hierarchy, Batch Release/Field Service description swap, "Search X as follows:" and "By X" parameter patterns
 - v9: Remove prompt counts, notes always on new line left-aligned, cautions separated from info notes with ⚠️ warning style
 - v8: Verified and redeployed with latest enriched data
 - v7: Response line rejoining, note suppression, fragment filtering, f-string fix
