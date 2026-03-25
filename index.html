@@ -283,9 +283,10 @@ for(var pei=0;pei<patternEntries.length;pei++){
     h+='</div>';
     for(var gi=0;gi<grouped[pr.key].length;gi++){var val=grouped[pr.key][gi][1];
       h+='<div class="sol-pane'+(gi===0?' active':'')+'" id="modpane-'+pKey+'-'+pr.key+'-'+gi+'"><div class="sol-content">';
-      for(var ci=0;ci<val[pKey].length;ci++){var cap=val[pKey][ci];var st=(cap.name+' '+cap.prompts.join(' ')).toLowerCase();var badge=tierBadge(cap.tier||'base');
+      for(var ci=0;ci<val[pKey].length;ci++){var cap=val[pKey][ci];var cPrompts=cap.prompts||(cap.prompt?[cap.prompt]:[]);var st=(cap.name+' '+cPrompts.join(' ')).toLowerCase();var badge=tierBadge(cap.tier||'base');
         h+='<div class="cap-item" data-search="'+escAttr(st)+'"><button class="cap-toggle" onclick="this.closest(\x27.cap-item\x27).classList.toggle(\x27open\x27)"><span class="arrow">▶</span><span class="cap-name">'+cap.name+'</span>'+badge+'</button><div class="cap-body"><div class="cap-inner"><div class="prompt-label">Sample Prompts</div>';
-        for(var pi2=0;pi2<cap.prompts.length;pi2++){h+='<span class="prompt-chip">"'+cap.prompts[pi2]+'"</span>';}
+        if(cap.link){h+='<a href="'+cap.link+'" target="_blank" rel="noopener" class="prompt-chip" style="display:inline-block;margin-bottom:6px;color:#1a73e8;text-decoration:underline;">📖 Documentation</a>';}
+        for(var pi2=0;pi2<cPrompts.length;pi2++){h+='<span class="prompt-chip">"'+cPrompts[pi2]+'"</span>';}
         h+='</div></div></div>';}
       h+='</div></div>';}
     h+='</div>';}
