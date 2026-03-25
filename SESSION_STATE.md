@@ -1,7 +1,7 @@
 # Session State
 
 > **Last Updated:** 2026-03-25  
-> **Status:** Scraper complete, ALL pages scraped, all spot checks pass.  
+> **Status:** Full tree scraper complete — 202 pages, 366 capabilities.  
 > **Read this file at the start of every new Cline session.**
 
 ## What Exists
@@ -18,59 +18,60 @@
 
 **Run:** `python3 -m pipeline.sources.scrape_joule`
 
-Scrapes **EVERY page** (branch + leaf) in the **Joule Capabilities Guide** TOC tree.
+### Architecture
+- **TOC source:** `pipeline/sources/toc_tree.txt` (indented text tree, easy to update)
+- **Slug-based fetching:** auto-generates URL slugs from page titles
+- **Content API:** `https://help.sap.com/docs/content/{DELIVERABLE_ID}/{slug}`
+- The TOC API (`/docs/meta/.../toc`) returns a STALE 52-page subset — do NOT use it
+- Deduplicates entries by (topic_id, use_case, section)
 
+### Stats
 - **Deliverable ID:** `d0750ba6-6e30-455c-a879-af14f1054a14`
-- **Source URL:** https://help.sap.com/docs/joule/capabilities-guide/
-- **52 pages total** (39 leaves + 13 branches), **44 with content**
-- **253 capabilities + 54 What's New = 307 total**
-- **All Commercial Model = Base**
-- Retry pass handles rate-limited pages (especially Perform Maintenance Jobs, 80KB)
+- **202 pages** (150 leaves, 52 branches), **82 with table entries**
+- **366 deduplicated capabilities** (420 raw, 54 removed as duplicates from slug collisions)
+- **26 pages with 0 content** (navigation-only or sub-article pages)
+- **94 pages** with content but no table entries (text-only documentation)
 
 ### Data fields (per capability)
 - `use_case`, `description`, `important_notes`, `capability_type`
 - `sample_prompts`, `commercial_model`, `on_mobile`, `best_practices`
-- `source_page`, `source_product`, `section`, `page_id`
+- `source_page`, `source_path`, `section`, `slug`, `topic_id`
 
-### Verified Counts
-| Page | Count | Key Detail |
-|------|-------|------------|
-| SF Employee Central | 21 | |
-| Finance | 21 | 7 sections incl Manage Internal Orders |
-| Perform Maintenance Jobs | 17 | 80KB page, rate-limit-prone |
-| Sales | 14 | |
-| S/4HANA Cloud (branch) | 14 | 4 journal entries, manufacturing, procurement |
-| Procurement | 13 | Op Purchaser:3, Central:7, BizNet:2, Supplier:1 |
-| SAP Analytics Cloud | 11 | |
-| SAP Sales and Service Cloud | 10 | |
-| Concur total | 10 | Branch:3 + Expense:5 + Travel:2 |
-| Manufacturing | 9 | |
-| Ariba Lifecycle & Performance | 9 | |
-| Joule AI Assistant | 8 | |
-| SF Learning | 7 | |
-| Work Zone Advanced Edition | 5 | Branch page |
-| BTP Cockpit (branch) | 4 | General, Subscriptions, Services, Security |
-| SAP Cloud ALM (branch) | 4 | Analytics, Projects, Operations, Config |
-| SF Compensation | 4 | |
+### Verified Spot Checks (all pass)
+| Check | Count |
+|-------|-------|
+| Perform Maintenance Jobs | 17 |
+| Finance (Public Edition) | 21 |
+| Employee Central Use Cases | 21 |
+| What's New | 54 |
+| Concur Solutions (total) | 10 |
+| Work Zone Advanced | 5 |
+| BTP Cockpit | 4 |
+| Risk and Assurance Management | 2 |
+| Digital Manufacturing | 1 |
+| Create Billing Documents | 2 |
+| Manufacturing Supervisor | 2 |
+| Audit Journal | 1 |
+
+### Adding New Pages
+When SAP adds pages to the Capabilities Guide:
+1. Edit `pipeline/sources/toc_tree.txt` — add the page title with proper indentation
+2. Re-run `python3 -m pipeline.sources.scrape_joule`
+3. Slugs are auto-generated from titles
 
 ## Technical Notes
-
-- SAP Help content API: `https://help.sap.com/docs/content/{deliverable_id}/{page_id}`
-- TOC API: `https://help.sap.com/docs/meta/{deliverable_id}/toc`
+- **ONLY use Capabilities Guide** — do NOT scrape other SAP Help deliverables
+- Slug collisions: pages with same name in Public/Private Edition resolve to same content
+  (unique child pages capture all distinct PE content)
+- Rate limiting: scraper retries up to 5x per page + dedicated retry pass
 - SSL workaround: `ssl._create_unverified_context()` (macOS Python)
-- Rate limiting: scraper retries up to 5x per page + dedicated retry pass at end
-- TOC is live — SAP adds pages over time
-- **ONLY use Capabilities Guide** — do NOT scrape other deliverables
 
 ## Arkansas Approach
-
 - **Crawl → Walk → Run** adoption strategy
 - **Crawl phase** = Unified Joule + high-value, low-risk features
-- All 253 capabilities are Commercial Model: **Base**
 - Website: **easyassap.com** (GitHub Pages from `JBShearer/Arkansas`)
 
 ## Next Steps
-
 1. Build analysis pipeline for Arkansas crawl-phase recommendations
 2. Build site pages from scraped data
 3. Deploy to easyassap.com
