@@ -136,6 +136,18 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .sample-prompts li {{ font-size: 0.78rem; color: #0a6ed1; background: #e8f4f8; padding: 0.25rem 0.7rem; border-radius: 14px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
 .sample-prompts li::before {{ content: '💬 '; }}
 
+/* Notes & Parameters */
+.uc-notes {{ width: 100%; padding: 0.3rem 0 0.2rem 4.5rem; }}
+.uc-notes details {{ font-size: 0.78rem; }}
+.uc-notes summary {{ cursor: pointer; color: #7b6d00; font-weight: 600; font-size: 0.78rem; }}
+.uc-notes summary:hover {{ color: #5a4f00; }}
+.uc-notes .note-item {{ display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.78rem; color: #555; line-height: 1.4; }}
+.uc-notes .note-item::before {{ content: 'ℹ️'; flex-shrink: 0; }}
+.uc-params {{ width: 100%; padding: 0.15rem 0 0.3rem 4.5rem; }}
+.uc-params .param-list {{ display: flex; flex-wrap: wrap; gap: 0.3rem; }}
+.uc-params .param-tag {{ font-size: 0.72rem; background: #f5f0e0; color: #7b6d00; padding: 0.15rem 0.55rem; border-radius: 10px; border: 1px solid #e8e0c0; }}
+.uc-params .param-tag::before {{ content: '⚙️ '; font-size: 0.65rem; }}
+
 /* Special note */
 .special-note {{ width: 100%; padding: 0.5rem 1rem 0.5rem 3.5rem; }}
 .note-box {{ background: linear-gradient(135deg, #e3f2fd, #f3e5f5); border-radius: 8px; padding: 1rem; border-left: 4px solid #0a6ed1; font-size: 0.82rem; color: #333; line-height: 1.5; }}
@@ -366,6 +378,8 @@ function renderChildUseCase(uc) {{
   const name = uc.name || 'Use Case';
   const desc = uc.description || '';
   const prompts = uc.prompts || [];
+  const notes = uc.notes || [];
+  const params = uc.parameters || [];
   const resp = uc.response_summary || '';
   const CAP_TYPES = ['Informational','Transactional','Navigational','Analytical'];
   
@@ -384,6 +398,17 @@ function renderChildUseCase(uc) {{
   }}
   html += '</div>';
   html += '</div>';
+
+  // Parameters as compact tags
+  if (params.length > 0) {{
+    html += '<div class="uc-params"><div class="param-list">';
+    params.forEach(p => {{
+      html += '<span class="param-tag">' + p + '</span>';
+    }});
+    html += '</div></div>';
+  }}
+
+  // Sample prompts as pills
   if (prompts.length > 0) {{
     html += '<div class="uc-child-prompts"><ul>';
     prompts.forEach(p => {{
@@ -391,6 +416,17 @@ function renderChildUseCase(uc) {{
     }});
     html += '</ul></div>';
   }}
+
+  // Notes in collapsible section
+  if (notes.length > 0) {{
+    html += '<div class="uc-notes"><details>';
+    html += '<summary>📝 ' + notes.length + ' note' + (notes.length > 1 ? 's' : '') + '</summary>';
+    notes.forEach(n => {{
+      html += '<div class="note-item">' + n + '</div>';
+    }});
+    html += '</details></div>';
+  }}
+
   return html;
 }}
 

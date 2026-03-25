@@ -187,6 +187,107 @@ def _is_misaligned_table(use_cases_raw):
     return False
 
 
+# ── Note / Parameter / Prompt classification ─────────────────────
+
+NOTE_STARTS = [
+    "You can ", "When the ", "Currently", "Ensure ", "The current ",
+    "The date ", "Use the ", "The job ", "New status ", "The confirmation ",
+    "Action on ", "Requested data", "Note:", "Important:", "As a workaround",
+    "The ", "If the ", "Only ", "This ", "After ", "Before ", "Once ",
+    "In case ", "For more ", "Please ", "Make sure ",
+]
+
+NOTE_CONTAINS = [
+    "is validated", "can only be", "not supported", "as a workaround",
+    "is posted after", "are not provided", "should be between",
+    "is activated after", "cannot be", "is not available",
+]
+
+
+def _is_note(text):
+    """Check if text is a note/instruction rather than an example prompt."""
+    t = text.strip()
+    # Starts with note patterns
+    for start in NOTE_STARTS:
+        if t.startswith(start) and len(t) > 40:
+            return True
+    # Contains explanation language
+    t_lower = t.lower()
+    for phrase in NOTE_CONTAINS:
+        if phrase in t_lower:
+            return True
+    # Ends with colon → intro sentence
+    if t.endswith(":") or t.endswith("attributes:") or t.endswith("attributes."):
+        return True
+    return False
+
+
+def _is_parameter(text):
+    """Check if text is a parameter/attribute name rather than an example prompt."""
+    t = text.strip()
+    if not t or len(t) > 80:
+        return False
+    # Has parenthetical options like "JobSelection (all/my/team/open)"
+    if re.match(r'^[A-Z][\w\s]*\(.*\)$', t):
+        return True
+    # Short text (≤ 3 words) that doesn't start with a prompt verb
+    words = t.split()
+    if len(words) <= 3 and t[0].isupper():
+        prompt_verbs = (
+            "Show", "Display", "Create", "Get", "Search", "Find", "List",
+            "Check", "Manage", "Open", "Delete", "Update", "Copy", "Recall",
+            "Add", "Assign", "Start", "Pause", "Resume", "Complete", "Record",
+            "Pick", "Select", "Book", "Filter", "Navigate", "Go", "What",
+            "How", "Where", "Which", "Who", "Set", "Run", "View", "Close",
+            "Cancel", "Reverse", "Post", "Release", "Approve",
+        )
+        if not any(t.startswith(v) for v in prompt_verbs):
+            return True
+    return False
+
+
+# Regex for splitting concatenated response text into individual prompts
+_PROMPT_VERBS_RE = (
+    r"(?:Show|Display|Get|Search|Find|List|Check|Create|Manage|Open|Delete|"
+    r"Update|Copy|Recall|Add|Assign|Start|Pause|Resume|Complete|Record|"
+    r"Pick|Select|Book|Filter|Navigate|Go to|What|How|Where|Which|Who|"
+    r"Set |Run |View|Close|Cancel|Reverse|Post|Release|Approve|"
+    r"Quick confirm|Retrieve|Send|Make)"
+)
+
+
+def _split_response_into_prompts(response_text):
+    """Split concatenated response text into individual example prompts.
+
+    SAP Help response columns often concatenate example prompts without
+    delimiters: "Show my jobsShow team jobs" → ["Show my jobs", "Show team jobs"]
+    """
+    if not response_text or len(response_text.strip()) < 5:
+        return []
+
+    text = response_text.strip()
+
+    # First split on newlines
+    parts = text.split("\n")
+
+    prompts = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        # Split on verb boundaries: lowercase/digit followed by uppercase verb
+        splits = re.split(
+            rf'(?<=[a-z\d\)\.])\s*(?={_PROMPT_VERBS_RE})',
+            part
+        )
+        for s in splits:
+            s = s.strip()
+            if s and 3 < len(s) < 200:
+                prompts.append(s)
+
+    return prompts
+
+
 def _merge_duplicate_use_cases(use_cases):
     """Merge use cases that share the same name into a single grouped entry.
 
@@ -202,6 +303,8 @@ def _merge_duplicate_use_cases(use_cases):
             groups[name] = {
                 "name": name,
                 "description": uc.get("description", ""),
+                "notes": list(uc.get("notes", [])),
+                "parameters": list(uc.get("parameters", [])),
                 "prompts": [],
                 "response_summary": uc.get("response_summary", ""),
             }
@@ -209,6 +312,14 @@ def _merge_duplicate_use_cases(use_cases):
         for p in uc.get("prompts", []):
             if p and p not in groups[name]["prompts"]:
                 groups[name]["prompts"].append(p)
+        # Merge notes
+        for n in uc.get("notes", []):
+            if n and n not in groups[name]["notes"]:
+                groups[name]["notes"].append(n)
+        # Merge parameters
+        for p in uc.get("parameters", []):
+            if p and p not in groups[name]["parameters"]:
+                groups[name]["parameters"].append(p)
         # Keep first non-empty description
         if not groups[name]["description"] and uc.get("description"):
             groups[name]["description"] = uc["description"]
@@ -270,19 +381,52 @@ def extract_use_cases_from_scraped(page_data):
             })
         return use_cases
 
-    # ── Standard table parsing ───────────────────────────────────
+    # ── Standard table parsing with note/parameter separation ────
     for uc in raw_ucs:
         name = uc.get("name", "").strip()
-        # Support both 'prompts' and 'samplePrompts' keys
         raw_prompts = uc.get("prompts", []) or uc.get("samplePrompts", [])
-        if name and len(name) > 3 and "What's New" not in name:
-            use_cases.append({
-                "name": name,
-                "description": uc.get("description", ""),
-                "prompts": [p.strip() for p in raw_prompts
-                           if p.strip() and "What's New" not in p and len(p.strip()) > 5],
-                "response_summary": uc.get("response", "")[:200],
-            })
+        response_text = uc.get("response", "") or ""
+
+        if not name or len(name) <= 3 or "What's New" in name:
+            continue
+
+        # Classify each "prompt" item as note, parameter, or real prompt
+        notes = []
+        parameters = []
+        real_prompts = []
+
+        for p in raw_prompts:
+            p = p.strip()
+            if not p or len(p) <= 5 or "What's New" in p:
+                continue
+            if _is_note(p):
+                notes.append(p)
+            elif _is_parameter(p):
+                parameters.append(p)
+            else:
+                real_prompts.append(p)
+
+        # Extract example prompts from response field (often concatenated)
+        response_prompts = _split_response_into_prompts(response_text)
+
+        # Decide which prompts to show:
+        # If we got real prompts from the response field, prefer those
+        # (they're actual example prompts users would type)
+        if response_prompts:
+            final_prompts = response_prompts
+        elif real_prompts:
+            final_prompts = real_prompts
+        else:
+            final_prompts = []
+
+        use_cases.append({
+            "name": name,
+            "description": uc.get("description", ""),
+            "notes": notes,
+            "parameters": parameters,
+            "prompts": final_prompts,
+            "response_summary": response_text[:200] if not response_prompts else "",
+        })
 
     # ── Global dedup: merge use cases with the same name ─────────
     use_cases = _merge_duplicate_use_cases(use_cases)
