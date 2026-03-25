@@ -80,6 +80,7 @@ make serve     # Local preview on port 4000
 - SAP Analytics Cloud: 3 entries (11 capabilities)
 
 ## Recent Changes
+- v9: Remove prompt counts, notes always on new line left-aligned, cautions separated from info notes with ⚠️ warning style
 - v8: Verified and redeployed with latest enriched data
 - v7: Response line rejoining, note suppression, fragment filtering, f-string fix
 - v6: Response-option detection, verb exclusions, continuation fragments
