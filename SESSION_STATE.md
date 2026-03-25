@@ -1,79 +1,87 @@
-# Session State
+# Session State – SAP Business AI / Joule Pipeline
 
 > **Last Updated:** 2026-03-25  
-> **Status:** Full tree scraper complete — 202 pages, 366 capabilities.  
+> **Status:** Site LIVE at easyassap.com — 312 capabilities with interactive explorer  
 > **Read this file at the start of every new Cline session.**
 
-## What Exists
+## Quick Resume
+```bash
+cd /Users/I530341/Documents/Joule
+cat SESSION_STATE.md
+```
 
-| Item | Path / Detail |
-|------|--------------|
-| Workspace | `/Users/I530341/Documents/Joule/` |
-| GitHub repo | `JBShearer/Arkansas` (origin, main branch) |
-| Site folder | `site/` — deployed to **easyassap.com** via GitHub Pages |
-| Pipeline | `pipeline/` — Python scraper + analysis + site generator |
-| Data | `pipeline/data/joule_capabilities_raw.json` (gitignored, regenerate with scraper) |
+## Repository
+- **Remote:** https://github.com/JBShearer/Arkansas.git
+- **Branch:** main
+- **GitHub Pages:** easyassap.com — serves from **root** (`/`), path setting = `/`
+- **CNAME:** `site/CNAME` contains `easyassap.com`
 
-## Scraper
+## Architecture
+```
+index.html             ← DEPLOYED (copy of site/index.html, served by GitHub Pages)
+site/
+  index.html           ← generated output
+  Arkansas_Joule_Capabilities.html  ← standalone copy
+  CNAME                ← custom domain
+pipeline/
+  sources/
+    scrape_joule.py    ← selenium scraper → pipeline/data/joule_capabilities_raw.json
+    loader.py          ← loads JSON
+    toc_tree.txt       ← 202-page Joule help.sap.com TOC
+  analysis/
+    analyzer.py        ← enrichment & classification
+  generators/
+    site_generator.py  ← reads JSON → site/index.html + root index.html
+  data/                ← intermediate data (gitignored except .gitkeep)
+  main.py              ← orchestrator
+config.yaml
+Makefile
+```
 
-**Run:** `python3 -m pipeline.sources.scrape_joule`
+## How to Regenerate
+```bash
+python3 -m pipeline.sources.scrape_joule        # ~15 min, needs Chrome
+python3 -m pipeline.generators.site_generator    # rebuilds HTML → site/ AND root
+git add -A && git commit -m "Update capabilities" && git push origin main
+```
 
-### Architecture
-- **TOC source:** `pipeline/sources/toc_tree.txt` (indented text tree, easy to update)
-- **Slug-based fetching:** auto-generates URL slugs from page titles
+## Data Snapshot (25 Mar 2026)
+| Metric | Value |
+|--------|-------|
+| Pages scraped | 228 |
+| Raw capabilities | 366 |
+| After dedup/filtering | 312 |
+| S/4 Private Edition | 140 |
+| S/4 Public Edition | 47 |
+| SuccessFactors | 53 |
+| Premium (SAP Business AI) | 68 |
+| Base (Standard) | 190 |
+| Base (Included) | 47 |
+
+## Site Features
+- Interactive card-based explorer with expand/collapse
+- Filter by: Type (Nav/Info/Trans), Product, Process Area, Licensing
+- Full-text search across use cases, descriptions, prompts
+- Licensing badges: Base Standard, Premium (SAP Business AI), Base Included
+- Each card shows: description, sample prompts, notes, best practices, mobile support
+
+## Key Decisions
+1. **GitHub Pages serves from root** — `index.html` at repo root (not `/site`)
+2. Generator writes to both `site/index.html` AND root `index.html`
+3. **Crawl-Walk-Run** — Arkansas is in "Crawl" phase
+4. **Self-contained HTML** — all entries embedded as JSON (no backend)
+5. **Data is gitignored** — regenerate with scraper
+
+## Scraper Notes
+- **TOC source:** `pipeline/sources/toc_tree.txt` (manually maintained)
 - **Content API:** `https://help.sap.com/docs/content/{DELIVERABLE_ID}/{slug}`
-- The TOC API (`/docs/meta/.../toc`) returns a STALE 52-page subset — do NOT use it
-- Deduplicates entries by (topic_id, use_case, section)
-
-### Stats
 - **Deliverable ID:** `d0750ba6-6e30-455c-a879-af14f1054a14`
-- **228 pages** (183 leaves, 45 branches), **~95 with table entries**
-- **366 deduplicated capabilities** (418 raw, 52 removed as duplicates from slug collisions)
-- **S/4HANA = 267 capabilities (73% of total)**
-  - S/4 Public Edition: 70 (Finance 21, Sales 14, Finding Apps 17, etc.)
-  - S/4 Private Edition: 197 (Sales 30, Finance 43, Supply Chain 20, Service 18, Procurement 17, BRIM 16, Manufacturing 15, etc.)
-- **Other products: 99** (SuccessFactors 57, Concur 10, Ariba 9, Analytics 11, etc.)
-
-### Data fields (per capability)
-- `use_case`, `description`, `important_notes`, `capability_type`
-- `sample_prompts`, `commercial_model`, `on_mobile`, `best_practices`
-- `source_page`, `source_path`, `section`, `slug`, `topic_id`
-
-### Verified Spot Checks (all pass)
-| Check | Count |
-|-------|-------|
-| Perform Maintenance Jobs | 17 |
-| Finance (Public Edition) | 21 |
-| Employee Central Use Cases | 21 |
-| What's New | 54 |
-| Concur Solutions (total) | 10 |
-| Work Zone Advanced | 5 |
-| BTP Cockpit | 4 |
-| Risk and Assurance Management | 2 |
-| Digital Manufacturing | 1 |
-| Create Billing Documents | 2 |
-| Manufacturing Supervisor | 2 |
-| Audit Journal | 1 |
-
-### Adding New Pages
-When SAP adds pages to the Capabilities Guide:
-1. Edit `pipeline/sources/toc_tree.txt` — add the page title with proper indentation
-2. Re-run `python3 -m pipeline.sources.scrape_joule`
-3. Slugs are auto-generated from titles
-
-## Technical Notes
-- **ONLY use Capabilities Guide** — do NOT scrape other SAP Help deliverables
-- Slug collisions: pages with same name in Public/Private Edition resolve to same content
-  (unique child pages capture all distinct PE content)
-- Rate limiting: scraper retries up to 5x per page + dedicated retry pass
-- SSL workaround: `ssl._create_unverified_context()` (macOS Python)
-
-## Arkansas Approach
-- **Crawl → Walk → Run** adoption strategy
-- **Crawl phase** = Unified Joule + high-value, low-risk features
-- Website: **easyassap.com** (GitHub Pages from `JBShearer/Arkansas`)
+- Do NOT use the TOC API — it returns stale 52-page subset
+- Deduplicates by (topic_id, use_case, section)
 
 ## Next Steps
-1. Build analysis pipeline for Arkansas crawl-phase recommendations
-2. Build site pages from scraped data
-3. Deploy to easyassap.com
+- [ ] Add Arkansas-specific Crawl/Walk/Run classification
+- [ ] Add Embedded AI (non-Joule) features
+- [ ] Add recommended projects section
+- [ ] Improve mobile responsiveness
+- [ ] Add analytics / visitor tracking
