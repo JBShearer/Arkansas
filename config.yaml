@@ -1,0 +1,35 @@
+# Pipeline Configuration
+
+site:
+  name: "SAP Business AI — Arkansas"
+  url: "https://easyassap.com"
+  repo: "JBShearer/Arkansas"
+  branch: "main"
+
+customer:
+  name: "State of Arkansas"
+  approach: "crawl-walk-run"
+  current_phase: "crawl"
+
+phases:
+  crawl:
+    label: "Crawl"
+    description: "High-value, low-risk AI features"
+    risk_level: "low"
+  walk:
+    label: "Walk"
+    description: "Custom AI scenarios, process automation"
+    risk_level: "medium"
+  run:
+    label: "Run"
+    description: "Advanced AI/ML, custom models"
+    risk_level: "higher"
+
+pipeline:
+  sources_dir: "sources"
+  data_dir: "pipeline/data"
+  output_dir: "output"
+  site_dir: "site"
+
+sources:
+  joule_capabilities: "https://help.sap.com/docs/joule/capabilities-guide/"
