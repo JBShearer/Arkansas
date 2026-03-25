@@ -130,15 +130,11 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .help-link {{ font-size: 0.75rem; color: #0a6ed1; text-decoration: none; white-space: nowrap; }}
 .help-link:hover {{ text-decoration: underline; }}
 
-/* Sample prompts */
-.prompts-toggle {{ font-size: 0.72rem; color: #0a6ed1; cursor: pointer; white-space: nowrap; margin-left: 0.3rem; }}
-.prompts-toggle:hover {{ text-decoration: underline; }}
-.sample-prompts {{ width: 100%; padding: 0.5rem 0 0.3rem 3.5rem; display: none; }}
-.sample-prompts.open {{ display: block; }}
-.sample-prompts ul {{ list-style: none; }}
-.sample-prompts li {{ font-size: 0.8rem; color: #444; padding: 0.25rem 0; padding-left: 1.2rem; position: relative; font-style: italic; }}
-.sample-prompts li::before {{ content: '"'; position: absolute; left: 0; color: #0a6ed1; font-weight: bold; font-size: 1rem; }}
-.sample-prompts li::after {{ content: '"'; color: #0a6ed1; font-weight: bold; font-size: 1rem; }}
+/* Sample prompts — always visible */
+.sample-prompts {{ width: 100%; padding: 0.3rem 0 0.4rem 3.5rem; }}
+.sample-prompts ul {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }}
+.sample-prompts li {{ font-size: 0.78rem; color: #0a6ed1; background: #e8f4f8; padding: 0.25rem 0.7rem; border-radius: 14px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
+.sample-prompts li::before {{ content: '💬 '; }}
 
 /* Special note */
 .special-note {{ width: 100%; padding: 0.5rem 1rem 0.5rem 3.5rem; }}
@@ -344,21 +340,17 @@ function renderUseCase(c) {{
   html += '<div class="uc-main">';
   html += '<span class="uc-title">' + title + '</span>';
   html += badge;
-  if (hasPrompts) {{
-    html += '<span class="prompts-toggle" onclick="togglePrompts(\\'' + pid + '\\')">💬 Prompts</span>';
-  }}
   html += link;
   html += '</div>';
-  html += '</div>';
-  
   if (hasPrompts) {{
-    html += '<div class="sample-prompts" id="' + pid + '">';
+    html += '<div class="sample-prompts">';
     html += '<ul>';
     c.sample_prompts.forEach(p => {{
       html += '<li>' + p + '</li>';
     }});
     html += '</ul></div>';
   }}
+  html += '</div>';
   
   if (hasNote) {{
     html += '<div class="special-note"><div class="note-box">';

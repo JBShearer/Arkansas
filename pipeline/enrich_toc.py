@@ -1,14 +1,12 @@
-"""Enrich TOC tree into structured Joule capabilities with proper typing.
+"""Enrich TOC tree with REAL scraped data from SAP Help Portal.
 
-ALL capabilities here are Joule (Generative AI) — the 'capability_type' describes
-the INTERACTION PATTERN: what the user does with it.
-
-Types:
-  - Informational: Display, view, search, check, look up data
-  - Navigational:  Open apps, go to screens
-  - Transactional: Create, change, manage, process business documents
+Eliminates 'Mixed' type. Every capability gets exactly one type:
+  - Informational: Display, view, search, check, look up, fetch data
+  - Navigational:  Open apps, go to screens, find apps
+  - Transactional: Create, change, manage, process, update, delete
   - Analytical:    Insights, forecasts, anomaly detection, analytics
-  - Mixed:         Capabilities with both informational and transactional use cases
+
+Sample prompts come from the ACTUAL SAP Help pages (scraped data).
 
 Usage:
     python3 -m pipeline.enrich_toc
@@ -21,6 +19,7 @@ from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parent.parent
 TOC_FILE = WORKSPACE / "pipeline" / "sources" / "toc_tree.txt"
+SCRAPED_FILE = WORKSPACE / "pipeline" / "data" / "scraped_use_cases.json"
 OUT_FILE = WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json"
 
 # ── Product mapping ──────────────────────────────────────────────
@@ -54,264 +53,190 @@ SKIP_TITLES = [
 ]
 
 # ── Capability type classification ───────────────────────────────
-# Order matters — first match wins for single-type classification
+# NO "Mixed" — every capability gets exactly one type.
+# Priority: Analytical > Navigational > Transactional > Informational
+
 INFORMATIONAL_PATTERNS = [
     r"\bDisplay\b", r"\bShow\b", r"\bView\b", r"\bSearch\b", r"\bList\b",
     r"\bCheck\b", r"\bGet\b", r"\bLook\s?up\b", r"\bFind\b", r"\bRetrieve\b",
-    r"\bDisplaying\b", r"\bSearching\b", r"\bAvailability\b",
+    r"\bDisplaying\b", r"\bSearching\b", r"\bViewing\b", r"\bFetch\b",
+    r"\bSummariz", r"\bAsk for\b",
     r"\bError Explanation\b", r"\bError Summary\b", r"\bError Explanations\b",
     r"\bSummary\b", r"\bOverview\b", r"\bStatus\b", r"\bBalance\b",
     r"\bLine Items\b", r"\bDocument Flow\b", r"\bPositions?\b",
-    r"\bCommitment\b",
+    r"\bCommitment\b", r"\bAvailability\b",
+    r"\bInformational Capability\b",
 ]
 
 TRANSACTIONAL_PATTERNS = [
-    r"\bCreate\b", r"\bManage\b", r"\bProcess\b", r"\bExecute\b", r"\bPost\b",
-    r"\bRelease\b", r"\bClearing\b", r"\bApprove\b", r"\bChange\b", r"\bEdit\b",
-    r"\bUpdate\b", r"\bDelete\b", r"\bCancel\b", r"\bReverse\b", r"\bAssign\b",
+    r"\bCreate\b", r"\bCreating\b", r"\bManage\b", r"\bManaging\b",
+    r"\bProcess\b", r"\bProcessing\b", r"\bExecut", r"\bPost\b",
+    r"\bRelease\b", r"\bClearing\b", r"\bApprove\b", r"\bChange\b",
+    r"\bChanging\b", r"\bEdit\b", r"\bUpdate\b", r"\bUpdating\b",
+    r"\bDelete\b", r"\bCancel\b", r"\bReverse\b", r"\bAssign\b",
     r"\bReassign\b", r"\bTransfer\b", r"\bConvert\b", r"\bClose\b",
-    r"\bCreation\b", r"\bBudgeting\b", r"\bReminders?\b",
-    r"\bRecurring\b", r"\bTemplates?\b",
+    r"\bMaking\b", r"\bGenerating\b", r"\bRenewing\b", r"\bDestroying\b",
+    r"\bPerform\b", r"\bComplete\b",
+    r"\bBudgeting\b", r"\bReminders?\b", r"\bRecurring\b",
+    r"\bTemplates?\b", r"\bAccrual\b",
+    r"\bTransactional Capabilit",
+    r"\bBilling Request\b", r"\bInvoicing Document\b",
+    r"\bClarification Case\b", r"\bDispute Resolution\b",
+    r"\bPayment Resolution\b", r"\bBilling Plan\b",
+    r"\bContract Accounting\b", r"\bConvergent Invoicing\b",
+    r"\bCash Management\b", r"\bSubscription\b",
+    r"\bMaster Agreement\b", r"\bMaintenance\b",
+    r"\bProduction Order\b", r"\bProcess Order\b",
+    r"\bManufacturing Supervisor\b",
+    r"\bDecision Table\b",
+    r"\bAudit Journal\b",
+    r"\bCost Center\b",
+    r"\bInternal Order\b", r"\bJournal Entr",
+    r"\bProfit Center\b", r"\bActivity Type\b",
+    r"\bStatistical Key\b", r"\bDirect Activity\b",
+    r"\bPurchase Requisition\b", r"\bPurchase Order\b",
+    r"\bService Confirm", r"\bService Contract\b",
+    r"\bService Order\b", r"\bIn-House Service\b",
+    r"\bEquipment\b",
 ]
 
 NAVIGATIONAL_PATTERNS = [
-    r"\bNavigate\b", r"\bGo to\b", r"\bOpen App\b", r"\bLaunch\b",
-    r"\bUsing Siri\b",
+    r"\bNavigat", r"\bGo to\b", r"\bOpen App\b", r"\bLaunch\b",
+    r"\bUsing Siri\b", r"\bFinding Apps\b",
+    r"\bNavigational Capability\b",
+    r"\bRequesting Access\b",
 ]
 
 ANALYTICAL_PATTERNS = [
     r"\bAnalytic", r"\bInsight", r"\bAnomal", r"\bForecast",
     r"\bTrend", r"\bPredict", r"\bOptimiz",
+    r"\bAI-Assisted\b", r"\bDetailed Scheduling Optimization\b",
 ]
 
-# ── Items that have BOTH informational and transactional use cases ──
-# These are capability pages where Joule can both display AND create/change
-MIXED_CAPABILITIES = {
-    "Billing Request",
-    "Invoicing Document",
-    "Contract Accounting",
-    "Clarification Case",
-    "Convergent Invoicing",
-    "Dispute Resolution",
-    "Payment Resolution",
-    "Billing Plan",
-    "Cash Management",
-    "Subscription Order",
-    "Subscription Contract",
-    "Master Agreement",
-    "Production Order",
-    "Manufacturing Supervisor",
-    "Enterprise Portfolio and Project Management",
-    "Products, Resources, and Receipts in Production Planning and Detailed Scheduling",
-    "Audit Journal",
-}
 
-# ── Curated sample prompts ───────────────────────────────────────
-SAMPLE_PROMPTS = {
-    # Business Partners
-    "Display Business Partners": [
-        "Show me Business Partner 17100010",
-        "Display overview of Business Partner 17100010",
-        "Show me the addresses for Business Partner 17100010",
-    ],
-    "Edit Business Partners": [
-        "Change the phone number for Business Partner 17100010",
-        "Update the address for Business Partner 17100010",
-    ],
-    # Finance
-    "Display G/L Account Balance": [
-        "Show me the balance for G/L account 100000",
-        "Display G/L account balance for company code 1000",
-    ],
-    "Display G/L Account Line Items - General Ledger View": [
-        "Show me G/L account line items for account 100000",
-    ],
-    "Display Journal Entries in T-Accounting View": [
-        "Show journal entry 100000001 in T-account view",
-    ],
-    "Manage Journal Entries": [
-        "Create a journal entry for company code 1000",
-        "Post a journal entry to G/L account 400000",
-    ],
-    "Manage Cost Center": [
-        "Create a new cost center in controlling area 0001",
-        "Update cost center 10001",
-    ],
-    "Clearing Single G/L Open Item": [
-        "Clear open items for G/L account 113100",
-    ],
-    "Manage Accounts Receivable": [
-        "Show open receivables for customer 17100001",
-    ],
-    "Audit Journal": [
-        "Show me the audit journal for today",
-        "Display audit trail for user SMITH",
-    ],
-    "Cost Center Budgeting": [
-        "Set budget for cost center 10001 to $500,000",
-        "Display budget for cost center 10001",
-    ],
-    # Sales
-    "Display Sales Order": [
-        "Show me sales order 1000001",
-        "Display details of sales order 1000001",
-    ],
-    "Create Sales Order": [
-        "Create a sales order for customer 17100001",
-        "Create a standard sales order with material M-01",
-    ],
-    "Display Sales Quotation": [
-        "Show me quotation 20000001",
-    ],
-    "Create Sales Quotation": [
-        "Create a quotation for customer 17100001",
-    ],
-    "Display Billing Document": [
-        "Show billing document 90000001",
-    ],
-    # Billing & Revenue
-    "Billing Request": [
-        "Show me billing request 700000001",
-        "Create a new billing request",
-        "Display billing requests for account 100001",
-    ],
-    "Invoicing Document": [
-        "Display invoicing document 800000001",
-        "Create an invoicing document",
-    ],
-    "Clarification Case": [
-        "Show clarification case 300000001",
-        "Create a clarification case for account 100001",
-    ],
-    "Dispute Resolution": [
-        "Display dispute case 400000001",
-        "Create a dispute case",
-    ],
-    # Warehouse
-    "Searching for Outbound Delivery Orders": [
-        "Search for outbound delivery orders for warehouse 1000",
-        "Find delivery orders shipped today",
-    ],
-    # Cash
-    "Displaying Cash Positions": [
-        "Show me cash positions for company code 1000",
-        "Display today's cash position",
-    ],
-    "Cash Management": [
-        "Show cash management overview for company code 1000",
-        "Display liquidity forecast",
-    ],
-    # Service
-    "Display Service Order": [
-        "Show me service order 4000001",
-    ],
-    "Create Service Order": [
-        "Create a service order for equipment 10000001",
-    ],
-    # Procurement
-    "Display Purchase Order": [
-        "Show purchase order 4500000001",
-    ],
-    "Create Purchase Order": [
-        "Create a purchase order for vendor 1000001",
-    ],
-    # Asset Management
-    "Display Fixed Asset": [
-        "Show me fixed asset 100000-0",
-    ],
-    "Create Fixed Asset": [
-        "Create a fixed asset in company code 1000",
-    ],
-    # SuccessFactors
-    "Compensation Use Cases": [
-        "What is my current salary?",
-        "Show me my compensation history",
-    ],
-    "Employee Central Use Cases": [
-        "Show me my team members",
-        "Who is my manager?",
-        "What are my direct reports?",
-    ],
-    "Learning Use Cases": [
-        "Find training courses on leadership",
-        "Show my learning assignments",
-    ],
-    "Recruiting Use Cases": [
-        "Show open positions in my department",
-        "What's the status of requisition 12345?",
-    ],
-    "Time Tracking Use Cases": [
-        "Clock in for today",
-        "Show my time sheet for this week",
-    ],
-    "Performance & Goals Use Cases": [
-        "Show my performance goals",
-        "What are my objectives for this quarter?",
-    ],
-    # SAC
-    "Analytical Insights with SAP Analytics Cloud": [
-        "Show me revenue trends for Q1",
-        "Analyze cost center spending anomalies",
-    ],
-    # EWM
-    "Display Warehouse Task": [
-        "Show warehouse task 100000001",
-    ],
-    "Display Physical Inventory Document": [
-        "Show physical inventory document 100000001",
-    ],
-}
+def is_good_scraped_data(page_data):
+    """Check if scraped data is real content vs sidebar navigation."""
+    if not page_data:
+        return False
+    ucs = page_data.get("useCases", [])
+    if not ucs:
+        return False
+    # False positive: exactly 233 use cases = sidebar nav
+    if len(ucs) == 233:
+        return False
+    # False positive: single use case where prompts start with "What's New"
+    if len(ucs) == 1:
+        prompts = ucs[0].get("prompts", [])
+        if prompts and any("What's New" in p for p in prompts[:3]):
+            return False
+        # Also check for very high prompt count (likely sidebar)
+        if len(prompts) > 30:
+            return False
+    return True
 
 
-def classify_capability(title, is_leaf, children_types=None):
+def extract_prompts_from_scraped(page_data):
+    """Extract clean prompts from scraped data."""
+    prompts = []
+    if not page_data:
+        return prompts
+    for uc in page_data.get("useCases", []):
+        for p in uc.get("prompts", []):
+            # Clean up prompt text
+            clean = p.strip()
+            # Skip sidebar items
+            if "What's New" in clean:
+                continue
+            if len(clean) < 5 or len(clean) > 300:
+                continue
+            # Skip if it looks like a heading or nav item
+            if clean.startswith("20") and "What's New" in clean:
+                continue
+            prompts.append(clean)
+    return prompts
+
+
+def extract_use_cases_from_scraped(page_data):
+    """Extract use case names from scraped data."""
+    use_cases = []
+    if not page_data:
+        return use_cases
+    for uc in page_data.get("useCases", []):
+        name = uc.get("name", "").strip()
+        if name and len(name) > 3 and "What's New" not in name:
+            use_cases.append({
+                "name": name,
+                "prompts": [p.strip() for p in uc.get("prompts", [])
+                           if p.strip() and "What's New" not in p and len(p.strip()) > 5],
+                "response_summary": uc.get("response", "")[:200],
+            })
+    return use_cases
+
+
+def classify_capability(title, is_leaf):
     """Classify a capability by its interaction pattern.
-    
-    Returns one of: Informational, Navigational, Transactional, Analytical, Mixed
+
+    Returns one of: Informational, Navigational, Transactional, Analytical
+    NO Mixed type.
     """
-    # Check mixed list first
-    if title in MIXED_CAPABILITIES:
-        return "Mixed"
-    
-    # Check patterns
-    for pattern in NAVIGATIONAL_PATTERNS:
-        if re.search(pattern, title, re.IGNORECASE):
-            return "Navigational"
-    
+    # "Joule in SAP X" leaf entries → Navigational (product availability)
+    if title.startswith("Joule in SAP") and is_leaf:
+        return "Navigational"
+
+    # Check patterns in priority order: Analytical > Navigational > Transactional > Informational
     for pattern in ANALYTICAL_PATTERNS:
         if re.search(pattern, title, re.IGNORECASE):
             return "Analytical"
-    
-    for pattern in INFORMATIONAL_PATTERNS:
+
+    for pattern in NAVIGATIONAL_PATTERNS:
         if re.search(pattern, title, re.IGNORECASE):
-            return "Informational"
-    
+            return "Navigational"
+
     for pattern in TRANSACTIONAL_PATTERNS:
         if re.search(pattern, title, re.IGNORECASE):
             return "Transactional"
-    
-    # For branch nodes, aggregate children types
-    if children_types:
-        unique = set(children_types)
-        if len(unique) == 1:
-            return list(unique)[0]
-        elif "Informational" in unique and "Transactional" in unique:
-            return "Mixed"
-        elif unique:
-            return list(unique)[0]
-    
-    # SuccessFactors "Use Cases" pages → Mixed (they contain both info + transactional)
+
+    for pattern in INFORMATIONAL_PATTERNS:
+        if re.search(pattern, title, re.IGNORECASE):
+            return "Informational"
+
+    # SuccessFactors "Use Cases" pages — determine from title prefix
     if "Use Cases" in title:
-        return "Mixed"
-    
-    # Product overview pages like "Joule in SAP X" → Mixed
+        return "Transactional"
+
+    # Remaining unclassified → Transactional (default for business capabilities)
+    return "Transactional"
+
+
+def classify_branch(title, children_types):
+    """Classify a branch node based on children.
+    Returns the majority type of children.
+    """
+    # First check if the branch title itself is clearly one type
     if title.startswith("Joule in SAP"):
-        return "Mixed"
-    
-    # Default for remaining unclassified leaves → Mixed
-    if is_leaf:
-        return "Mixed"
-    
-    return "Mixed"
+        pass  # Aggregate from children
+    else:
+        for pattern in ANALYTICAL_PATTERNS:
+            if re.search(pattern, title, re.IGNORECASE):
+                return "Analytical"
+        for pattern in NAVIGATIONAL_PATTERNS:
+            if re.search(pattern, title, re.IGNORECASE):
+                return "Navigational"
+
+    if not children_types:
+        return classify_capability(title, False)
+
+    # Count types and return majority
+    counts = {}
+    for t in children_types:
+        counts[t] = counts.get(t, 0) + 1
+
+    # If all same type, use that
+    if len(counts) == 1:
+        return list(counts.keys())[0]
+
+    # Return the most common type
+    return max(counts, key=counts.get)
 
 
 def parse_toc():
@@ -319,28 +244,26 @@ def parse_toc():
     lines = TOC_FILE.read_text().splitlines()
     entries = []
     path_stack = []
-    
+
     for line in lines:
         if not line.strip():
             continue
-        # Count indentation (2 spaces per level)
         stripped = line.lstrip()
         indent = len(line) - len(stripped)
         depth = indent // 2
         title = stripped.strip()
-        
-        # Maintain path stack
+
         while len(path_stack) > depth:
             path_stack.pop()
         path_stack.append(title)
-        
+
         entries.append({
             "title": title,
             "depth": depth,
             "path": list(path_stack),
             "path_str": " > ".join(path_stack),
         })
-    
+
     return entries
 
 
@@ -362,76 +285,84 @@ def get_product(path_str):
 
 
 def enrich():
-    """Main enrichment pipeline."""
-    print("📊 Enriching TOC tree with proper capability types...")
+    """Main enrichment pipeline using scraped data."""
+    print("📊 Enriching TOC tree with REAL scraped data (no Mixed type)...")
+
+    # Load scraped data
+    scraped = {}
+    if SCRAPED_FILE.exists():
+        raw = json.loads(SCRAPED_FILE.read_text())
+        scraped = raw.get("pages", {})
+        print(f"   Loaded scraped data: {len(scraped)} pages")
+    else:
+        print("   ⚠️  No scraped data found. Run: node pipeline/sources/scrape_help.js")
+
     entries = parse_toc()
-    
+
     # Build parent-children relationships
-    children_map = {}  # index → list of child indices
-    parent_map = {}    # index → parent index
-    
+    children_map = {}
+    parent_map = {}
+
     for i, entry in enumerate(entries):
         children_map[i] = []
-    
+
     for i, entry in enumerate(entries):
-        # Find parent: nearest previous entry at depth-1
         for j in range(i - 1, -1, -1):
             if entries[j]["depth"] == entry["depth"] - 1:
                 parent_map[i] = j
                 children_map[j].append(i)
                 break
-    
-    # Determine which entries are leaves
+
     leaf_set = set()
     for i, entry in enumerate(entries):
         if not children_map[i]:
             leaf_set.add(i)
-    
-    # Skip filtered entries
+
     skip_indices = set()
     for i, entry in enumerate(entries):
         if any(s.lower() in entry["title"].lower() for s in SKIP_TITLES):
             skip_indices.add(i)
-    
+
     # First pass: classify leaves
     cap_types = {}
     for i in leaf_set:
         if i in skip_indices:
             continue
         cap_types[i] = classify_capability(entries[i]["title"], True)
-    
+
     # Second pass: classify branches based on children
     for i in sorted(set(range(len(entries))) - leaf_set - skip_indices, reverse=True):
         child_types = [cap_types[c] for c in children_map[i] if c in cap_types]
-        cap_types[i] = classify_capability(entries[i]["title"], False, child_types)
-    
-    # Build output capabilities
+        cap_types[i] = classify_branch(entries[i]["title"], child_types)
+
+    # Build output
     capabilities = []
+    good_scraped = 0
+    fallback_count = 0
+
     for i, entry in enumerate(entries):
         if i in skip_indices:
             continue
-        
+
         title = entry["title"]
         path = entry["path"]
         path_str = entry["path_str"]
         depth = entry["depth"]
         is_leaf = i in leaf_set
         product = get_product(path_str)
-        
-        # Extract business area and sub-area
-        # Path: [Product, BusinessArea, SubArea?, ..., Title]
-        # For product-level entries, business_area might be the title itself
+
+        # Extract business area
         product_depth = None
         for pi, part in enumerate(path):
             if part in PRODUCT_MAP or part.startswith("Joule in SAP") or part.startswith("Analytical Insights"):
                 product_depth = pi
                 break
-        
+
         if product_depth is not None:
             remaining = path[product_depth + 1:]
         else:
-            remaining = path[1:]  # Skip root
-        
+            remaining = path[1:]
+
         business_area = ""
         sub_area = ""
         if len(remaining) >= 2:
@@ -440,13 +371,29 @@ def enrich():
                 sub_area = remaining[1]
         elif len(remaining) == 1 and not is_leaf:
             business_area = remaining[0]
-        
+
         slug = title_to_slug(title)
-        cap_type = cap_types.get(i, "Mixed")
-        
-        # Get sample prompts if available
-        prompts = SAMPLE_PROMPTS.get(title, [])
-        
+        cap_type = cap_types.get(i, "Transactional")
+
+        # Get data from scraped content
+        page_data = scraped.get(title)
+        has_good_data = is_good_scraped_data(page_data)
+
+        use_cases = []
+        sample_prompts = []
+        description = ""
+
+        if has_good_data:
+            good_scraped += 1
+            use_cases = extract_use_cases_from_scraped(page_data)
+            sample_prompts = extract_prompts_from_scraped(page_data)
+            description = (page_data.get("description") or "").strip()
+            # Limit to reasonable number of prompts for display
+            if len(sample_prompts) > 10:
+                sample_prompts = sample_prompts[:10]
+        else:
+            fallback_count += 1
+
         cap = {
             "title": title,
             "product": product,
@@ -460,63 +407,46 @@ def enrich():
             "slug": slug,
             "sap_help_url": f"https://help.sap.com/docs/joule/capabilities-guide/{slug}",
             "children_count": len(children_map[i]),
-            "sample_prompts": prompts,
+            "description": description,
+            "use_cases": use_cases,
+            "sample_prompts": sample_prompts,
+            "data_source": "scraped" if has_good_data else "title-only",
         }
         capabilities.append(cap)
-    
-    # Add SAC integration note as a special capability
-    capabilities.append({
-        "title": "Joule + SAP Analytics Cloud Integration",
-        "product": "SAP Analytics Cloud",
-        "business_area": "Analytics",
-        "sub_area": "",
-        "capability_type": "Analytical",
-        "is_leaf": True,
-        "is_branch": False,
-        "depth": 1,
-        "hierarchy": "Analytical Insights with SAP Analytics Cloud > Joule + SAC Integration",
-        "slug": "joule-sac-integration",
-        "sap_help_url": "",
-        "children_count": 0,
-        "sample_prompts": [
-            "Show me revenue trends for Q1",
-            "Analyze cost center spending anomalies",
-            "What are the top performing products this quarter?",
-        ],
-        "special_note": "Coming soon: Enhanced analytics capabilities when Joule is connected to SAP Analytics Cloud. This integration will unlock conversational data exploration, natural language queries on your live data, and AI-generated insights across all SAP data sources.",
-    })
-    
+
     # Stats
     leaves = [c for c in capabilities if c["is_leaf"]]
     type_counts = {}
     for c in capabilities:
         t = c["capability_type"]
         type_counts[t] = type_counts.get(t, 0) + 1
-    
+
     product_counts = {}
     for c in capabilities:
         p = c["product"]
         product_counts[p] = product_counts.get(p, 0) + 1
-    
+
     output = {
         "metadata": {
-            "source": "TOC-enriched-v4",
+            "source": "TOC-enriched-v7-scraped",
             "enriched_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "total_entries": len(capabilities),
             "total_leaves": len(leaves),
             "products": len(product_counts),
+            "scraped_pages": good_scraped,
+            "fallback_pages": fallback_count,
         },
         "capabilities": capabilities,
     }
-    
+
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT_FILE, "w") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
-    
+
     print(f"   Total entries: {len(capabilities)}")
     print()
-    print("   By capability type:")
-    for t in ["Informational", "Transactional", "Navigational", "Analytical", "Mixed"]:
+    print("   By capability type (NO Mixed):")
+    for t in ["Informational", "Transactional", "Navigational", "Analytical"]:
         if t in type_counts:
             print(f"     {t}: {type_counts[t]}")
     print()
@@ -524,8 +454,13 @@ def enrich():
     for p, count in sorted(product_counts.items(), key=lambda x: -x[1]):
         print(f"     {p}: {count}")
     print()
-    print(f"   Leaves: {len(leaves)}, Branches: {len(capabilities) - len(leaves)}")
-    print(f"   Capabilities with sample prompts: {sum(1 for c in capabilities if c.get('sample_prompts'))}")
+    print(f"   Data sources:")
+    print(f"     Scraped (real data): {good_scraped}")
+    print(f"     Title-only (no scraped data): {fallback_count}")
+    with_prompts = sum(1 for c in capabilities if c.get("sample_prompts"))
+    with_use_cases = sum(1 for c in capabilities if c.get("use_cases"))
+    print(f"     With sample prompts: {with_prompts}")
+    print(f"     With use case details: {with_use_cases}")
     print()
     print(f"   💾 Saved to {OUT_FILE}")
 
