@@ -1,34 +1,447 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAP Business AI — Joule Capabilities Explorer</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 40px; background: #f0f4f8; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; text-align: center; }
-        h1 { color: #0a6ed1; font-size: 2rem; margin-bottom: 0.5rem; }
-        .subtitle { color: #666; font-size: 1.1rem; margin-bottom: 2rem; }
-        .status { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .badge { display: inline-block; background: #0a6ed1; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
-        .timestamp { color: #999; font-size: 0.85rem; margin-top: 2rem; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAP Business AI — Joule Capabilities Explorer</title>
+<style>
+:root {
+  --sap-blue: #0070F2;
+  --sap-dark: #1B2B3A;
+  --sap-light: #F5F6F7;
+  --sap-green: #107E3E;
+  --sap-orange: #E76500;
+  --sap-red: #BB0000;
+  --sap-purple: #7B3B99;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--sap-light);
+  color: var(--sap-dark);
+  line-height: 1.5;
+}
+header {
+  background: linear-gradient(135deg, var(--sap-dark) 0%, #2C4A62 100%);
+  color: white;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+header p {
+  opacity: 0.85;
+  font-size: 1rem;
+}
+.toolbar {
+  background: white;
+  border-bottom: 1px solid #ddd;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+.toolbar label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.toolbar select, .toolbar input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  min-width: 180px;
+  background: white;
+}
+.toolbar select:focus, .toolbar input:focus {
+  outline: none;
+  border-color: var(--sap-blue);
+  box-shadow: 0 0 0 2px rgba(0,112,242,0.2);
+}
+.stats {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: #666;
+  white-space: nowrap;
+}
+.stats strong {
+  color: var(--sap-blue);
+  font-size: 1.1rem;
+}
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+.card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.card:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+}
+.card-header {
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+.card-header:hover {
+  background: #FAFBFC;
+}
+.card-header .expand {
+  color: #aaa;
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.card.open .card-header .expand {
+  transform: rotate(90deg);
+}
+.card-header .title {
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+}
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.badge-nav { background: #E8F4FD; color: #0854A0; }
+.badge-info { background: #E8FDF0; color: #107E3E; }
+.badge-trans { background: #FFF3E0; color: #E76500; }
+.badge-unknown { background: #F0F0F0; color: #666; }
+.badge-base { background: #E8FDF0; color: #107E3E; }
+.badge-premium { background: #FFF3E0; color: #E76500; }
+.badge-included { background: #E8F4FD; color: #0854A0; }
+.badge-product {
+  background: #F0E8FD;
+  color: var(--sap-purple);
+}
+.card-body {
+  display: none;
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  border-top: 1px solid #eee;
+}
+.card.open .card-body {
+  display: block;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+@media (max-width: 768px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .toolbar { flex-direction: column; }
+  .toolbar label { width: 100%; }
+  .toolbar select, .toolbar input { width: 100%; min-width: 0; }
+  .stats { margin-left: 0; }
+}
+.detail-section {
+  background: #FAFBFC;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border-left: 3px solid var(--sap-blue);
+}
+.detail-section h4 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #666;
+  margin-bottom: 0.4rem;
+}
+.detail-section p, .detail-section ul {
+  font-size: 0.9rem;
+  color: #333;
+}
+.detail-section.prompts {
+  border-left-color: var(--sap-green);
+  grid-column: 1 / -1;
+}
+.detail-section.notes {
+  border-left-color: var(--sap-orange);
+  grid-column: 1 / -1;
+}
+.detail-section.bp {
+  border-left-color: var(--sap-purple);
+  grid-column: 1 / -1;
+}
+.prompt-item {
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  margin: 0.4rem 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  border: 1px solid #e0e0e0;
+}
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 0.25rem;
+}
+footer {
+  text-align: center;
+  padding: 2rem;
+  color: #888;
+  font-size: 0.8rem;
+}
+footer a { color: var(--sap-blue); text-decoration: none; }
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+  font-size: 1.1rem;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🤖 Joule Capabilities Explorer</h1>
-        <p class="subtitle">SAP Business AI — State of Arkansas</p>
-        <div class="status">
-            <h2>🚧 Full Explorer Loading Soon</h2>
-            <p>The pipeline-generated interactive capability guide is being deployed.</p>
-            <p>
-                <span class="badge">312 Capabilities</span>
-                <span class="badge">S/4HANA Cloud</span>
-                <span class="badge">SuccessFactors</span>
-                <span class="badge">Crawl → Walk → Run</span>
-            </p>
+
+<header>
+  <h1>🤖 SAP Business AI — Joule Capabilities Explorer</h1>
+  <p>State of Arkansas • Crawl → Walk → Run Adoption</p>
+</header>
+
+<div class="toolbar">
+  <label>
+    Search
+    <input type="text" id="searchBox" placeholder="Search use cases, prompts…">
+  </label>
+  <label>
+    Type
+    <select id="filterType">
+      <option value="">All Types</option>
+    </select>
+  </label>
+  <label>
+    Product
+    <select id="filterProduct">
+      <option value="">All Products</option>
+    </select>
+  </label>
+  <label>
+    Process Area
+    <select id="filterArea">
+      <option value="">All Areas</option>
+    </select>
+  </label>
+  <label>
+    Licensing
+    <select id="filterCommercial">
+      <option value="">All</option>
+    </select>
+  </label>
+  <div class="stats">
+    Showing <strong id="countShowing">0</strong> of <strong id="countTotal">0</strong> capabilities
+  </div>
+</div>
+
+<main id="cardContainer"></main>
+
+<footer>
+  Data sourced from <a href="https://help.sap.com/docs/joule/capabilities-guide/" target="_blank">SAP Help — Joule Capabilities Guide</a>.
+  Last scraped: 2026-03-25.
+  Built with the Arkansas SAP Business AI Pipeline.
+</footer>
+
+<script>
+const DATA = [{"use_case": "What's New for Joule", "description": "Joule capability for What's New for Joule", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "2023 What's New for Joule (Archive)", "description": "Joule capability for 2023 What's New for Joule (Archive)", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule Capabilities", "description": "Joule capability for Joule Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Activating Business AI and Assigning Users", "description": "Joule capability for Activating Business AI and Assigning Users", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule Multi Language Support", "description": "Joule capability for Joule Multi Language Support", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Glossary", "description": "Joule capability for Glossary", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Analytical Insights with SAP Analytics Cloud", "description": "Joule capability for Analytical Insights with SAP Analytics Cloud", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Analytical Question Examples", "description": "Joule capability for Analytical Question Examples", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Constraints for Analytical Insights", "description": "Joule capability for Constraints for Analytical Insights", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP SuccessFactors", "description": "Joule capability for Joule in SAP SuccessFactors", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Important Notes About Using Joule", "description": "Joule capability for Important Notes About Using Joule", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Using Siri to Launch Joule", "description": "Joule capability for Using Siri to Launch Joule", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Use Cases Supported in Joule", "description": "Joule capability for Use Cases Supported in Joule", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Compensation Use Cases", "description": "Joule capability for Compensation Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Employee Central Use Cases", "description": "Joule capability for Employee Central Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Employee Central Payroll Use Cases", "description": "Joule capability for Employee Central Payroll Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Learning Use Cases", "description": "Joule capability for Learning Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Onboarding Use Cases", "description": "Joule capability for Onboarding Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Opportunity Marketplace Use Cases", "description": "Joule capability for Opportunity Marketplace Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Performance & Goals Use Cases", "description": "Joule capability for Performance & Goals Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Performance Preparation Agent", "description": "Joule capability for Performance Preparation Agent", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Important Notes About Using Agent", "description": "Joule capability for Important Notes About Using Agent", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Configuring Performance Preparation Agent", "description": "Joule capability for Configuring Performance Preparation Agent", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Platform Use Cases", "description": "Joule capability for Platform Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Recruiting Use Cases", "description": "Joule capability for Recruiting Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Succession & Development Use Cases", "description": "Joule capability for Succession & Development Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Time Tracking Use Cases", "description": "Joule capability for Time Tracking Use Cases", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP S/4HANA Cloud Public Edition", "description": "Joule capability for Joule in SAP S/4HANA Cloud Public Edition", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Finding Apps with Navigational Capability", "description": "Joule capability for Finding Apps with Navigational Capability", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Informational Capability", "description": "Joule capability for Informational Capability", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Transactional Capabilities", "description": "Joule capability for Transactional Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cross-Area Capabilities", "description": "Joule capability for Cross-Area Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Viewing Business Data", "description": "Joule capability for Viewing Business Data", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Creating Insights Cards", "description": "Joule capability for Creating Insights Cards", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Business Partners", "description": "Joule capability for Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Business Partners", "description": "Joule capability for Display Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Customers", "description": "Joule capability for Display Customers", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Suppliers", "description": "Joule capability for Display Suppliers", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Asset Management", "description": "Joule capability for Asset Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Creating Maintenance Notification and Maintenance Order", "description": "Joule capability for Creating Maintenance Notification and Maintenance Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Finance", "description": "Joule capability for Finance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Creating Fixed Asset Master Data", "description": "Joule capability for Creating Fixed Asset Master Data", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cash and Liquidity Management", "description": "Joule capability for Cash and Liquidity Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Displaying Cash Positions", "description": "Joule capability for Displaying Cash Positions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Making Bank Transfers", "description": "Joule capability for Making Bank Transfers", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "AI-Assisted Error Resolution for Cost Accounting", "description": "Joule capability for AI-Assisted Error Resolution for Cost Accounting", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Sales", "description": "Joule capability for Sales", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Expiring Price Handling", "description": "Joule capability for Expiring Price Handling", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Posting Issue Handling for Billing Documents", "description": "Joule capability for Posting Issue Handling for Billing Documents", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Sales Order Status Check", "description": "Joule capability for Sales Order Status Check", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Automatic Filling of Billing Document Number in Joule", "description": "Joule capability for Automatic Filling of Billing Document Number in Joule", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Sourcing and Procurement", "description": "Joule capability for Sourcing and Procurement", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Generating Draft Reminder Emails for Purchase Orders", "description": "Joule capability for Generating Draft Reminder Emails for Purchase Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Updating Delivery Dates for Purchase Orders", "description": "Joule capability for Updating Delivery Dates for Purchase Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Managing Supplier Invoices", "description": "Joule capability for Managing Supplier Invoices", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Supplier Confirmations for Purchase Orders", "description": "Joule capability for Create Supplier Confirmations for Purchase Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Supply Chain", "description": "Joule capability for Supply Chain", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Availability Checks", "description": "Joule capability for Availability Checks", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Executing Backorder Processing (BOP) Run", "description": "Joule capability for Executing Backorder Processing (BOP) Run", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Warehouse Management", "description": "Joule capability for Warehouse Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Managing Outbound Delivery Orders", "description": "Joule capability for Managing Outbound Delivery Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Processing Warehouse Tasks", "description": "Joule capability for Processing Warehouse Tasks", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Managing Physical Stock", "description": "Joule capability for Managing Physical Stock", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Managing Inbound Deliveries", "description": "Joule capability for Managing Inbound Deliveries", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Transportation Management", "description": "Joule capability for Transportation Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Freight Agreements", "description": "Joule capability for Search Freight Agreements", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Rate Tables", "description": "Joule capability for Search Rate Tables", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Country/Region-Specific Capabilities", "description": "Joule capability for Country/Region-Specific Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Document and Reporting Compliance", "description": "Joule capability for Document and Reporting Compliance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Electronic Document Error Explanations", "description": "Joule capability for Electronic Document Error Explanations", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP S/4HANA Cloud Private Edition", "description": "Joule capability for Joule in SAP S/4HANA Cloud Private Edition", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Release-Specific Capabilities", "description": "Joule capability for Release-Specific Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Finding Apps with Navigational Capability", "description": "Joule capability for Finding Apps with Navigational Capability", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Informational Capability", "description": "Joule capability for Informational Capability", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Transactional Capabilities", "description": "Joule capability for Transactional Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cross-Area Capabilities", "description": "Joule capability for Cross-Area Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Business Partners", "description": "Joule capability for Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Business Partners", "description": "Joule capability for Create Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Business Partners", "description": "Joule capability for Display Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Business Partners", "description": "Joule capability for Search Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Edit Business Partners", "description": "Joule capability for Edit Business Partners", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Business Partner Certificates", "description": "Joule capability for Manage Business Partner Certificates", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Supplier", "description": "Joule capability for Display Supplier", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Supplier", "description": "Joule capability for Search Supplier", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Customer", "description": "Joule capability for Display Customer", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Customer", "description": "Joule capability for Search Customer", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Master Data Governance", "description": "Joule capability for Master Data Governance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Business Partners with Governance", "description": "Joule capability for Create Business Partners with Governance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Business Partners with Governance", "description": "Joule capability for Display Business Partners with Governance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search Business Partners with Governance", "description": "Joule capability for Search Business Partners with Governance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Edit Business Partners with Governance", "description": "Joule capability for Edit Business Partners with Governance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display MDG Process", "description": "Joule capability for Display MDG Process", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search MDG Process", "description": "Joule capability for Search MDG Process", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "ILM Data Destruction", "description": "Joule capability for ILM Data Destruction", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Destroying Archived Data", "description": "Joule capability for Destroying Archived Data", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Destroying Data from the Database", "description": "Joule capability for Destroying Data from the Database", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Business Rules Framework Plus", "description": "Joule capability for Business Rules Framework Plus", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Decision Table", "description": "Joule capability for Create Decision Table", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Product Master", "description": "Joule capability for Display Product Master", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manufacturing", "description": "Joule capability for Manufacturing", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manufacturing Supervisor", "description": "Joule capability for Manufacturing Supervisor", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Production Order", "description": "Joule capability for Production Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Process Order", "description": "Joule capability for Process Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "R&D/ Engineering", "description": "Joule capability for R&D/ Engineering", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Enterprise Portfolio and Project Management", "description": "Joule capability for Enterprise Portfolio and Project Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Product Lifecycle Management", "description": "Joule capability for Product Lifecycle Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Viewing Change Record Information", "description": "Joule capability for Viewing Change Record Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarizing Change Record Information", "description": "Joule capability for Summarizing Change Record Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Viewing Bill of Material Information", "description": "Joule capability for Viewing Bill of Material Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Sales", "description": "Joule capability for Sales", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Sales Order Information", "description": "Joule capability for Fetch Sales Order Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Perform Sales Order Field Changes and Resolve Fulfillment Issues", "description": "Joule capability for Perform Sales Order Field Changes and Resolve Fulfillment Issues", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Requesting Access to SAP Business Technology Platform (SAP BTP)", "description": "Joule capability for Requesting Access to SAP Business Technology Platform (SAP BTP)", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Sales Documents with Reference", "description": "Joule capability for Create Sales Documents with Reference", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Billing Document Information", "description": "Joule capability for Fetch Billing Document Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Perform Mass Change of Sales Orders", "description": "Joule capability for Perform Mass Change of Sales Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Billing Documents", "description": "Joule capability for Create Billing Documents", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Perform Release and Acceptance of Solution Quotations", "description": "Joule capability for Perform Release and Acceptance of Solution Quotations", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Solution Quotation Information", "description": "Joule capability for Fetch Solution Quotation Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Solution Quotation", "description": "Joule capability for Create Solution Quotation", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Renewing Expiring Prices", "description": "Joule capability for Renewing Expiring Prices", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Change Sales Quotations", "description": "Joule capability for Change Sales Quotations", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display List of Open Sales Documents", "description": "Joule capability for Display List of Open Sales Documents", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Supply Chain", "description": "Joule capability for Supply Chain", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Extended Warehouse Management", "description": "Joule capability for Extended Warehouse Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Searching for Outbound Delivery Orders", "description": "Joule capability for Searching for Outbound Delivery Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Searching for Outbound Delivery Order Items", "description": "Joule capability for Searching for Outbound Delivery Order Items", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search for Warehouse Tasks", "description": "Joule capability for Search for Warehouse Tasks", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarizing Outbound Delivery Orders", "description": "Joule capability for Summarizing Outbound Delivery Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarizing Outbound Delivery Order Items", "description": "Joule capability for Summarizing Outbound Delivery Order Items", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarize Warehouse Orders", "description": "Joule capability for Summarize Warehouse Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Ask for Outbound Delivery Order Properties", "description": "Joule capability for Ask for Outbound Delivery Order Properties", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Ask for Outbound Delivery Order Item Properties", "description": "Joule capability for Ask for Outbound Delivery Order Item Properties", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Delivery and Transportation", "description": "Joule capability for Delivery and Transportation", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Outbound Deliveries", "description": "Joule capability for Manage Outbound Deliveries", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Service", "description": "Joule capability for Service", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Service Confirmation Information", "description": "Joule capability for Fetch Service Confirmation Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Complete or Cancel Service Confirmations", "description": "Joule capability for Complete or Cancel Service Confirmations", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Search and Display Service Orders", "description": "Joule capability for Search and Display Service Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Change Statuses of Service Orders and Service Order Items", "description": "Joule capability for Change Statuses of Service Orders and Service Order Items", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Processing In-House Services", "description": "Joule capability for Processing In-House Services", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Retrieval of Equipment Information in Service Management", "description": "Joule capability for Retrieval of Equipment Information in Service Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Requesting Access to SAP Business Technology Platform (SAP BTP)", "description": "Joule capability for Requesting Access to SAP Business Technology Platform (SAP BTP)", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Service Contract Information", "description": "Joule capability for Fetch Service Contract Information", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Update Service Contract Status", "description": "Joule capability for Update Service Contract Status", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Procurement", "description": "Joule capability for Procurement", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Operational Purchaser", "description": "Joule capability for Operational Purchaser", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create Purchase Requisitions", "description": "Joule capability for Create Purchase Requisitions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Change Purchase Orders", "description": "Joule capability for Change Purchase Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Finance", "description": "Joule capability for Finance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Audit Journal", "description": "Joule capability for Audit Journal", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display G/L Account Balance", "description": "Joule capability for Display G/L Account Balance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display G/L Account Line Items - General Ledger View", "description": "Joule capability for Display G/L Account Line Items - General Ledger View", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display G/L Account Line Items - Posting View", "description": "Joule capability for Display G/L Account Line Items - Posting View", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Document Flow", "description": "Joule capability for Display Document Flow", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Journal Entries in T-Accounting View", "description": "Joule capability for Display Journal Entries in T-Accounting View", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Clearing Single G/L Open Item", "description": "Joule capability for Clearing Single G/L Open Item", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Process Invoice Reminders", "description": "Joule capability for Process Invoice Reminders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Cost Center", "description": "Joule capability for Manage Cost Center", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Internal Order", "description": "Joule capability for Manage Internal Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Journal Entries", "description": "Joule capability for Manage Journal Entries", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Journal Entry Templates", "description": "Joule capability for Manage Journal Entry Templates", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Recurring Journal Entries", "description": "Joule capability for Manage Recurring Journal Entries", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manual Accrual Object Creation", "description": "Joule capability for Manual Accrual Object Creation", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Billing and Revenue Innovation Management", "description": "Joule capability for Billing and Revenue Innovation Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Convergent Invoicing", "description": "Joule capability for Convergent Invoicing", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Clarification Case", "description": "Joule capability for Clarification Case", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Billing Plan", "description": "Joule capability for Billing Plan", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Invoicing Document", "description": "Joule capability for Invoicing Document", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Billing Request", "description": "Joule capability for Billing Request", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Contract Accounting", "description": "Joule capability for Contract Accounting", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Dispute Resolution", "description": "Joule capability for Dispute Resolution", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Payment Resolution", "description": "Joule capability for Payment Resolution", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Subscription Order Management", "description": "Joule capability for Subscription Order Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Subscription Order", "description": "Joule capability for Subscription Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Searching for and Navigating to Subscription Orders", "description": "Joule capability for Searching for and Navigating to Subscription Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Creating a Subscription Order", "description": "Joule capability for Creating a Subscription Order", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Subscription Contract", "description": "Joule capability for Subscription Contract", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Searching for and Navigating to Subscription Contracts", "description": "Joule capability for Searching for and Navigating to Subscription Contracts", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarizing Subscriptions", "description": "Joule capability for Summarizing Subscriptions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Changing Subscription Contracts", "description": "Joule capability for Changing Subscription Contracts", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Master Agreement", "description": "Joule capability for Master Agreement", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Searching for and Navigating to Master Agreements", "description": "Joule capability for Searching for and Navigating to Master Agreements", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Summarizing Master Agreements", "description": "Joule capability for Summarizing Master Agreements", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cash and Liquidity Management", "description": "Joule capability for Cash and Liquidity Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cash Management", "description": "Joule capability for Cash Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Cost Center Budgeting", "description": "Joule capability for Cost Center Budgeting", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Accounts Receivable", "description": "Joule capability for Manage Accounts Receivable", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Finance Management Controlling", "description": "Joule capability for Finance Management Controlling", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Activity Type", "description": "Joule capability for Manage Activity Type", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Profit Center", "description": "Joule capability for Manage Profit Center", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Statistical Key Figures and Values", "description": "Joule capability for Manage Statistical Key Figures and Values", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Commitment by Cost Center", "description": "Joule capability for Commitment by Cost Center", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Manage Direct Activity Allocation", "description": "Joule capability for Manage Direct Activity Allocation", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Reassign Cost and Revenue", "description": "Joule capability for Reassign Cost and Revenue", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Field Logistics", "description": "Joule capability for Field Logistics", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Quantity and Milestones for Non-Stock, Rental and Ad Hoc Items", "description": "Joule capability for Fetch Quantity and Milestones for Non-Stock, Rental and Ad Hoc Items", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Purchase Order Receipt Details for Field Logistics Plant", "description": "Joule capability for Fetch Purchase Order Receipt Details for Field Logistics Plant", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Order Risk Information for Maintenance or Network Orders", "description": "Joule capability for Fetch Order Risk Information for Maintenance or Network Orders", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Core Logistics", "description": "Joule capability for Core Logistics", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Fetch Batches using Filtering Capabilities", "description": "Joule capability for Fetch Batches using Filtering Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Asset Management", "description": "Joule capability for Asset Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Perform Maintenance Jobs", "description": "Joule capability for Perform Maintenance Jobs", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Display Maintenance Orders and Maintenance Notifications", "description": "Joule capability for Display Maintenance Orders and Maintenance Notifications", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Create and View Maintenance Events", "description": "Joule capability for Create and View Maintenance Events", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Production Planning and Detailed Scheduling", "description": "Joule capability for Production Planning and Detailed Scheduling", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Detailed Scheduling Optimization", "description": "Joule capability for Detailed Scheduling Optimization", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Products, Resources, and Receipts in Production Planning and Detailed Scheduling", "description": "Joule capability for Products, Resources, and Receipts in Production Planning and Detailed Scheduling", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Initial Setup", "description": "Joule capability for Initial Setup", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Country/Region-Specific Capabilities", "description": "Joule capability for Country/Region-Specific Capabilities", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Document and Reporting Compliance", "description": "Joule capability for Document and Reporting Compliance", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Electronic Document Error Explanation", "description": "Joule capability for Electronic Document Error Explanation", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Electronic Document Error Summary", "description": "Joule capability for Electronic Document Error Summary", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP BTP Cockpit", "description": "Joule capability for Joule in SAP BTP Cockpit", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Integrated Product Development", "description": "Joule capability for Joule in SAP Integrated Product Development", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Digital Manufacturing", "description": "Joule capability for Joule in SAP Digital Manufacturing", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Logistics Management", "description": "Joule capability for Joule in SAP Logistics Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Integrated Business Planning", "description": "Joule capability for Joule in SAP Integrated Business Planning", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Risk and Assurance Management", "description": "Joule capability for Joule in SAP Risk and Assurance Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Signavio Solutions", "description": "Joule capability for Joule in SAP Signavio Solutions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Concur Solutions", "description": "Joule capability for Joule in SAP Concur Solutions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Ariba Solutions", "description": "Joule capability for Joule in SAP Ariba Solutions", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Ariba Intake Management", "description": "Joule capability for Joule in SAP Ariba Intake Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Field Service Management", "description": "Joule capability for Joule in SAP Field Service Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Build Work Zone, advanced edition", "description": "Joule capability for Joule in SAP Build Work Zone, advanced edition", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Batch Release Hub for Life Sciences", "description": "Joule capability for Joule in SAP Batch Release Hub for Life Sciences", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Sports One", "description": "Joule capability for Joule in SAP Sports One", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}, {"use_case": "Joule in SAP Incentive Management", "description": "Joule capability for Joule in SAP Incentive Management", "type": "Generative AI", "product": "", "area": "", "commercial": "Unknown", "prompts": "", "notes": "", "best_practices": "", "mobile": "", "source_page": ""}];
+
+// Populate filters
+function populateSelect(id, values) {
+  const sel = document.getElementById(id);
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+const types = [...new Set(DATA.map(d => d.type))].sort();
+const products = [...new Set(DATA.map(d => d.product))].sort();
+const areas = [...new Set(DATA.map(d => d.area).filter(Boolean))].sort();
+const commercials = [...new Set(DATA.map(d => d.commercial))].sort();
+
+populateSelect('filterType', types);
+populateSelect('filterProduct', products);
+populateSelect('filterArea', areas);
+populateSelect('filterCommercial', commercials);
+
+document.getElementById('countTotal').textContent = DATA.length;
+
+function typeBadge(t) {
+  const cls = t === 'Navigational' ? 'badge-nav'
+    : t === 'Informational' ? 'badge-info'
+    : t === 'Transactional' ? 'badge-trans'
+    : 'badge-unknown';
+  return `<span class="badge ${cls}">${t}</span>`;
+}
+
+function commercialBadge(c) {
+  const cls = c.includes('Premium') ? 'badge-premium'
+    : c.includes('Base') ? 'badge-base'
+    : 'badge-included';
+  return `<span class="badge ${cls}">${c}</span>`;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatPrompts(prompts) {
+  if (!prompts) return '';
+  return prompts.split('\n').filter(Boolean).map(p =>
+    `<div class="prompt-item">${escHtml(p.replace(/^"|"$/g, ''))}</div>`
+  ).join('');
+}
+
+function formatText(text) {
+  if (!text) return '';
+  return text.split('\n').filter(Boolean).map(p => `<p>${escHtml(p)}</p>`).join('');
+}
+
+function renderCards(filtered) {
+  const container = document.getElementById('cardContainer');
+  document.getElementById('countShowing').textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-results">No capabilities match your filters.</div>';
+    return;
+  }
+
+  // Limit rendering for performance
+  const toRender = filtered.slice(0, 500);
+  let html = '';
+
+  toRender.forEach((e, i) => {
+    const hasPrompts = e.prompts && e.prompts.trim();
+    const hasNotes = e.notes && e.notes.trim();
+    const hasDesc = e.description && e.description.trim();
+    const hasBP = e.best_practices && e.best_practices.trim();
+
+    html += `<div class="card" id="card-${i}">
+      <div class="card-header" onclick="toggleCard(${i})">
+        <span class="expand">▶</span>
+        <span class="title">${escHtml(e.use_case)}</span>
+        ${typeBadge(e.type)}
+        ${commercialBadge(e.commercial)}
+        <span class="badge badge-product">${escHtml(e.product)}</span>
+      </div>
+      <div class="card-body">
+        <div class="meta">
+          <span>📂 ${escHtml(e.area)}</span>
+          <span>📄 ${escHtml(e.source_page)}</span>
+          ${e.mobile ? '<span>📱 Mobile: ' + escHtml(e.mobile) + '</span>' : ''}
         </div>
-        <p class="timestamp">Placeholder deployed to verify pipeline connectivity</p>
-    </div>
+        <div class="detail-grid">
+          ${hasDesc ? `<div class="detail-section"><h4>Description</h4>${formatText(e.description)}</div>` : ''}
+          ${hasPrompts ? `<div class="detail-section prompts"><h4>💬 Sample Prompts</h4>${formatPrompts(e.prompts)}</div>` : ''}
+          ${hasNotes ? `<div class="detail-section notes"><h4>⚠️ Important Notes</h4>${formatText(e.notes)}</div>` : ''}
+          ${hasBP ? `<div class="detail-section bp"><h4>✅ Best Practices</h4>${formatText(e.notes)}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  if (filtered.length > 500) {
+    html += `<div class="no-results">Showing first 500 of ${filtered.length} results. Narrow your filters to see more.</div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function toggleCard(i) {
+  document.getElementById('card-' + i).classList.toggle('open');
+}
+
+function applyFilters() {
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const type = document.getElementById('filterType').value;
+  const product = document.getElementById('filterProduct').value;
+  const area = document.getElementById('filterArea').value;
+  const commercial = document.getElementById('filterCommercial').value;
+
+  const filtered = DATA.filter(e => {
+    if (type && e.type !== type) return false;
+    if (product && e.product !== product) return false;
+    if (area && e.area !== area) return false;
+    if (commercial && e.commercial !== commercial) return false;
+    if (search) {
+      const blob = (e.use_case + ' ' + e.description + ' ' + e.prompts + ' ' + e.area + ' ' + e.product).toLowerCase();
+      if (!blob.includes(search)) return false;
+    }
+    return true;
+  });
+
+  renderCards(filtered);
+}
+
+// Dynamic area filter based on selected product
+document.getElementById('filterProduct').addEventListener('change', function() {
+  const product = this.value;
+  const areaSelect = document.getElementById('filterArea');
+  const currentArea = areaSelect.value;
+  
+  // Get areas for selected product (or all)
+  let relevantAreas;
+  if (product) {
+    relevantAreas = [...new Set(DATA.filter(d => d.product === product).map(d => d.area).filter(Boolean))].sort();
+  } else {
+    relevantAreas = areas;
+  }
+  
+  // Rebuild area select
+  areaSelect.innerHTML = '<option value="">All Areas</option>';
+  relevantAreas.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a;
+    if (a === currentArea) opt.selected = true;
+    areaSelect.appendChild(opt);
+  });
+  
+  applyFilters();
+});
+
+document.getElementById('searchBox').addEventListener('input', applyFilters);
+document.getElementById('filterType').addEventListener('change', applyFilters);
+document.getElementById('filterArea').addEventListener('change', applyFilters);
+document.getElementById('filterCommercial').addEventListener('change', applyFilters);
+
+// Initial render
+applyFilters();
+</script>
 </body>
 </html>
