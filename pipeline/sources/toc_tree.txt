@@ -1,0 +1,228 @@
+What's New for Joule
+2023 What's New for Joule (Archive)
+Joule Capabilities
+Activating Business AI and Assigning Users
+Joule Multi Language Support
+Glossary
+Analytical Insights with SAP Analytics Cloud
+  Analytical Question Examples
+  Constraints for Analytical Insights
+Joule in SAP SuccessFactors
+  Important Notes About Using Joule
+  Using Siri to Launch Joule
+  Use Cases Supported in Joule
+  Compensation Use Cases
+  Employee Central Use Cases
+  Employee Central Payroll Use Cases
+  Learning Use Cases
+  Onboarding Use Cases
+  Opportunity Marketplace Use Cases
+  Performance & Goals Use Cases
+  Performance Preparation Agent
+    Important Notes About Using Agent
+    Configuring Performance Preparation Agent
+  Platform Use Cases
+  Recruiting Use Cases
+  Succession & Development Use Cases
+  Time Tracking Use Cases
+Joule in SAP S/4HANA Cloud Public Edition
+  Finding Apps with Navigational Capability
+  Informational Capability
+  Transactional Capabilities
+  Cross-Area Capabilities
+    Viewing Business Data
+    Creating Insights Cards
+  Business Partners
+    Display Business Partners
+    Display Customers
+    Display Suppliers
+  Asset Management
+    Creating Maintenance Notification and Maintenance Order
+  Finance
+    Creating Fixed Asset Master Data
+    Cash and Liquidity Management
+      Displaying Cash Positions
+      Making Bank Transfers
+    AI-Assisted Error Resolution for Cost Accounting
+  Sales
+    Expiring Price Handling
+    Posting Issue Handling for Billing Documents
+    Sales Order Status Check
+    Automatic Filling of Billing Document Number in Joule
+  Sourcing and Procurement
+    Generating Draft Reminder Emails for Purchase Orders
+    Updating Delivery Dates for Purchase Orders
+    Managing Supplier Invoices
+    Create Supplier Confirmations for Purchase Orders
+  Supply Chain
+    Availability Checks
+    Executing Backorder Processing (BOP) Run
+  Warehouse Management
+    Managing Outbound Delivery Orders
+    Processing Warehouse Tasks
+    Managing Physical Stock
+    Managing Inbound Deliveries
+  Transportation Management
+    Search Freight Agreements
+    Search Rate Tables
+  Country/Region-Specific Capabilities
+    Document and Reporting Compliance
+      Electronic Document Error Explanations
+Joule in SAP S/4HANA Cloud Private Edition
+  Release-Specific Capabilities
+  Finding Apps with Navigational Capability
+  Informational Capability
+  Transactional Capabilities
+  Cross-Area Capabilities
+  Business Partners
+    Create Business Partners
+    Display Business Partners
+    Search Business Partners
+    Edit Business Partners
+    Manage Business Partner Certificates
+    Display Supplier
+    Search Supplier
+    Display Customer
+    Search Customer
+  Master Data Governance
+    Create Business Partners with Governance
+    Display Business Partners with Governance
+    Search Business Partners with Governance
+    Edit Business Partners with Governance
+    Display MDG Process
+    Search MDG Process
+  ILM Data Destruction
+    Destroying Archived Data
+    Destroying Data from the Database
+  Business Rules Framework Plus
+    Create Decision Table
+  Display Product Master
+  Manufacturing
+    Manufacturing Supervisor
+    Production Order
+    Process Order
+  R&D/ Engineering
+    Enterprise Portfolio and Project Management
+    Product Lifecycle Management
+      Viewing Change Record Information
+      Summarizing Change Record Information
+      Viewing Bill of Material Information
+  Sales
+    Fetch Sales Order Information
+    Perform Sales Order Field Changes and Resolve Fulfillment Issues
+    Requesting Access to SAP Business Technology Platform (SAP BTP)
+    Create Sales Documents with Reference
+    Fetch Billing Document Information
+    Perform Mass Change of Sales Orders
+    Create Billing Documents
+    Perform Release and Acceptance of Solution Quotations
+    Fetch Solution Quotation Information
+    Create Solution Quotation
+    Renewing Expiring Prices
+    Change Sales Quotations
+    Display List of Open Sales Documents
+  Supply Chain
+    Extended Warehouse Management
+      Searching for Outbound Delivery Orders
+      Searching for Outbound Delivery Order Items
+      Search for Warehouse Tasks
+      Summarizing Outbound Delivery Orders
+      Summarizing Outbound Delivery Order Items
+      Summarize Warehouse Orders
+      Ask for Outbound Delivery Order Properties
+      Ask for Outbound Delivery Order Item Properties
+    Delivery and Transportation
+      Manage Outbound Deliveries
+  Service
+    Fetch Service Confirmation Information
+    Complete or Cancel Service Confirmations
+    Search and Display Service Orders
+    Change Statuses of Service Orders and Service Order Items
+    Processing In-House Services
+    Retrieval of Equipment Information in Service Management
+    Requesting Access to SAP Business Technology Platform (SAP BTP)
+    Fetch Service Contract Information
+    Update Service Contract Status
+  Procurement
+    Operational Purchaser
+      Create Purchase Requisitions
+      Change Purchase Orders
+  Finance
+    Audit Journal
+    Display G/L Account Balance
+    Display G/L Account Line Items - General Ledger View
+    Display G/L Account Line Items - Posting View
+    Display Document Flow
+    Display Journal Entries in T-Accounting View
+    Clearing Single G/L Open Item
+    Process Invoice Reminders
+    Manage Cost Center
+    Manage Internal Order
+    Manage Journal Entries
+    Manage Journal Entry Templates
+    Manage Recurring Journal Entries
+    Manual Accrual Object Creation
+    Billing and Revenue Innovation Management
+      Convergent Invoicing
+      Clarification Case
+      Billing Plan
+      Invoicing Document
+      Billing Request
+      Contract Accounting
+      Dispute Resolution
+      Payment Resolution
+    Subscription Order Management
+      Subscription Order
+        Searching for and Navigating to Subscription Orders
+        Creating a Subscription Order
+      Subscription Contract
+        Searching for and Navigating to Subscription Contracts
+        Summarizing Subscriptions
+        Changing Subscription Contracts
+      Master Agreement
+        Searching for and Navigating to Master Agreements
+        Summarizing Master Agreements
+    Cash and Liquidity Management
+      Cash Management
+    Cost Center Budgeting
+    Manage Accounts Receivable
+    Finance Management Controlling
+      Manage Activity Type
+      Manage Profit Center
+      Manage Statistical Key Figures and Values
+      Commitment by Cost Center
+      Manage Direct Activity Allocation
+      Reassign Cost and Revenue
+  Field Logistics
+    Fetch Quantity and Milestones for Non-Stock, Rental and Ad Hoc Items
+    Fetch Purchase Order Receipt Details for Field Logistics Plant
+    Fetch Order Risk Information for Maintenance or Network Orders
+  Core Logistics
+    Fetch Batches using Filtering Capabilities
+  Asset Management
+    Perform Maintenance Jobs
+    Display Maintenance Orders and Maintenance Notifications
+    Create and View Maintenance Events
+  Production Planning and Detailed Scheduling
+    Detailed Scheduling Optimization
+    Products, Resources, and Receipts in Production Planning and Detailed Scheduling
+  Initial Setup
+  Country/Region-Specific Capabilities
+    Document and Reporting Compliance
+      Electronic Document Error Explanation
+      Electronic Document Error Summary
+Joule in SAP BTP Cockpit
+Joule in SAP Integrated Product Development
+Joule in SAP Digital Manufacturing
+Joule in SAP Logistics Management
+Joule in SAP Integrated Business Planning
+Joule in SAP Risk and Assurance Management
+Joule in SAP Signavio Solutions
+Joule in SAP Concur Solutions
+Joule in SAP Ariba Solutions
+Joule in SAP Ariba Intake Management
+Joule in SAP Field Service Management
+Joule in SAP Build Work Zone, advanced edition
+Joule in SAP Batch Release Hub for Life Sciences
+Joule in SAP Sports One
+Joule in SAP Incentive Management

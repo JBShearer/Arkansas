@@ -1,20 +1,20 @@
 """Scrape Joule Capabilities Guide from SAP Help Portal.
 
-The Capabilities Guide (d0750ba6...) is the single source of truth for all
-Joule capabilities across products. EVERY node in the TOC tree is scraped —
-both branch pages and leaf pages can contain use-case tables.
+The Capabilities Guide is the single source of truth for all Joule
+capabilities. We maintain the full TOC in toc_tree.txt (indented text)
+and fetch each page via the slug-based content API:
 
-Each page may have a rich table with:
-  Use Case, Description, Important Notes, Capability Type,
-  Sample Prompts, Commercial Model, On Mobile App?, Best Practices
+    https://help.sap.com/docs/content/{DELIVERABLE_ID}/{slug}
 
-The root page has What's New and Changes to Existing Capabilities.
+The TOC API (/docs/meta/.../toc) returns a STALE subset, so we derive
+slugs from page titles using SAP Help's URL conventions.
 
 Usage:
     python3 -m pipeline.sources.scrape_joule
 """
 
 import json
+import re
 import ssl
 import time
 import urllib.request
@@ -26,6 +26,66 @@ BASE = "https://help.sap.com"
 WORKSPACE = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = WORKSPACE / "pipeline" / "data"
 SSL_CTX = ssl._create_unverified_context()
+
+
+# ---------------------------------------------------------------------------
+# TOC Tree Parser
+# ---------------------------------------------------------------------------
+
+def parse_toc_file(filepath):
+    """Parse indented text tree into structured TOC list."""
+    lines = Path(filepath).read_text().splitlines()
+    root = []
+    stack = [(root, -1)]  # (children_list, indent_level)
+
+    for line in lines:
+        if not line.strip():
+            continue
+        indent = len(line) - len(line.lstrip())
+        title = line.strip()
+
+        node = {"title": title, "children": []}
+
+        # Pop stack to find parent
+        while stack and stack[-1][1] >= indent:
+            stack.pop()
+
+        parent_children = stack[-1][0]
+        parent_children.append(node)
+        stack.append((node["children"], indent))
+
+    return root
+
+
+def title_to_slug(title):
+    """Convert a page title to a URL slug matching SAP Help conventions."""
+    s = title.strip().lower()
+    s = re.sub(r'&', '', s)
+    s = re.sub(r'/', ' ', s)
+    s = re.sub(r'[^a-z0-9\s-]', '', s)
+    s = re.sub(r'\s+', '-', s.strip())
+    s = re.sub(r'-+', '-', s)
+    return s.strip('-')
+
+
+def flatten_toc(nodes, parent="", depth=0):
+    """Flatten TOC tree into list of page descriptors with slugs."""
+    pages = []
+    for node in nodes:
+        title = node["title"]
+        path = f"{parent} > {title}" if parent else title
+        children = node.get("children", [])
+        pages.append({
+            "title": title,
+            "slug": title_to_slug(title),
+            "path": path,
+            "parent": parent,
+            "is_leaf": not children,
+            "depth": depth,
+        })
+        if children:
+            pages.extend(flatten_toc(children, path, depth + 1))
+    return pages
 
 
 # ---------------------------------------------------------------------------
@@ -128,14 +188,14 @@ def fetch_json(url, retries=5):
             data = resp.read()
             if data[:1] == b"<":
                 wait = 3 + attempt * 5
-                print(f"    ⏳ Rate limited, waiting {wait}s...")
+                print(f"    ⏳ Rate limited, waiting {wait}s...", flush=True)
                 time.sleep(wait)
                 continue
             return json.loads(data.decode("utf-8"))
         except Exception as e:
             if attempt < retries - 1:
                 wait = 3 + attempt * 5
-                print(f"    ⏳ Error ({e}), retrying in {wait}s...")
+                print(f"    ⏳ Error ({e}), retrying in {wait}s...", flush=True)
                 time.sleep(wait)
             else:
                 raise
@@ -148,24 +208,6 @@ def cell_to_str(cell):
     return cell
 
 
-def collect_all_pages(nodes, parent_title=""):
-    """Recursively collect EVERY page (branch and leaf) from TOC."""
-    pages = []
-    for node in nodes:
-        title = node["title"].strip()
-        full_path = f"{parent_title} > {title}" if parent_title else title
-        children = node.get("children", [])
-        pages.append({
-            "id": node["id"], "title": title,
-            "path": full_path, "parent": parent_title,
-            "is_leaf": not children,
-        })
-        if children:
-            pages.extend(collect_all_pages(children, full_path))
-    return pages
-
-
-# Column-name mapping for the use-case tables
 COLUMN_KEYWORDS = {
     "use_case":         ["use case", "capability", "feature", "task", "function"],
     "description":      ["description", "detail"],
@@ -198,7 +240,7 @@ def map_columns(header_row):
     return col_map
 
 
-def extract_entries(html, page_title, parent_product):
+def extract_entries(html, page_title, parent_path):
     """Parse HTML and extract all table entries."""
     parser = TableExtractor()
     parser.feed(html)
@@ -215,7 +257,7 @@ def extract_entries(html, page_title, parent_product):
         for row in rows[1:]:
             entry = {
                 "source_page": page_title,
-                "source_product": parent_product,
+                "source_path": parent_path,
                 "section": section,
             }
             for field, idx in col_map.items():
@@ -227,7 +269,6 @@ def extract_entries(html, page_title, parent_product):
                     else:
                         entry[field] = cell_to_str(raw).strip().replace("\n", " ").replace("  ", " ")
 
-            # Skip noise rows (Supported Languages table)
             uc = entry.get("use_case", "")
             if isinstance(uc, str) and uc.lower() in ("language", "english", "status", "supported", ""):
                 continue
@@ -242,120 +283,118 @@ def extract_entries(html, page_title, parent_product):
 # ---------------------------------------------------------------------------
 
 def main():
-    print("🔍 Scraping Joule Capabilities Guide — ALL pages")
+    print("🔍 Scraping Joule Capabilities Guide — FULL TREE (slug-based)")
     print(f"   {BASE}/docs/joule/capabilities-guide/")
     print(f"   Deliverable: {DELIVERABLE_ID}\n")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 1. Fetch TOC
-    print("📋 Fetching table of contents...")
-    toc = fetch_json(f"{BASE}/docs/meta/{DELIVERABLE_ID}/toc")
-    root = toc[0] if isinstance(toc, list) else toc
-    root_id = root["id"]
-
-    # Collect every page in the tree (branch + leaf), excluding the root itself
-    all_pages = collect_all_pages(root.get("children", []))
+    # 1. Parse TOC
+    toc_path = Path(__file__).parent / "toc_tree.txt"
+    print(f"📋 Loading TOC from {toc_path.name}...")
+    tree = parse_toc_file(toc_path)
+    all_pages = flatten_toc(tree)
     leaves = [p for p in all_pages if p["is_leaf"]]
     branches = [p for p in all_pages if not p["is_leaf"]]
-    print(f"   {len(all_pages)} total pages ({len(leaves)} leaves, {len(branches)} branches)")
-    print(f"   + 1 root page\n")
+    print(f"   {len(all_pages)} total pages ({len(leaves)} leaves, {len(branches)} branches)\n")
 
-    # 2. Scrape root page (What's New + Changes)
-    print("📰 Root page (What's New)...")
-    root_data = fetch_json(f"{BASE}/docs/content/{DELIVERABLE_ID}/{root_id}")
-    root_html = root_data.get("topicContent", "")
-    whats_new, root_sections = extract_entries(root_html, "What's New", "Overview")
-    print(f"   → {len(whats_new)} entries\n")
+    # Check for slug collisions
+    slug_counts = {}
+    for p in all_pages:
+        slug_counts[p["slug"]] = slug_counts.get(p["slug"], 0) + 1
+    collisions = {s: c for s, c in slug_counts.items() if c > 1}
+    if collisions:
+        print(f"⚠️  {len(collisions)} slug collisions (SAP disambiguates these):")
+        for s, c in collisions.items():
+            pages_with_slug = [p["path"] for p in all_pages if p["slug"] == s]
+            print(f"   '{s}' ({c}x): {pages_with_slug}")
+        print()
 
-    # 3. Scrape EVERY page in the tree
+    # 2. Scrape every page
     all_entries = []
     pages_info = []
+    failed = []
 
     for i, page in enumerate(all_pages):
         kind = "leaf" if page["is_leaf"] else "BRANCH"
         print(f"   [{i+1}/{len(all_pages)}] {page['title']} ({kind})", end="", flush=True)
+
+        page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{page['slug']}"
         try:
             entries = []
             sections = []
-            page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{page['id']}"
+            topic_id = None
+            content_len = 0
 
-            # Try up to 5 times — rate limiting can return empty/truncated content
             for attempt in range(5):
                 data = fetch_json(page_url)
                 html = data.get("topicContent", "")
+                topic_id = data.get("topicId")
+                content_len = len(html) if html else 0
+
                 if not html:
-                    if page["is_leaf"]:
-                        # Leaves should always have content
-                        wait = 8 + attempt * 8
-                        print(f" ⏳ empty({attempt+1})", end="", flush=True)
-                        time.sleep(wait)
-                        continue
-                    else:
-                        # Branch pages may legitimately have no content
-                        break
-                entries, sections = extract_entries(html, page["title"], page["parent"])
-                if entries or not page["is_leaf"]:
-                    # Got entries, or it's a branch (may have 0 use-case entries)
+                    wait = 8 + attempt * 8
+                    print(f" ⏳ empty({attempt+1})", end="", flush=True)
+                    time.sleep(wait)
+                    continue
+
+                entries, sections = extract_entries(html, page["title"], page["path"])
+                if entries:
                     break
-                # Leaf with 0 entries from non-empty HTML — may be truncated
+                # Pages without tables are valid (text-only content)
+                if "<table" not in html:
+                    break
+                # Has table but 0 entries — might be truncated
                 wait = 8 + attempt * 8
                 print(f" ⏳ retry({attempt+1})", end="", flush=True)
                 time.sleep(wait)
 
-            pages_info.append({
-                "id": page["id"], "title": page["title"],
-                "path": page["path"], "parent": page["parent"],
+            info = {
+                "title": page["title"],
+                "slug": page["slug"],
+                "topic_id": topic_id,
+                "path": page["path"],
+                "parent": page["parent"],
                 "is_leaf": page["is_leaf"],
+                "depth": page["depth"],
+                "content_bytes": content_len,
                 "entries_count": len(entries),
                 "sections": sections,
-            })
+            }
+            pages_info.append(info)
 
             for e in entries:
-                e["page_id"] = page["id"]
+                e["slug"] = page["slug"]
+                e["topic_id"] = topic_id
             all_entries.extend(entries)
 
             if entries:
                 print(f" → {len(entries)} entries")
             else:
-                print(f" → 0")
+                print(f" → 0 ({content_len}b)")
+                if content_len == 0:
+                    failed.append(page)
+
         except Exception as e:
             print(f" ⚠️ {e}")
+            failed.append(page)
             pages_info.append({
-                "id": page["id"], "title": page["title"],
-                "path": page["path"], "error": str(e),
+                "title": page["title"],
+                "slug": page["slug"],
+                "path": page["path"],
+                "error": str(e),
             })
+
         time.sleep(0.5)
 
-    # 4. Save
-    output = {
-        "metadata": {
-            "source": "SAP Help Portal — Joule Capabilities Guide",
-            "deliverable_id": DELIVERABLE_ID,
-            "url": f"{BASE}/docs/joule/capabilities-guide/",
-            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "total_pages_scraped": len(all_pages),
-            "total_leaves": len(leaves),
-            "total_branches": len(branches),
-            "total_whats_new": len(whats_new),
-            "total_capabilities": len(all_entries),
-        },
-        "whats_new": whats_new,
-        "pages": pages_info,
-        "capabilities": all_entries,
-    }
-
-    # Check for pages with 0 entries that likely have content (retry pass)
-    zero_pages = [p for p in pages_info
-                  if p.get("entries_count", 0) == 0 and p.get("is_leaf", True)
-                  and "error" not in p]
-    if zero_pages:
-        print(f"\n🔄 Retry pass for {len(zero_pages)} pages with 0 entries...")
-        time.sleep(10)  # Cool down before retry
-        for p in zero_pages:
-            print(f"   Retrying: {p['title']}", end="", flush=True)
+    # 3. Retry failed pages
+    if failed:
+        print(f"\n🔄 Retry pass for {len(failed)} failed/empty pages...")
+        time.sleep(10)
+        for page in failed:
+            print(f"   Retrying: {page['title']}", end="", flush=True)
             try:
-                page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{p['id']}"
+                page_url = f"{BASE}/docs/content/{DELIVERABLE_ID}/{page['slug']}"
                 for attempt in range(5):
                     data = fetch_json(page_url)
                     html = data.get("topicContent", "")
@@ -364,39 +403,67 @@ def main():
                         print(f" ⏳ ({attempt+1})", end="", flush=True)
                         time.sleep(wait)
                         continue
-                    entries, sections = extract_entries(html, p["title"], p["parent"])
-                    if entries:
-                        p["entries_count"] = len(entries)
-                        p["sections"] = sections
-                        for e in entries:
-                            e["page_id"] = p["id"]
-                        all_entries.extend(entries)
-                        print(f" → {len(entries)} entries")
-                        break
-                    wait = 10 + attempt * 10
-                    print(f" ⏳ ({attempt+1})", end="", flush=True)
-                    time.sleep(wait)
+                    entries, sections = extract_entries(html, page["title"], page["path"])
+                    # Update page info
+                    for pi in pages_info:
+                        if pi.get("slug") == page["slug"] and pi.get("title") == page["title"]:
+                            pi["entries_count"] = len(entries)
+                            pi["sections"] = sections
+                            pi["content_bytes"] = len(html)
+                            pi["topic_id"] = data.get("topicId")
+                            if "error" in pi:
+                                del pi["error"]
+                    for e in entries:
+                        e["slug"] = page["slug"]
+                        e["topic_id"] = data.get("topicId")
+                    all_entries.extend(entries)
+                    print(f" → {len(entries)} entries")
+                    break
                 else:
-                    print(f" → still 0")
+                    print(f" → still empty")
             except Exception as e:
                 print(f" ⚠️ {e}")
             time.sleep(3)
 
-    # Update metadata with final count
-    output["metadata"]["total_capabilities"] = len(all_entries)
+    # 4. Deduplicate entries by (topic_id, use_case) — slug collisions
+    #    cause the same page to be fetched twice for Public/Private editions
+    seen = set()
+    deduped = []
+    for e in all_entries:
+        key = (e.get("topic_id", ""), e.get("use_case", ""), e.get("section", ""))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(e)
+    if len(deduped) < len(all_entries):
+        print(f"\n🔄 Deduplicated: {len(all_entries)} → {len(deduped)} entries")
+    all_entries = deduped
+
+    # 5. Save
+    output = {
+        "metadata": {
+            "source": "SAP Help Portal — Joule Capabilities Guide",
+            "deliverable_id": DELIVERABLE_ID,
+            "url": f"{BASE}/docs/joule/capabilities-guide/",
+            "scraped_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "total_pages": len(all_pages),
+            "total_leaves": len(leaves),
+            "total_branches": len(branches),
+            "total_capabilities": len(all_entries),
+        },
+        "pages": pages_info,
+        "capabilities": all_entries,
+    }
 
     out_path = DATA_DIR / "joule_capabilities_raw.json"
     with open(out_path, "w") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
     print(f"\n💾 Saved to {out_path}")
 
-    # 5. Summary
+    # 6. Summary
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
-    print(f"What's New entries: {len(whats_new)}")
-    print(f"Page capabilities:  {len(all_entries)}")
-    print(f"Total combined:     {len(whats_new) + len(all_entries)}\n")
+    print(f"Total capabilities: {len(all_entries)}\n")
 
     by_page = {}
     for e in all_entries:
@@ -405,15 +472,16 @@ def main():
     for page in sorted(by_page.keys()):
         items = by_page[page]
         types = {}
-        models = {}
         for item in items:
             t = item.get("capability_type", "?")
             types[t] = types.get(t, 0) + 1
-            m = item.get("commercial_model", "—")
-            models[m] = models.get(m, 0) + 1
         type_str = ", ".join(f"{t}:{n}" for t, n in sorted(types.items()))
-        model_str = ", ".join(f"{m}:{n}" for m, n in sorted(models.items()))
-        print(f"  {page}: {len(items)} | {type_str} | {model_str}")
+        print(f"  {page}: {len(items)} | {type_str}")
+
+    # Pages with 0 entries
+    zero = [p for p in pages_info if p.get("entries_count", 0) == 0 and p.get("content_bytes", 0) > 0]
+    if zero:
+        print(f"\n  ({len(zero)} pages with content but no table entries — text-only)")
 
 
 if __name__ == "__main__":
