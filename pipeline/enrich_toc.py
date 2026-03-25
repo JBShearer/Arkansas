@@ -143,6 +143,28 @@ def is_good_scraped_data(page_data):
     return True
 
 
+def _fuzzy_match_scraped_page(title, scraped_pages):
+    """Find scraped page by title with fuzzy matching.
+
+    Handles cases where TOC title differs from scraped page title:
+      - "Joule in SAP Build Work Zone" vs "Joule in SAP Build Work Zone, advanced edition"
+      - Exact match first, then prefix/substring matching.
+    """
+    if title in scraped_pages:
+        return scraped_pages[title]
+    # Try prefix match (TOC title is prefix of scraped title)
+    for page_title, page_data in scraped_pages.items():
+        if page_title.startswith(title) or title.startswith(page_title):
+            return page_data
+    # Try substring match (one is contained in the other)
+    title_lower = title.lower()
+    for page_title, page_data in scraped_pages.items():
+        pt_lower = page_title.lower()
+        if title_lower in pt_lower or pt_lower in title_lower:
+            return page_data
+    return None
+
+
 def extract_prompts_from_scraped(page_data):
     """Extract clean prompts from scraped data."""
     prompts = []
@@ -311,6 +333,12 @@ def _is_note(text):
     # Ends with colon → intro sentence (but not if it starts with a verb like "Show" and is a real prompt)
     if t.endswith(":") and not re.match(r'^(?:Show|Display|Create|Get|List|Find|Search|View|Check)\b.{10,}', t):
         return True
+    # "Search X as follows:" pattern (Logistics)
+    if re.match(r'^Search\b.+\bas follows\s*:', t, re.IGNORECASE):
+        return True
+    # Long text (>120 chars) that reads like a description paragraph
+    if len(t) > 120 and '. ' in t[20:]:
+        return True
     return False
 
 
@@ -319,11 +347,14 @@ def _is_parameter(text):
     t = text.strip()
     if not t or len(t) > 80:
         return False
+    words = t.split()
     # Has parenthetical options like "JobSelection (all/my/team/open)"
     if re.match(r'^[A-Z][\w\s]*\(.*\)$', t):
         return True
+    # "By X" pattern (Logistics: "By carrier", "By location", "At a certain date")
+    if re.match(r'^(?:By |At a |For a |In a )\b', t) and len(words) <= 6:
+        return True
     # Short text (≤ 3 words) that doesn't start with a prompt verb
-    words = t.split()
     if len(words) <= 3 and t[0].isupper():
         prompt_verbs = (
             "Show", "Display", "Create", "Get", "Search", "Find", "List",
@@ -727,7 +758,7 @@ def classify_branch(title, children_types):
         return list(counts.keys())[0]
 
     # Return the most common type
-    return max(counts, key=counts.get)
+    return max(counts, key=lambda k: counts[k])
 
 
 def parse_toc():
@@ -866,8 +897,8 @@ def enrich():
         slug = title_to_slug(title)
         cap_type = cap_types.get(i, "Transactional")
 
-        # Get data from scraped content
-        page_data = scraped.get(title)
+        # Get data from scraped content (with fuzzy matching for title mismatches)
+        page_data = _fuzzy_match_scraped_page(title, scraped)
         has_good_data = is_good_scraped_data(page_data)
 
         # Use actual scraped URL if available, otherwise generate from slug

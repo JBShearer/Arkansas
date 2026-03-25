@@ -34,9 +34,9 @@ def main():
         run(config, WORKSPACE)
     elif cmd == "build":
         from pipeline.analysis.analyzer import run as analyze
-        from pipeline.generators.site_generator import run as generate
+        from pipeline.generators.site_generator import generate
         analyze(config, WORKSPACE)
-        generate(config, WORKSPACE)
+        generate()
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)
