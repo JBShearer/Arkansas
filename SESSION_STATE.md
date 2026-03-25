@@ -7,8 +7,8 @@ Website at **easyassap.com** (Arkansas folder) explaining SAP Business AI featur
 - **GitHub**: https://github.com/JBShearer/Arkansas
 - **Branch**: main
 - **Remote**: origin → Arkansas repo
-- **Site URL**: https://easyassap.com/Arkansas/ (GitHub Pages via `site/` folder)
-- **Latest Commit**: `3dbb662` — Fix: Correct URLs for Signavio (59 use cases), IBP, IPD; carry prompts through enrichment
+- **Site URL**: https://easyassap.com (GitHub Pages via `site/` folder + root `index.html`)
+- **Latest Commit**: `d36ff23` — Fix Ariba rendering: show grouped sub-products with type badges, count total prompts
 
 ## Architecture
 
@@ -38,8 +38,9 @@ pipeline/
 ### Site Output
 ```
 site/
-├── index.html                # Generated single-page app (~436KB)
+├── index.html                # Generated single-page app (~492KB)
 └── CNAME                     # easyassap.com
+index.html                    # Copy of site/index.html for GitHub Pages root
 ```
 
 ### Key Commands
@@ -51,6 +52,7 @@ make all
 node pipeline/sources/scrape_help.js          # Scrape SAP Help (172 pages, ~8 min)
 python3 -m pipeline.enrich_toc                # Enrich with scraped data
 python3 -m pipeline.generators.site_generator # Generate HTML
+cp site/index.html index.html                 # Copy to root for GitHub Pages
 git add -A && git commit -m "msg" && git push # Deploy
 
 # Local preview
@@ -61,9 +63,10 @@ make serve   # → http://localhost:4000
 - **216 total capabilities** (no "Mixed" type)
 - **4 capability types**: Informational (59), Transactional (123), Navigational (27), Analytical (7)
 - **19 SAP products** covered
-- **100 pages with verified real scraped data** (out of 172 scraped)
-- **97 capabilities with actual SAP-provided sample prompts**
-- False positives filtered: 27 sidebar nav captures, ~39 sidebar link captures
+- **103 pages with verified real scraped data** (out of 167 scraped)
+- **100 capabilities with actual SAP-provided sample prompts**
+- **102 capabilities with use case details**
+- False positives filtered: sidebar nav captures, sidebar link captures
 
 ## Scraper Details
 - Uses Puppeteer (headless Chrome) to render JavaScript-heavy SAP Help pages
@@ -74,10 +77,34 @@ make serve   # → http://localhost:4000
   - 1 use case + "What's New" in prompts = sidebar links (skip)
   - 1 use case + 30+ prompts = sidebar content (skip)
 
+## Ariba Misaligned Table Handling
+SAP Ariba pages have a different table structure than other products:
+- Standard: `Name | Sample Prompts | Response` 
+- Ariba: `Sub-Product | Capability Type | Description`
+
+The scraper maps columns as: `name → Sub-Product`, `prompts → [Capability Type]`, `response → Description`
+
+**Detection** (`_is_misaligned_table` in `enrich_toc.py`):
+- If >80% of rows have a single prompt value that's a capability type string → misaligned
+- If any row's `name` is literally a capability type (e.g., "Transactional") → misaligned
+
+**Restructuring**:
+- Groups rows by sub-product name
+- Aggregates capability types as badges
+- Uses description text as actual prompts/capabilities
+- For Intake Management edge case: if `name` is a type, `prompts[0]` becomes the use case name
+
+**Result**: SAP Ariba Solutions → 6 grouped sub-products, 39 total capabilities with real prompts
+
 ## URL Handling
 - **Scraped URLs**: Real URLs from SAP Help Portal are captured during scraping and carried through enrichment via `page_data.get("url", "")`
 - **Fallback URLs**: For pages without scraped data, generated from slug: `https://help.sap.com/docs/joule/capabilities-guide/{slug}`
-- **Recent fix**: Corrected URL mapping for Signavio (59 use cases), IBP, and IPD products — these now use the actual scraped URLs instead of slug-generated ones
+
+## Site Generator Features
+- **ucCount**: Counts total individual capabilities (sum of prompts across use_cases)
+- **Flattened products**: Single-capability products skip intermediate hierarchy levels
+- **renderChildUseCase**: Shows sub-product name (bold), type badges (Navigational/Transactional), and all prompts as pills
+- **Type badges**: Description field parsed — if all comma-separated values are capability types, rendered as colored badges
 
 ## Classification Rules (No Mixed)
 Priority order: Analytical > Navigational > Transactional > Informational
@@ -102,6 +129,7 @@ Priority order: Analytical > Navigational > Transactional > Informational
 3. **Sample prompts always visible**: Shown as blue pills below each use case (no toggle needed)
 4. **Type filtering**: Click type cards or use dropdown to filter by Informational/Transactional/Navigational/Analytical
 5. **Scraped URLs preferred**: `enrich_toc.py` carries through actual SAP Help URLs from scrape data
+6. **Grouped sub-products**: Ariba-style tables auto-detected and restructured into grouped display
 
 ## What's Next
 - Add Embedded AI features (non-Joule AI capabilities)
