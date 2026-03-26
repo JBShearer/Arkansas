@@ -1,103 +1,187 @@
-# Session State — SAP Business AI Joule Capabilities Explorer
+# Session State — SAP Business AI / Joule Capabilities Website
 
-## Project Status: PRODUCTION ✅
-- **Live at**: https://easyassap.com (GitHub Pages)
-- **Repository**: https://github.com/JBShearer/Arkansas
+> **Last updated:** 2025-03-25T18:33 MDT  
+> **Git commit:** v14 (d4d2020) — Clean up Signavio prompts  
+> **Live site:** https://easyassap.com (via GitHub Pages, CNAME configured)
 
-## Architecture
+---
+
+## Project Overview
+
+A Python-based pipeline that scrapes, enriches, and generates a website cataloging
+SAP Business AI (Joule) capabilities across 18 SAP products. Built for the State
+of Arkansas's crawl-walk-run AI adoption strategy.
+
+### Architecture
+
 ```
 pipeline/
-  sources/         # Data acquisition
-    toc_tree.txt   # TOC from SAP Help (216 entries)
-    scrape_help.js # Puppeteer scraper for SAP Help Portal
-    scrape_joule.py # Python-based scraper (alternative)
-  data/            # Generated data
-    scraped_use_cases.json  # Raw scraped data (167 pages)
-    joule_capabilities_raw.json  # Enriched capabilities
-  enrich_toc.py    # TOC enrichment pipeline
-  analysis/        # Analysis modules  
-  generators/
-    site_generator.py  # HTML site generation
+├── sources/
+│   ├── toc_tree.txt          # TOC hierarchy (216 entries after skip filtering)
+│   ├── scrape_help.js         # Puppeteer scraper for SAP Help Portal
+│   └── scrape_joule.py        # Python scraper (alternative)
+├── data/
+│   ├── scraped_use_cases.json # Raw scraped data (167 pages)
+│   └── joule_capabilities_raw.json  # Enriched output (216 entries)
+├── enrich_toc.py              # Main enrichment pipeline
+├── generators/
+│   └── site_generator.py      # HTML site generator
+└── analysis/
+    └── analyzer.py            # Data analysis utilities
 site/
-  index.html       # Generated site (served by GitHub Pages)
-  CNAME            # Custom domain config
+├── index.html                 # Generated website
+└── CNAME                      # easyassap.com
 ```
 
-## Key Commands
+### Key Numbers (v14)
+
+| Metric | Count |
+|--------|-------|
+| Total entries | 216 |
+| Products | 18 |
+| Scraped (real data) | 114 |
+| Title-only (no scraped data) | 102 |
+| With sample prompts | 111 |
+| With use case details | 113 |
+| Use cases on site | 171 |
+
+### Capability Type Distribution
+
+| Type | Count |
+|------|-------|
+| Transactional | 124 |
+| Informational | 61 |
+| Navigational | 24 |
+| Analytical | 7 |
+
+---
+
+## Enrichment Pipeline (`enrich_toc.py`)
+
+### What It Does
+1. Parses `toc_tree.txt` hierarchy
+2. Matches each entry to scraped page data (fuzzy title matching)
+3. Validates scraped data quality (filters sidebar nav false positives)
+4. Extracts use cases with smart table layout detection:
+   - Standard tables (most S/4HANA pages)
+   - Category-column tables (SuccessFactors style)
+   - Misaligned tables (Ariba style)
+   - Text-only pages (Digital Manufacturing, Risk & Assurance, Incentive Mgmt)
+5. Classifies prompts vs notes vs parameters vs descriptions
+6. Merges duplicate use cases
+7. Assigns capability types (Informational/Transactional/Navigational/Analytical)
+
+### Data Quality Features
+- **`is_good_scraped_data()`**: Filters sidebar navigation (233 use cases, "What's New" patterns, >30 prompts)
+- **`_fuzzy_match_scraped_page()`**: Handles title mismatches (e.g., "Work Zone" vs "Work Zone, advanced edition")
+- **`_is_note()`**: Classifies instructional text, response-option descriptions, description-style text
+- **`_is_parameter()`**: Identifies parameter names vs prompts
+- **`_is_response_description()`**: Detects "Joule displays..." descriptions vs actual prompts
+- **`_split_response_into_prompts()`**: Handles concatenated prompts, rejoins broken lines
+- **`_DESCRIPTION_STARTS`**: Regex matching description patterns (also used in `_is_note`)
+- **Fragment filtering**: Removes lowercase continuations, preposition-starting fragments, quoted refs
+
+### Text-Only Page Fallback (`TEXT_ONLY_PAGE_FALLBACK`)
+For pages without tables where the scraper captured sidebar nav:
+- SAP Digital Manufacturing → Informational (doc search)
+- SAP Risk and Assurance Management → Informational
+- SAP Incentive Management → Transactional
+
+### Skip List
+Filters out non-capability pages: What's New, Archive, Glossary, Configuration, etc.
+
+---
+
+## Site Generator (`site_generator.py`)
+
+### Features
+- Responsive single-page HTML with embedded CSS/JS
+- Product filter sidebar with capability counts
+- Capability type filter (color-coded badges)
+- Search across titles, prompts, descriptions
+- Expandable use case cards with prompts, notes, parameters
+- SAP Help Portal deep links
+- Arkansas "crawl-walk-run" framing
+- Mobile-friendly layout
+
+---
+
+## Scraper (`scrape_help.js`)
+
+### How It Works
+- Puppeteer-based, navigates SAP Help Portal TOC
+- Extracts tables from each capability page
+- Maps columns: name | prompts/samplePrompts | response/description
+- Saves to `scraped_use_cases.json`
+
+### Known Limitations
+- Text-only pages (no tables) → captures sidebar nav instead
+  - **Workaround**: `TEXT_ONLY_PAGE_FALLBACK` in `enrich_toc.py`
+- Some Signavio prompts still have description fragments starting uppercase
+  - Minor issue, prompts are still usable
+
+---
+
+## Completed Work (This Session)
+
+### Data Quality Fixes
+1. ✅ Fixed "0 prompts" display — extracted prompts from response column
+2. ✅ Fixed note formatting — separated notes from prompts
+3. ✅ Separated cautions/warnings from notes
+4. ✅ Fixed misclassified prompts (response descriptions, instructional text)
+5. ✅ Full data quality audit across all 18 products
+6. ✅ Added fuzzy page title matching (fixed Work Zone)
+7. ✅ Fixed Logistics, Ariba, Batch Release, Concur, Sports One data
+8. ✅ Fixed `is_good_scraped_data` to check samplePrompts + description keys
+9. ✅ Re-enriched and unlocked Signavio, IPD, IBP data
+10. ✅ Added fallback data for text-only pages (Digital Mfg, Risk & Assurance, Incentive Mgmt)
+11. ✅ Cleaned up Signavio prompts (descriptions filtered from samplePrompts)
+
+### Commits
+- v13: Add fallback data for text-only pages
+- v14: Clean up Signavio prompts - filter descriptions/fragments
+
+---
+
+## Remaining Work / Known Issues
+
+### Minor
+- A few Signavio prompts still have uppercase description fragments (e.g., "Process Intelligence based on..." in Performance Indicator Recommender)
+- 102 entries still "title-only" — these are branch/category nodes without their own capability pages
+
+### Future Enhancements
+- Improve scraper to handle text-only pages natively
+- Add crawl/walk/run phase recommendations per capability
+- Add embedded AI features catalog (non-Joule)
+- Add recommended projects section
+- Add risk/complexity scoring for implementation planning
+- Consider breaking large product pages into sub-tabs
+
+---
+
+## How to Continue
+
 ```bash
-make enrich    # Enrich TOC with scraped data
-make generate  # Generate site HTML + copy to root
-make deploy    # Git add/commit/push
-make all       # Full pipeline: enrich → generate → deploy
-make scrape    # Re-scrape SAP Help Portal (requires Puppeteer, ~8 min)
-make serve     # Local preview on port 4000
+# Re-run enrichment pipeline
+python3 -m pipeline.enrich_toc
+
+# Regenerate site
+python3 -m pipeline.generators.site_generator
+
+# Deploy
+cp site/index.html index.html
+git add -A && git commit -m "description" && git push
+
+# Full pipeline
+make all  # or: python3 -m pipeline.main
+
+# Re-scrape (takes ~8 min)
+node pipeline/sources/scrape_help.js
 ```
 
-## Data Pipeline
-1. **Scrape**: `node pipeline/sources/scrape_help.js` → scraped_use_cases.json (167 pages)
-2. **Enrich**: `python3 -m pipeline.enrich_toc` → joule_capabilities_raw.json (216 entries)
-3. **Generate**: `python3 -m pipeline.generators.site_generator` → site/index.html
-4. **Deploy**: `git push` → GitHub Pages
-
-## Data Quality Features (Current)
-- **No Mixed type** — all capabilities get exactly one type (Informational/Transactional/Navigational/Analytical)
-- **Fuzzy title matching** — scraped page titles matched to TOC titles even with suffixes (e.g., "Work Zone, advanced edition")
-- **Category-column detection** — SuccessFactors tables with Feature Area column handled correctly
-- **Misaligned table detection** — Ariba tables with swapped columns handled correctly
-- **Note/Parameter/Prompt separation** — intelligent classification of scraped text
-- **Response-option filtering** — Submit:/Cancel:/Retype: button descriptions → notes (suppressed in renderer)
-- **Line rejoining** — mid-sentence line breaks in response text properly reassembled
-- **Instructional prefix stripping** — "Ask for example:", "Show the following:" detected and handled
-- **Continuation fragment filtering** — lowercase starts, "to ..." fragments excluded
-- **Duplicate merging** — use cases with same name grouped with all prompts collected
-
-## Stats (Current)
-- 216 total entries, 171 use cases, 18 products
-- 108 pages with real scraped data, 108 title-only
-- 108 capabilities with sample prompts, 107 with use case details
-- 4 capability types: Informational (59), Transactional (123), Navigational (27), Analytical (7)
-
-## Site Features
-- Hierarchical tree-based drilldown: Product → Business Area → Sub-Area → Use Cases
-- Type filter cards: Informational, Transactional, Analytical, Navigational
-- Search bar with text search across titles, hierarchies, and use case names
-- Product and Business Area dropdown filters
-- Sample prompts shown as pill badges with 💬 prefix
-- Collapsible capability groups with child use cases
-- Subcategory grouping (e.g., SuccessFactors Feature Areas)
-- Notes and parameters displayed inline
-- Links to SAP Help Portal for each capability
-- "Documentation Pending" badge for title-only entries (no misleading type badges)
-- Responsive design for mobile/tablet
-- Crawl → Walk → Run adoption framework header
-
-## Key Products & Capability Counts
-- SAP S/4HANA Cloud Private Edition: 140 entries (1,067 individual capabilities)
-- SAP SuccessFactors: 15 entries (313 capabilities)
-- SAP S/4HANA Cloud Public Edition: 43 entries (87 capabilities)
-- SAP Logistics Management: 1 entry (62 capabilities)
-- SAP Ariba Solutions: 2 entries (40 capabilities)
-- SAP Concur Solutions: 1 entry (24 capabilities)
-- SAP Batch Release Hub: 1 entry (17 capabilities)
-- SAP Analytics Cloud: 3 entries (11 capabilities)
-
-## Recent Changes
-- v11: Title-only entries show "📋 Documentation Pending" badge instead of misleading Navigational tag; dimmed styling for placeholder entries
-- v10: Data quality audit — fuzzy title matching (fixes Work Zone), Logistics prompts cleanup, Ariba hierarchy, Batch Release/Field Service description swap, "Search X as follows:" and "By X" parameter patterns
-- v9: Remove prompt counts, notes always on new line left-aligned, cautions separated from info notes with ⚠️ warning style
-- v8: Verified and redeployed with latest enriched data
-- v7: Response line rejoining, note suppression, fragment filtering, f-string fix
-- v6: Response-option detection, verb exclusions, continuation fragments
-- v5: Note/parameter/prompt separation, category-column tables, misaligned tables
-- v4: Real scraped data integration, no Mixed type
-- v3: Tree-based UI with drilldown
-
-## How to Continue Working in New Sessions
-1. Read this file first: `SESSION_STATE.md`
-2. Key files to review:
-   - `pipeline/enrich_toc.py` — data enrichment logic
-   - `pipeline/generators/site_generator.py` — HTML generation
-   - `pipeline/sources/toc_tree.txt` — TOC hierarchy
-   - `pipeline/data/joule_capabilities_raw.json` — enriched data
-3. To regenerate: `make all` (enrich → generate → deploy)
-4. To re-scrape from SAP Help: `make scrape` then `make all`
+### Key Files to Edit
+- **Add products**: `PRODUCT_MAP` in `enrich_toc.py`
+- **Fix data quality**: `_is_note()`, `_is_parameter()`, `_DESCRIPTION_STARTS` in `enrich_toc.py`
+- **Add fallback data**: `TEXT_ONLY_PAGE_FALLBACK` in `enrich_toc.py`
+- **Change site design**: `site_generator.py`
+- **Update TOC**: `pipeline/sources/toc_tree.txt`
