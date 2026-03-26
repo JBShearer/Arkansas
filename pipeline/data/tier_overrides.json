@@ -1,0 +1,40 @@
+{
+  "_source": "Manual mapping based on SAP Discovery Center and SAP pricing documentation",
+  "_note": "Keys are capability slugs (title_to_slug output). Fallback for unknown = 'base'",
+  "_tiers": {
+    "base": "Included in standard Joule entitlement",
+    "premium": "Requires premium Joule / add-on license",
+    "eac": "Early Adopter Care — not yet generally available",
+    "beta": "Beta / preview availability"
+  },
+
+  "joule-in-sap-analytics-cloud": "premium",
+  "analytical-insights-with-sap-analytics-cloud": "premium",
+
+  "joule-in-sap-integrated-business-planning": "premium",
+
+  "joule-in-sap-ariba-solutions": "premium",
+  "joule-in-sap-ariba-intake-management": "premium",
+
+  "joule-in-sap-concur-solutions": "premium",
+
+  "joule-in-sap-field-service-management": "premium",
+
+  "joule-in-sap-batch-release-hub-for-life-sciences": "premium",
+
+  "joule-in-sap-sports-one": "premium",
+
+  "joule-in-sap-incentive-management": "premium",
+
+  "joule-in-sap-signavio-solutions": "base",
+
+  "joule-in-sap-successfactors": "base",
+  "joule-in-sap-s4hana-cloud-public-edition": "base",
+  "joule-in-sap-s4hana-cloud-private-edition": "base",
+  "joule-in-sap-btp-cockpit": "base",
+  "joule-in-sap-build-work-zone-advanced-edition": "base",
+  "joule-in-sap-digital-manufacturing": "base",
+  "joule-in-sap-logistics-management": "base",
+  "joule-in-sap-risk-and-assurance-management": "base",
+  "joule-in-sap-integrated-product-development": "base"
+}

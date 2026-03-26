@@ -182,15 +182,25 @@ def infer_capability_type(cap: dict) -> str:
     # Check use case names
     has_info = any(k in uc_names for k in ['display', 'view', 'show', 'fetch', 'search'])
     has_trans = any(k in uc_names for k in ['create', 'change', 'edit', 'update', 'delete', 'complete', 'cancel', 'reject'])
-    
+
+    # Check prompts for transactional verbs (used both here and in fallback)
+    trans_prompt_verbs = ['create', 'submit', 'change', 'update', 'delete', 'approve', 'reject', 'process',
+                          'post', 'log', 'report', 'assign', 'complete', 'release', 'cancel', 'close']
+    has_trans_prompts = any(any(v in p.lower() for v in trans_prompt_verbs) for p in all_prompts)
+
     if has_info and has_trans:
-        return 'Mixed'
+        # Transactional wins if there are actual transactional prompts; otherwise Informational
+        return 'Transactional' if has_trans_prompts else 'Informational'
     if has_info and not has_trans:
         return 'Informational'
     if has_trans:
         return 'Transactional'
     
-    return cap.get('capability_type', 'Informational')
+    existing = cap.get('capability_type', 'Informational')
+    if existing == 'Mixed':
+        # Resolve Mixed: Transactional if any transactional prompts exist, else Informational
+        return 'Transactional' if has_trans_prompts else 'Informational'
+    return existing
 
 
 def clean_use_case(uc: dict) -> dict:

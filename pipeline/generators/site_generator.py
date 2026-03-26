@@ -89,7 +89,6 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .type-nav {{ border-left: 3px solid #6f42c1; }}
 .type-trans {{ border-left: 3px solid #28a745; }}
 .type-anal {{ border-left: 3px solid #fd7e14; }}
-.type-mixed {{ border-left: 3px solid #6c757d; }}
 
 /* Filter bar */
 .filter-bar {{ background: white; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }}
@@ -131,11 +130,17 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .badge-nav {{ background: #f0e6f6; color: #6f42c1; }}
 .badge-trans {{ background: #e6f4ea; color: #1e7e34; }}
 .badge-anal {{ background: #fff3e0; color: #e65100; }}
-.badge-mixed {{ background: #f0f0f0; color: #555; }}
 .badge-pending {{ font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 600; white-space: nowrap; background: #f0f0f0; color: #999; font-style: italic; }}
 .title-only-entry {{ opacity: 0.7; }}
 .help-link {{ font-size: 0.75rem; color: #0a6ed1; text-decoration: none; white-space: nowrap; }}
 .help-link:hover {{ text-decoration: underline; }}
+
+/* Tier badges */
+.tier-badge {{ font-size: 0.65rem; padding: 0.1rem 0.45rem; border-radius: 10px; font-weight: 700; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px; }}
+.tier-base {{ background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }}
+.tier-premium {{ background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }}
+.tier-eac {{ background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }}
+.tier-beta {{ background: #fce4ec; color: #c62828; border: 1px solid #f48fb1; }}
 
 /* Sample prompts — always visible */
 .sample-prompts {{ width: 100%; padding: 0.3rem 0 0.4rem 3.5rem; }}
@@ -197,6 +202,23 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 .uc-child-prompts ul {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.3rem; }}
 .uc-child-prompts li {{ font-size: 0.75rem; color: #0a6ed1; background: #e8f4f8; padding: 0.2rem 0.6rem; border-radius: 12px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
 .uc-child-prompts li::before {{ content: '💬 '; }}
+
+/* Subcategory headers inside child use cases */
+.subcat-header {{ margin: 0.5rem 0 0.2rem 0; font-size: 0.8rem; font-weight: 600; color: #444; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.2rem; }}
+.subcat-list {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem; }}
+.subcat-item {{ font-size: 0.78rem; color: #333; background: #f4f6f8; padding: 0.25rem 0.7rem; border-radius: 6px; border: 1px solid #dde2e8; }}
+
+/* Inline description next to use case name */
+.uc-inline-desc {{ font-size: 0.78rem; color: #666; margin-left: 0.5rem; }}
+
+/* Capability-level description */
+.cap-desc {{ width: 100%; padding: 0.3rem 0 0.2rem 3.5rem; font-size: 0.82rem; color: #444; }}
+
+/* Single use case name shown under title */
+.cap-single-uc {{ width: 100%; padding: 0.15rem 0 0.15rem 3.5rem; font-size: 0.78rem; color: #555; }}
+
+/* Flattened product badge/link row */
+.flat-badge-row {{ padding: 0.5rem 1.5rem 0.3rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }}
 
 .empty {{ padding: 3rem; text-align: center; color: #999; }}
 .footer {{ text-align: center; padding: 2rem; color: #999; font-size: 0.8rem; }}
@@ -271,14 +293,17 @@ const TYPE_INFO = {{
   'Analytical': {{
     icon: '📊', badgeClass: 'badge-anal', borderClass: 'type-anal',
     desc: 'AI-assisted analysis and insights — anomaly detection, forecasting, and data-driven decisions.'
-  }},
-  'Mixed': {{
-    icon: '🔀', badgeClass: 'badge-mixed', borderClass: 'type-mixed',
-    desc: 'Multi-purpose capabilities — combine display, create, and manage actions in a single conversational flow.'
   }}
 }};
 
 let activeType = null;
+
+function getTierBadge(tier) {{
+  if (!tier || tier === 'base') return '';
+  const labels = {{ premium: 'Premium', eac: 'EAC', beta: 'Beta' }};
+  const label = labels[tier] || tier;
+  return '<span class="tier-badge tier-' + tier + '">' + label + '</span>';
+}}
 
 function ucCount(c) {{
   // If a capability has use_cases, count total individual capabilities
@@ -296,6 +321,8 @@ function ucCount(c) {{
 function buildTree(caps) {{
   const tree = {{}};
   caps.forEach(c => {{
+    // Skip pure branch category nodes — they are TOC structural nodes, not capabilities
+    if (c.is_branch && !c.use_cases?.length && !c.sample_prompts?.length) return;
     const prod = c.product;
     if (!tree[prod]) tree[prod] = {{ areas: {{}}, count: 0 }};
     const ba = c.business_area || '(General)';
@@ -315,7 +342,7 @@ function buildTree(caps) {{
 }}
 
 function getTypeBadge(type) {{
-  const ti = TYPE_INFO[type] || TYPE_INFO['Mixed'];
+  const ti = TYPE_INFO[type] || TYPE_INFO['Informational'];
   return '<span class="badge ' + ti.badgeClass + '">' + type + '</span>';
 }}
 
@@ -337,7 +364,7 @@ function renderTypeCards(caps) {{
   const types = {{}};
   caps.forEach(c => {{ types[c.capability_type] = (types[c.capability_type] || 0) + 1; }});
   
-  const order = ['Informational', 'Transactional', 'Mixed', 'Analytical', 'Navigational'];
+  const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
   let html = '';
   order.forEach(t => {{
     if (!types[t]) return;
@@ -378,6 +405,7 @@ function getFilteredCaps() {{
   if (activeType) caps = caps.filter(c => c.capability_type === activeType);
   if (search) caps = caps.filter(c => {{
     if (c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search)) return true;
+    if ((c.description || '').toLowerCase().includes(search)) return true;
     if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search));
     return false;
   }});
@@ -459,7 +487,7 @@ function renderChildUseCase(uc) {{
     if (allTypes) {{
       parts.forEach(t => {{ html += ' ' + getTypeBadge(t); }});
     }} else {{
-      html += '<span style="font-size:0.78rem;color:#666;margin-left:0.5rem;">' + desc.substring(0, 200) + '</span>';
+      html += '<span class="uc-inline-desc">' + desc.substring(0, 200) + '</span>';
     }}
   }}
   html += '</div>';
@@ -485,10 +513,10 @@ function renderChildUseCase(uc) {{
   if (hasSubs) {{
     html += '<div class="uc-child-prompts">';
     Object.keys(subcategories).forEach(cat => {{
-      html += '<div style="margin:0.5rem 0 0.2rem 0;font-size:0.8rem;font-weight:600;color:#444;border-bottom:1px solid #e8e8e8;padding-bottom:0.2rem;">' + cat + '</div>';
-      html += '<ul style="list-style:none;display:flex;flex-wrap:wrap;gap:0.35rem;">';
+      html += '<div class="subcat-header">' + cat + '</div>';
+      html += '<ul class="subcat-list">';
       subcategories[cat].forEach(p => {{
-        html += '<li style="font-size:0.78rem;color:#333;background:#f4f6f8;padding:0.25rem 0.7rem;border-radius:6px;border:1px solid #dde2e8;">' + p + '</li>';
+        html += '<li class="subcat-item">' + p + '</li>';
       }});
       html += '</ul>';
     }});
@@ -517,41 +545,52 @@ function renderChildUseCase(uc) {{
 
 function renderUseCase(c) {{
   const badge = getTypeBadge(c.capability_type);
+  const tierBadge = getTierBadge(c.tier);
   const link = c.sap_help_url ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
-  const titleText = c.sap_help_url 
-    ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>' 
+  const titleText = c.sap_help_url
+    ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>'
     : c.title;
-  
+
   const hasChildUCs = c.use_cases && (c.use_cases.length > 1 || (c.use_cases.length === 1 && c.use_cases[0].subcategories && Object.keys(c.use_cases[0].subcategories).length > 0));
+  const hasUCs = c.use_cases && c.use_cases.length > 0;
   const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
   const hasNote = c.special_note;
   const isTitleOnly = c.data_source === 'title-only';
-  
+
   let html = '';
-  
-  if (isTitleOnly && !hasChildUCs && !hasPrompts) {{
-    // Title-only entry with no real content
+
+  // Suppress pure branch/category nodes with no real content
+  if (c.is_branch && !hasUCs && !hasPrompts) {{
+    return '';
+  }}
+
+  if (isTitleOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
+    // Title-only entry with no real content — still show with pending badge
     html += '<div class="use-case title-only-entry">';
     html += '<div class="uc-main">';
     html += '<span class="uc-title">' + titleText + '</span>';
+    html += badge + ' ' + tierBadge;
     html += '<span class="badge-pending">📋 Documentation Pending</span>';
     html += link;
     html += '</div>';
     html += '</div>';
     return html;
   }}
-  
+
   if (hasChildUCs) {{
     // Render as collapsible group with child use cases
     const gid = 'capgroup-' + (promptCounter++);
     html += '<div class="cap-group-header" onclick="toggleSection(this)">';
     html += '<span class="tree-expand">\\u25B6</span>';
     html += '<span class="cg-title">' + titleText + '</span>';
-    html += badge;
+    html += badge + ' ' + tierBadge;
     html += '<span class="count">' + c.use_cases.length + ' use cases</span>';
     html += link;
     html += '</div>';
     html += '<div class="cap-group-body">';
+    if (c.description) {{
+      html += '<div class="cap-desc">' + c.description + '</div>';
+    }}
     c.use_cases.forEach(uc => {{
       html += renderChildUseCase(uc);
     }});
@@ -561,9 +600,37 @@ function renderUseCase(c) {{
     html += '<div class="use-case">';
     html += '<div class="uc-main">';
     html += '<span class="uc-title">' + titleText + '</span>';
-    html += badge;
+    html += badge + ' ' + tierBadge;
     html += link;
     html += '</div>';
+    // Show description if available (capability-level or from single use case)
+    const desc = c.description || (hasUCs && c.use_cases[0].description ? c.use_cases[0].description : '');
+    if (desc) {{
+      html += '<div class="cap-desc">' + desc + '</div>';
+    }}
+    // Show single use case name + description even when no prompts
+    if (hasUCs && c.use_cases.length === 1) {{
+      const uc = c.use_cases[0];
+      if (uc.name && uc.name !== c.title) {{
+        html += '<div class="cap-single-uc"><strong>Use Case:</strong> ' + uc.name + '</div>';
+      }}
+      // Show use case description if different from cap description
+      if (uc.description && uc.description !== desc) {{
+        html += '<div class="cap-desc" style="padding-top:0">' + uc.description + '</div>';
+      }}
+      // Show notes even when no prompts
+      if (uc.notes && uc.notes.length > 0) {{
+        html += '<div class="uc-info-note">';
+        uc.notes.forEach(n => {{ html += '<div class="info-note-text">' + n + '</div>'; }});
+        html += '</div>';
+      }}
+      // Show parameters
+      if (uc.parameters && uc.parameters.length > 0) {{
+        html += '<div class="uc-params"><div class="param-list">';
+        uc.parameters.forEach(p => {{ html += '<span class="param-tag">' + p + '</span>'; }});
+        html += '</div></div>';
+      }}
+    }}
     if (hasPrompts) {{
       html += '<div class="sample-prompts">';
       html += '<ul>';
@@ -574,13 +641,13 @@ function renderUseCase(c) {{
     }}
     html += '</div>';
   }}
-  
+
   if (hasNote) {{
     html += '<div class="special-note"><div class="note-box">';
     html += '<strong>🔮 Coming Soon:</strong> ' + c.special_note;
     html += '</div></div>';
   }}
-  
+
   return html;
 }}
 
@@ -642,7 +709,11 @@ function renderTree(caps) {{
           flattenedToProduct = true;
           const link = singleCap.sap_help_url ? '<a href="' + singleCap.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
           const badge = getTypeBadge(singleCap.capability_type);
-          html += '<div style="padding:0.5rem 1.5rem 0.3rem;display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">' + badge + link + '</div>';
+          const tierBadge = getTierBadge(singleCap.tier);
+          html += '<div class="flat-badge-row">' + badge + ' ' + tierBadge + link + '</div>';
+          if (singleCap.description) {{
+            html += '<div class="cap-desc">' + singleCap.description + '</div>';
+          }}
           singleCap.use_cases.forEach(uc => {{
             html += renderChildUseCase(uc);
           }});

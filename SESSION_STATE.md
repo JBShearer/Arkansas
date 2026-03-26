@@ -1,7 +1,7 @@
 # Session State — SAP Business AI / Joule Capabilities Website
 
-> **Last updated:** 2026-03-25T19:48 MDT  
-> **Git commit:** v16 — Data quality cleaning pipeline  
+> **Last updated:** 2026-03-26
+> **Git commit:** v18 — Eliminate Mixed type, add tier badges, fix branch nodes, consistent UI
 > **Live site:** https://easyassap.com (via GitHub Pages, CNAME configured)
 
 ---
@@ -17,18 +17,19 @@ of Arkansas's crawl-walk-run AI adoption strategy.
 ```
 pipeline/
 ├── sources/
-│   ├── toc_tree.txt          # TOC hierarchy (216 entries after skip filtering)
+│   ├── toc_tree.txt          # TOC hierarchy
 │   ├── scrape_help.js         # Puppeteer scraper for SAP Help Portal
 │   └── scrape_joule.py        # Python scraper (alternative)
 ├── data/
 │   ├── scraped_use_cases.json # Raw scraped data (167 pages)
-│   ├── joule_capabilities_raw.json  # Enriched output (216 entries)
+│   ├── tier_overrides.json    # Manual tier mapping (slug → base/premium/eac/beta)
+│   ├── joule_capabilities_raw.json  # Enriched output (190 entries)
 │   └── joule_capabilities_clean.json # Cleaned output (notes/prompts fixed)
-├── enrich_toc.py              # Main enrichment pipeline
-├── clean_data.py              # Data quality cleaner (prompts↔notes, type fixes)
+├── enrich_toc.py              # Main enrichment pipeline (adds tier field, suppresses depth≤1 branch nodes)
+├── clean_data.py              # Data quality cleaner (no Mixed type, resolves via prompt analysis)
 ├── main.py                    # Pipeline entry point (analyze/clean/generate/build)
 ├── generators/
-│   └── site_generator.py      # HTML site generator (reads clean data)
+│   └── site_generator.py      # HTML site generator (tier badges, consistent template, no Mixed)
 └── analysis/
     └── analyzer.py            # Data analysis utilities
 site/
@@ -42,21 +43,21 @@ site/
 scrape → enrich → clean → generate → deploy
   │         │        │         │         │
   │    toc_tree.txt  │    clean.json    git push
-  │    + scraped →   │    (fixed        
+  │    + scraped →   │    (fixed
   │    raw.json      │    prompts/notes/types)
   │                  │         │
   node scraper    enrich_toc  clean_data.py
 ```
 
-### Key Numbers (v16)
+### Key Numbers (v18)
 
 | Metric | Count |
 |--------|-------|
-| Total entries | 216 |
+| Total entries | 190 |
 | Products | 18 |
 | Scraped (real data) | 114 |
-| Title-only (no scraped data) | 102 |
-| With sample prompts | 111 |
+| Title-only (no scraped data) | 76 |
+| With sample prompts | 112 |
 | With use case details | 113 |
 | Use cases on site | 171 |
 
@@ -70,7 +71,7 @@ scrape → enrich → clean → generate → deploy
 | Mixed | 6 |
 | Analytical | 4 |
 
-### Data Cleaning Stats (v16)
+### Data Cleaning Stats (v17)
 
 | Metric | Count |
 |--------|-------|
@@ -131,7 +132,7 @@ Reads `joule_capabilities_raw.json` → writes `joule_capabilities_clean.json`
 
 ### Text-Only Page Fallback (`TEXT_ONLY_PAGE_FALLBACK`)
 For pages without tables where the scraper captured sidebar nav:
-- SAP Digital Manufacturing → Informational (doc search)
+- SAP Digital Manufacturing → Mixed (4 use cases, 12 prompts: production orders, yield/scrap, goods receipt, components, nonconformances, SOPs)
 - SAP Risk and Assurance Management → Informational
 - SAP Incentive Management → Transactional
 
@@ -202,11 +203,28 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 8. ✅ Fixed Python SyntaxWarning (escaped regex in JS template)
 9. ✅ Regenerated site from clean data — no warnings
 
+### Session 4 (v17): Inline Styles → CSS Classes + Digital Manufacturing Fix
+1. ✅ Converted all inline `style=` attributes in site_generator.py to CSS classes
+   - `.subcat-header`, `.subcat-list`, `.subcat-item` — subcategory headers/lists
+   - `.uc-inline-desc` — inline description next to use case name
+   - `.cap-desc` — capability-level description block
+   - `.cap-single-uc` — single use case name display
+   - `.flat-badge-row` — flattened product badge/link row
+2. ✅ Fixed Digital Manufacturing fallback — added 4 real use cases with 12 sample prompts
+   - Production Order Information (4 prompts)
+   - Yield, Scrap, and Goods Receipt (3 prompts)
+   - Component Availability and Order Priorities (3 prompts)
+   - Process Parameters and SOPs (2 prompts)
+3. ✅ Fixed `TEXT_ONLY_PAGE_FALLBACK` branch to extract `sample_prompts` from fallback use cases
+4. ✅ Verified zero inline `style=` attributes in generated HTML
+5. ✅ Regenerated site from clean data (502KB, 216 entries, 171 use cases)
+
 ### Commits
 - v13: Add fallback data for text-only pages
 - v14: Clean up Signavio prompts - filter descriptions/fragments
 - v15: Fix site/ broken submodule — convert to regular tracked directory
 - v16: Data quality cleaning pipeline — fix prompts/notes/types
+- v17: Inline styles → CSS classes + Digital Manufacturing fix
 
 ---
 

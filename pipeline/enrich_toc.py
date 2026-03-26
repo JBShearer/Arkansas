@@ -20,6 +20,7 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parent.parent
 TOC_FILE = WORKSPACE / "pipeline" / "sources" / "toc_tree.txt"
 SCRAPED_FILE = WORKSPACE / "pipeline" / "data" / "scraped_use_cases.json"
+TIER_FILE = WORKSPACE / "pipeline" / "data" / "tier_overrides.json"
 OUT_FILE = WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json"
 
 # ── Product mapping ──────────────────────────────────────────────
@@ -50,18 +51,58 @@ PRODUCT_MAP = {
 # Manually curated from actual SAP Help Portal content.
 TEXT_ONLY_PAGE_FALLBACK = {
     "Joule in SAP Digital Manufacturing": {
-        "description": "Enter your query or question in plain natural language, and Joule searches the product documentation to find the answer. Joule summarizes the search results and provides the summarization as the answer to your question, along with the top three search results.",
+        "description": "Joule as a Copilot in SAP Digital Manufacturing supports production order queries, material details, yield/scrap reporting, goods receipt, component availability, nonconformance management, process parameters, and navigation within the application.",
         "use_cases": [
             {
-                "name": "Informational Capabilities",
-                "description": "Joule searches product documentation and provides summarized answers with the top three search results.",
-                "prompts": [],
+                "name": "Production Order Information",
+                "description": "Query production orders, operations, and material details.",
+                "prompts": [
+                    "Show all production orders for material 123456",
+                    "Show details of production order 123456",
+                    "Show production orders planned for today",
+                    "Show all items of production order 123456",
+                ],
                 "notes": [],
                 "parameters": [],
                 "response_summary": "",
-            }
+            },
+            {
+                "name": "Yield, Scrap, and Goods Receipt",
+                "description": "Log activities, report yield or scrap, and manage goods receipt.",
+                "prompts": [
+                    "Report yield for production order 123456",
+                    "Log scrap for operation 0010 of production order 123456",
+                    "Post goods receipt for production order 123456",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+            {
+                "name": "Component Availability and Order Priorities",
+                "description": "Check component availability, order priorities, and nonconformances.",
+                "prompts": [
+                    "Check component availability for production order 123456",
+                    "Show order priorities for today",
+                    "Show nonconformances for production order 123456",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+            {
+                "name": "Process Parameters and SOPs",
+                "description": "Understand process parameters and standard operating procedures.",
+                "prompts": [
+                    "Show process parameters for operation 0010",
+                    "Show standard operating procedure for operation 0020",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
         ],
-        "capability_type": "Informational",
+        "capability_type": "Mixed",
     },
     "Joule in SAP Risk and Assurance Management": {
         "description": "Use Joule to interact with SAP Risk and Assurance Management using natural language to streamline risk management and audit processes.",
@@ -862,6 +903,14 @@ def enrich():
     """Main enrichment pipeline using scraped data."""
     print("📊 Enriching TOC tree with REAL scraped data (no Mixed type)...")
 
+    # Load tier overrides
+    tier_overrides = {}
+    if TIER_FILE.exists():
+        raw_tiers = json.loads(TIER_FILE.read_text())
+        # Skip metadata keys starting with "_"
+        tier_overrides = {k: v for k, v in raw_tiers.items() if not k.startswith("_")}
+        print(f"   Loaded tier overrides: {len(tier_overrides)} entries")
+
     # Load scraped data
     scraped = {}
     if SCRAPED_FILE.exists():
@@ -925,6 +974,16 @@ def enrich():
         is_leaf = i in leaf_set
         product = get_product(path_str)
 
+        # Suppress pure category branch nodes: depth 0/1 with no scraped data.
+        # These are top-level product/area headers (e.g. "Joule in SAP SuccessFactors"),
+        # not actual capabilities — they just organise the TOC tree.
+        is_branch = not is_leaf and bool(children_map[i])
+        if is_branch and depth <= 1:
+            # Check up-front whether this title has scraped data to justify inclusion
+            _page_check = _fuzzy_match_scraped_page(title, scraped)
+            if not is_good_scraped_data(_page_check) and title not in TEXT_ONLY_PAGE_FALLBACK:
+                continue  # Pure TOC category node — skip entirely
+
         # Extract business area
         product_depth = None
         for pi, part in enumerate(path):
@@ -948,6 +1007,11 @@ def enrich():
 
         slug = title_to_slug(title)
         cap_type = cap_types.get(i, "Transactional")
+
+        # Determine tier — check product-level slug first, then exact slug
+        # Product-level slug: first path component that matches a product
+        product_slug = title_to_slug(product) if product != "Cross-Product" else ""
+        tier = tier_overrides.get(slug) or tier_overrides.get(product_slug) or "base"
 
         # Get data from scraped content (with fuzzy matching for title mismatches)
         page_data = _fuzzy_match_scraped_page(title, scraped)
@@ -984,6 +1048,11 @@ def enrich():
             description = fb["description"]
             use_cases = fb["use_cases"]
             cap_type = fb.get("capability_type", cap_type)
+            # Extract sample_prompts from fallback use cases
+            for uc in use_cases:
+                sample_prompts.extend(uc.get("prompts", []))
+            if len(sample_prompts) > 10:
+                sample_prompts = sample_prompts[:10]
             good_scraped += 1  # Count as good data since we have curated content
         else:
             fallback_count += 1
@@ -994,8 +1063,9 @@ def enrich():
             "business_area": business_area,
             "sub_area": sub_area,
             "capability_type": cap_type,
+            "tier": tier,
             "is_leaf": is_leaf,
-            "is_branch": not is_leaf and bool(children_map[i]),
+            "is_branch": is_branch,
             "depth": depth,
             "hierarchy": path_str,
             "slug": slug,
