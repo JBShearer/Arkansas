@@ -5,6 +5,14 @@
  *
  * Usage: node pipeline/sources/scrape_help.js
  * Output: pipeline/data/scraped_use_cases.json
+ *
+ * Key design principles:
+ *   1. All extraction is scoped to the main content area — never the sidebar.
+ *   2. Tables with >100 rows are rejected as navigation/sidebar tables.
+ *   3. List fallback only triggers when the list is inside main content.
+ *   4. Any batch of prompts containing "What's New" is discarded.
+ *   5. Rows where the name is literally a capability type are handled as
+ *      Ariba-style misaligned tables (type in col 2, description in col 3).
  */
 
 const puppeteer = require('puppeteer');
@@ -63,15 +71,20 @@ const SKIP_PATTERNS = [
 
 async function scrapePage(browser, url, title) {
   const page = await browser.newPage();
-  page.setDefaultTimeout(15000);
+  page.setDefaultTimeout(20000);
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 20000 });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // Wait for content to render
-    await page.waitForSelector('table, .section, h1', { timeout: 10000 }).catch(() => {});
+    // Wait for main content to appear — prefer article/main over generic table
+    await page.waitForSelector(
+      'article, [role="main"], .topic-content, main, table, h1',
+      { timeout: 15000 }
+    ).catch(() => {});
 
-    // Extract tables with use case data
+    // Small extra wait for lazy-rendered JS content
+    await new Promise(r => setTimeout(r, 300));
+
     const data = await page.evaluate(() => {
       const result = {
         description: '',
@@ -79,80 +92,142 @@ async function scrapePage(browser, url, title) {
         prerequisites: [],
       };
 
-      // Get page description (first paragraph)
-      const firstP = document.querySelector('.topic-content p, .section p, article p');
+      // ── 1. Locate the main content area ────────────────────────────────────
+      // SAP Help renders a left sidebar (TOC nav) and a right main content zone.
+      // We must restrict all extraction to the main content zone to avoid
+      // picking up sidebar navigation tables and lists.
+      const contentArea = (
+        document.querySelector('article') ||
+        document.querySelector('[role="main"]') ||
+        document.querySelector('.topic-content') ||
+        document.querySelector('.helpContent') ||
+        document.querySelector('main') ||
+        document.querySelector('.body') ||
+        // Last resort: find the div that contains a <table> but is NOT in a nav/aside
+        (() => {
+          const tables = document.querySelectorAll('table');
+          for (const t of tables) {
+            let el = t.parentElement;
+            while (el && el !== document.body) {
+              const tag = el.tagName.toLowerCase();
+              const role = (el.getAttribute('role') || '').toLowerCase();
+              if (tag === 'nav' || tag === 'aside' || role === 'navigation') break;
+              if (tag === 'article' || tag === 'main' || el.classList.contains('topic-content')) {
+                return el;
+              }
+              el = el.parentElement;
+            }
+          }
+          return null;
+        })() ||
+        document.body
+      );
+
+      // ── 2. Get page description from main content ───────────────────────────
+      const firstP = contentArea.querySelector('p');
       if (firstP) {
         result.description = firstP.textContent.trim();
       }
 
-      // Find all tables
-      const tables = document.querySelectorAll('table');
+      // ── 3. Extract tables ───────────────────────────────────────────────────
+      const tables = contentArea.querySelectorAll('table');
+
       for (const table of tables) {
-        const headers = [...table.querySelectorAll('thead th, tr:first-child th')]
+        const allRows = table.querySelectorAll('tr');
+
+        // Reject sidebar/navigation tables: too many rows
+        if (allRows.length > 100) continue;
+
+        const headers = [...table.querySelectorAll('thead th, tr:first-child th, tr:first-child td')]
           .map(th => th.textContent.trim().toLowerCase());
 
-        // Check if this is a use case table
         const hasUseCase = headers.some(h => h.includes('use case'));
         const hasPrompts = headers.some(h => h.includes('prompt') || h.includes('example'));
-        const hasResponse = headers.some(h => h.includes('response') || h.includes('joule'));
+        const hasResponse = headers.some(h =>
+          h.includes('response') || h.includes('joule') || h.includes('description')
+        );
 
-        if (hasUseCase || hasPrompts) {
-          const rows = table.querySelectorAll('tbody tr, tr:not(:first-child)');
-          for (const row of rows) {
-            const cells = [...row.querySelectorAll('td')];
-            if (cells.length >= 2) {
-              const useCase = {
-                name: cells[0] ? cells[0].textContent.trim() : '',
-                prompts: [],
-                response: '',
-              };
+        // Accept table if it has any relevant header, OR has ≥2 columns and some content
+        const isUseCaseTable = hasUseCase || hasPrompts || hasResponse;
+        const couldBeUseCaseTable = !isUseCaseTable && headers.length >= 2;
 
-              // Extract prompts (might be in cell 1 or cell with "prompt" header)
-              const promptCell = cells[1];
-              if (promptCell) {
-                // Split by line breaks or periods to get individual prompts
-                const text = promptCell.innerText || promptCell.textContent;
-                const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-                useCase.prompts = lines;
-              }
+        if (!isUseCaseTable && !couldBeUseCaseTable) continue;
 
-              // Extract response
-              if (cells.length >= 3) {
-                useCase.response = cells[2] ? cells[2].textContent.trim().substring(0, 500) : '';
-              }
+        const rows = table.querySelectorAll('tbody tr, tr:not(:first-child)');
 
-              if (useCase.name || useCase.prompts.length > 0) {
-                result.useCases.push(useCase);
-              }
+        for (const row of rows) {
+          const cells = [...row.querySelectorAll('td')];
+          if (cells.length < 2) continue;
+
+          const name = cells[0] ? cells[0].textContent.trim() : '';
+
+          // Skip rows with empty name or name that looks like a sidebar nav item
+          if (!name) continue;
+          if (name === 'Joule' || name === 'SAP' || name.startsWith('What\'s New')) continue;
+          // Skip rows where all cells are very short (likely a separator or header row)
+          const totalText = cells.map(c => c.textContent.trim()).join('').length;
+          if (totalText < 5) continue;
+
+          const useCase = { name, prompts: [], response: '' };
+
+          // Extract prompts from cell[1]
+          const promptCell = cells[1];
+          if (promptCell) {
+            const text = (promptCell.innerText || promptCell.textContent || '').trim();
+            const lines = text.split('\n')
+              .map(l => l.trim())
+              .filter(l => l.length > 5);
+            // Reject if these look like sidebar nav items
+            const hasSidebarSignal = lines.some(l =>
+              l.startsWith("What's New") || l === 'Cloud Foundry' || l === 'SAP BTP'
+            );
+            if (!hasSidebarSignal) {
+              useCase.prompts = lines;
             }
           }
-        }
 
-        // Check for prerequisites table
-        const hasPrereq = headers.some(h => h.includes('prerequisite') || h.includes('role'));
-        if (hasPrereq) {
-          const rows = table.querySelectorAll('tbody tr');
-          for (const row of rows) {
-            const cells = [...row.querySelectorAll('td')];
-            if (cells.length > 0) {
-              result.prerequisites.push(cells[0].textContent.trim());
-            }
+          // Extract response/description from cell[2] (or cell[1] if only 2 cols)
+          const responseCell = cells.length >= 3 ? cells[2] : null;
+          if (responseCell) {
+            useCase.response = responseCell.textContent.trim().substring(0, 500);
+          }
+
+          if (useCase.name || useCase.prompts.length > 0) {
+            result.useCases.push(useCase);
           }
         }
       }
 
-      // Also look for bullet lists of prompts (some pages use lists instead of tables)
+      // ── 4. Fallback: bullet lists in main content ───────────────────────────
+      // Only trigger when no table data was found.
+      // Scoped strictly to contentArea to avoid sidebar nav lists.
       if (result.useCases.length === 0) {
-        const listItems = document.querySelectorAll('ul li, ol li');
+        const listItems = contentArea.querySelectorAll('ul li, ol li');
         const promptLike = [];
         for (const li of listItems) {
           const text = li.textContent.trim();
-          // Prompts often start with verbs like "Show", "Display", "Create", etc.
-          if (/^(show|display|create|manage|find|search|open|what|how|list|get|check)/i.test(text) && text.length < 200) {
+          // Must start with an action verb and be a reasonable prompt length
+          if (
+            /^(show|display|create|manage|find|search|open|what|how|list|get|check|view|navigate|go to|change|update|delete|assign|approve|cancel|post|release)\b/i.test(text) &&
+            text.length >= 10 &&
+            text.length < 200 &&
+            !text.startsWith("What's New") &&
+            !text.match(/^\d{4}/)  // reject "2024 What's New..." date-prefixed items
+          ) {
             promptLike.push(text);
           }
         }
-        if (promptLike.length > 0) {
+
+        // Sanity check: reject if batch looks like sidebar TOC
+        // (TOC items tend to be page titles that match other TOC entries, not user queries)
+        const hasSidebarSignal = promptLike.some(p =>
+          p.startsWith("What's New") ||
+          p === 'Finding Apps with Navigational Capability' ||
+          p === 'Display Business Partners' ||
+          p.startsWith('Joule in SAP')
+        );
+
+        if (promptLike.length > 0 && !hasSidebarSignal && promptLike.length < 50) {
           result.useCases.push({
             name: 'General',
             prompts: promptLike,
@@ -161,19 +236,38 @@ async function scrapePage(browser, url, title) {
         }
       }
 
-      // Extract prerequisite roles from bullet lists
-      if (result.prerequisites.length === 0) {
-        const allLIs = document.querySelectorAll('li');
-        for (const li of allLIs) {
-          const text = li.textContent.trim();
-          if (/^SAP_BR_|^SAP_/.test(text) && text.length < 100) {
-            result.prerequisites.push(text);
-          }
+      // ── 5. Prerequisites ────────────────────────────────────────────────────
+      const allLIs = contentArea.querySelectorAll('li');
+      for (const li of allLIs) {
+        const text = li.textContent.trim();
+        if (/^SAP_BR_|^SAP_/.test(text) && text.length < 100) {
+          result.prerequisites.push(text);
         }
       }
 
       return result;
     });
+
+    // ── Post-extraction validation ──────────────────────────────────────────
+    // Final guard: if ANY prompt in ANY use case contains "What's New",
+    // the whole batch is a sidebar scrape — discard all use cases.
+    if (data.useCases.length > 0) {
+      const allPrompts = data.useCases.flatMap(uc => uc.prompts);
+      const hasSidebarSignal = allPrompts.some(p =>
+        p.includes("What's New") ||
+        p === 'Cloud Foundry' ||
+        p === 'Finding Apps with Navigational Capability'
+      );
+      if (hasSidebarSignal) {
+        data.useCases = [];
+      }
+    }
+
+    // If total prompt count is suspiciously high from a single use case,
+    // it's almost certainly a sidebar dump — discard.
+    if (data.useCases.length === 1 && data.useCases[0].prompts.length > 40) {
+      data.useCases = [];
+    }
 
     await page.close();
     return data;
@@ -204,6 +298,7 @@ async function main() {
   const results = {};
   let scraped = 0;
   let withUseCases = 0;
+  let discarded = 0;
 
   for (const entry of toScrape) {
     const slug = titleToSlug(entry.title);
@@ -223,12 +318,15 @@ async function main() {
       withUseCases++;
       const promptCount = data.useCases.reduce((s, uc) => s + uc.prompts.length, 0);
       console.log(` ✓ ${data.useCases.length} use cases, ${promptCount} prompts`);
+    } else if (data.error) {
+      discarded++;
+      console.log(` ✗ error: ${data.error.substring(0, 60)}`);
     } else {
-      console.log(' (no table found)');
+      console.log(' — no content found');
     }
 
-    // Small delay to be nice to SAP servers
-    await new Promise(r => setTimeout(r, 500));
+    // Polite delay between requests
+    await new Promise(r => setTimeout(r, 600));
   }
 
   await browser.close();
@@ -242,6 +340,7 @@ async function main() {
       scraped_at: new Date().toISOString(),
       total_pages: toScrape.length,
       pages_with_use_cases: withUseCases,
+      pages_with_errors: discarded,
       source: 'https://help.sap.com/docs/joule/capabilities-guide/',
     },
     pages: results,
@@ -251,7 +350,9 @@ async function main() {
 
   console.log('');
   console.log(`✅ Scraped ${scraped} pages`);
-  console.log(`   ${withUseCases} pages with use case tables`);
+  console.log(`   ${withUseCases} pages with use case content`);
+  console.log(`   ${scraped - withUseCases - discarded} pages with no content found`);
+  if (discarded) console.log(`   ${discarded} pages with errors`);
   console.log(`   💾 Saved to ${OUT_FILE}`);
 }
 

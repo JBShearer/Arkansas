@@ -51,7 +51,7 @@ PRODUCT_MAP = {
 # Manually curated from actual SAP Help Portal content.
 TEXT_ONLY_PAGE_FALLBACK = {
     "Joule in SAP Digital Manufacturing": {
-        "description": "Joule as a Copilot in SAP Digital Manufacturing supports production order queries, material details, yield/scrap reporting, goods receipt, component availability, nonconformance management, process parameters, and navigation within the application.",
+        "description": "Joule as a Copilot in SAP Digital Manufacturing supports production order queries, material details, component availability checks, nonconformance management, process parameter lookups, and navigation within the application.",
         "use_cases": [
             {
                 "name": "Production Order Information",
@@ -61,18 +61,6 @@ TEXT_ONLY_PAGE_FALLBACK = {
                     "Show details of production order 123456",
                     "Show production orders planned for today",
                     "Show all items of production order 123456",
-                ],
-                "notes": [],
-                "parameters": [],
-                "response_summary": "",
-            },
-            {
-                "name": "Yield, Scrap, and Goods Receipt",
-                "description": "Log activities, report yield or scrap, and manage goods receipt.",
-                "prompts": [
-                    "Report yield for production order 123456",
-                    "Log scrap for operation 0010 of production order 123456",
-                    "Post goods receipt for production order 123456",
                 ],
                 "notes": [],
                 "parameters": [],
@@ -92,7 +80,7 @@ TEXT_ONLY_PAGE_FALLBACK = {
             },
             {
                 "name": "Process Parameters and SOPs",
-                "description": "Understand process parameters and standard operating procedures.",
+                "description": "Look up process parameters and standard operating procedures.",
                 "prompts": [
                     "Show process parameters for operation 0010",
                     "Show standard operating procedure for operation 0020",
@@ -102,7 +90,7 @@ TEXT_ONLY_PAGE_FALLBACK = {
                 "response_summary": "",
             },
         ],
-        "capability_type": "Mixed",
+        "capability_type": "Informational",
     },
     "Joule in SAP Risk and Assurance Management": {
         "description": "Use Joule to interact with SAP Risk and Assurance Management using natural language to streamline risk management and audit processes.",
