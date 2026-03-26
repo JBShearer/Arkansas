@@ -133,10 +133,10 @@ def is_good_scraped_data(page_data):
         if len(prompts) > 30:
             return False
     # False positive: many rows but ALL have empty prompts AND empty response
-    # (e.g., Signavio with 59 name-only rows from failed scrape)
+    # (e.g., sidebar scrapes with name-only rows)
     non_empty = sum(
         1 for uc in ucs
-        if (uc.get("prompts") or uc.get("response", "").strip())
+        if (uc.get("prompts") or uc.get("samplePrompts") or uc.get("response", "").strip() or uc.get("description", "").strip())
     )
     if non_empty == 0:
         return False
