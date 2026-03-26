@@ -1,7 +1,7 @@
 # Session State — SAP Business AI / Joule Capabilities Website
 
-> **Last updated:** 2025-03-25T18:33 MDT  
-> **Git commit:** v14 (d4d2020) — Clean up Signavio prompts  
+> **Last updated:** 2026-03-25T19:33 MDT  
+> **Git commit:** v15 — Clean up site/ broken submodule, convert to regular directory  
 > **Live site:** https://easyassap.com (via GitHub Pages, CNAME configured)
 
 ---
@@ -122,9 +122,9 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 
 ---
 
-## Completed Work (This Session)
+## Completed Work
 
-### Data Quality Fixes
+### Session 1 (v1–v14): Data Quality & Pipeline Build
 1. ✅ Fixed "0 prompts" display — extracted prompts from response column
 2. ✅ Fixed note formatting — separated notes from prompts
 3. ✅ Separated cautions/warnings from notes
@@ -137,9 +137,16 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 10. ✅ Added fallback data for text-only pages (Digital Mfg, Risk & Assurance, Incentive Mgmt)
 11. ✅ Cleaned up Signavio prompts (descriptions filtered from samplePrompts)
 
+### Session 2 (v15): Git Cleanup
+1. ✅ Removed broken site/ gitlink (was tracked as submodule without .gitmodules)
+2. ✅ Removed site/.git (separate repo with diverged v6 history)
+3. ✅ Re-added site/ as regular tracked directory (CNAME + index.html)
+4. ✅ Removed duplicate files from old site/ repo (.github/workflows, old HTML)
+
 ### Commits
 - v13: Add fallback data for text-only pages
 - v14: Clean up Signavio prompts - filter descriptions/fragments
+- v15: Fix site/ broken submodule — convert to regular tracked directory
 
 ---
 
