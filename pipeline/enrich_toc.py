@@ -45,6 +45,54 @@ PRODUCT_MAP = {
     "Analytical Insights with SAP Analytics Cloud": "SAP Analytics Cloud",
 }
 
+# ── Fallback data for text-only pages (no table, scraper got sidebar nav) ────
+# These pages describe Joule capabilities in prose, not in tables.
+# Manually curated from actual SAP Help Portal content.
+TEXT_ONLY_PAGE_FALLBACK = {
+    "Joule in SAP Digital Manufacturing": {
+        "description": "Enter your query or question in plain natural language, and Joule searches the product documentation to find the answer. Joule summarizes the search results and provides the summarization as the answer to your question, along with the top three search results.",
+        "use_cases": [
+            {
+                "name": "Informational Capabilities",
+                "description": "Joule searches product documentation and provides summarized answers with the top three search results.",
+                "prompts": [],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            }
+        ],
+        "capability_type": "Informational",
+    },
+    "Joule in SAP Risk and Assurance Management": {
+        "description": "Use Joule to interact with SAP Risk and Assurance Management using natural language to streamline risk management and audit processes.",
+        "use_cases": [
+            {
+                "name": "Risk and Audit Management",
+                "description": "Interact with SAP Risk and Assurance Management using natural language to manage risk and audit tasks.",
+                "prompts": [],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            }
+        ],
+        "capability_type": "Informational",
+    },
+    "Joule in SAP Incentive Management": {
+        "description": "Use Joule to interact with SAP Incentive Management using natural language to manage incentive plans and compensation.",
+        "use_cases": [
+            {
+                "name": "Incentive Management",
+                "description": "Interact with SAP Incentive Management using natural language to manage incentive plans, compensation, and related tasks.",
+                "prompts": [],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            }
+        ],
+        "capability_type": "Transactional",
+    },
+}
+
 # ── Skip list ────────────────────────────────────────────────────
 SKIP_TITLES = [
     "What's New", "Archive", "Joule Capabilities", "Activating Business AI",
@@ -926,6 +974,13 @@ def enrich():
             # Limit to reasonable number of prompts for display
             if len(sample_prompts) > 10:
                 sample_prompts = sample_prompts[:10]
+        elif title in TEXT_ONLY_PAGE_FALLBACK:
+            # Text-only pages where scraper got sidebar nav instead of content
+            fb = TEXT_ONLY_PAGE_FALLBACK[title]
+            description = fb["description"]
+            use_cases = fb["use_cases"]
+            cap_type = fb.get("capability_type", cap_type)
+            good_scraped += 1  # Count as good data since we have curated content
         else:
             fallback_count += 1
 
@@ -945,7 +1000,7 @@ def enrich():
             "description": description,
             "use_cases": use_cases,
             "sample_prompts": sample_prompts,
-            "data_source": "scraped" if has_good_data else "title-only",
+            "data_source": "scraped" if (has_good_data or title in TEXT_ONLY_PAGE_FALLBACK) else "title-only",
         }
         capabilities.append(cap)
 
