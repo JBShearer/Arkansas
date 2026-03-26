@@ -32,10 +32,19 @@ def main():
     elif cmd == "generate":
         from pipeline.generators.site_generator import run
         run(config, WORKSPACE)
+    elif cmd == "clean":
+        from pipeline.clean_data import clean_data
+        raw = str(WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json")
+        clean = str(WORKSPACE / "pipeline" / "data" / "joule_capabilities_clean.json")
+        clean_data(raw, clean)
     elif cmd == "build":
         from pipeline.analysis.analyzer import run as analyze
+        from pipeline.clean_data import clean_data
         from pipeline.generators.site_generator import generate
         analyze(config, WORKSPACE)
+        raw = str(WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json")
+        clean = str(WORKSPACE / "pipeline" / "data" / "joule_capabilities_clean.json")
+        clean_data(raw, clean)
         generate()
     else:
         print(f"Unknown command: {cmd}")

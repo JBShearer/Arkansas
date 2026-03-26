@@ -1,14 +1,14 @@
 # Session State — SAP Business AI / Joule Capabilities Website
 
-> **Last updated:** 2026-03-25T19:33 MDT  
-> **Git commit:** v15 — Clean up site/ broken submodule, convert to regular directory  
+> **Last updated:** 2026-03-25T19:48 MDT  
+> **Git commit:** v16 — Data quality cleaning pipeline  
 > **Live site:** https://easyassap.com (via GitHub Pages, CNAME configured)
 
 ---
 
 ## Project Overview
 
-A Python-based pipeline that scrapes, enriches, and generates a website cataloging
+A Python-based pipeline that scrapes, enriches, cleans, and generates a website cataloging
 SAP Business AI (Joule) capabilities across 18 SAP products. Built for the State
 of Arkansas's crawl-walk-run AI adoption strategy.
 
@@ -22,10 +22,13 @@ pipeline/
 │   └── scrape_joule.py        # Python scraper (alternative)
 ├── data/
 │   ├── scraped_use_cases.json # Raw scraped data (167 pages)
-│   └── joule_capabilities_raw.json  # Enriched output (216 entries)
+│   ├── joule_capabilities_raw.json  # Enriched output (216 entries)
+│   └── joule_capabilities_clean.json # Cleaned output (notes/prompts fixed)
 ├── enrich_toc.py              # Main enrichment pipeline
+├── clean_data.py              # Data quality cleaner (prompts↔notes, type fixes)
+├── main.py                    # Pipeline entry point (analyze/clean/generate/build)
 ├── generators/
-│   └── site_generator.py      # HTML site generator
+│   └── site_generator.py      # HTML site generator (reads clean data)
 └── analysis/
     └── analyzer.py            # Data analysis utilities
 site/
@@ -33,7 +36,19 @@ site/
 └── CNAME                      # easyassap.com
 ```
 
-### Key Numbers (v14)
+### Pipeline Flow
+
+```
+scrape → enrich → clean → generate → deploy
+  │         │        │         │         │
+  │    toc_tree.txt  │    clean.json    git push
+  │    + scraped →   │    (fixed        
+  │    raw.json      │    prompts/notes/types)
+  │                  │         │
+  node scraper    enrich_toc  clean_data.py
+```
+
+### Key Numbers (v16)
 
 | Metric | Count |
 |--------|-------|
@@ -45,14 +60,47 @@ site/
 | With use case details | 113 |
 | Use cases on site | 171 |
 
-### Capability Type Distribution
+### Capability Type Distribution (after cleaning)
 
 | Type | Count |
 |------|-------|
-| Transactional | 124 |
-| Informational | 61 |
-| Navigational | 24 |
-| Analytical | 7 |
+| Transactional | 89 |
+| Informational | 62 |
+| Navigational | 10 |
+| Mixed | 6 |
+| Analytical | 4 |
+
+### Data Cleaning Stats (v16)
+
+| Metric | Count |
+|--------|-------|
+| Prompts moved to notes | 165 |
+| Notes moved to prompts | 8 |
+| Type reclassifications | 31 |
+
+---
+
+## Data Cleaning Pipeline (`clean_data.py`)
+
+### What It Does
+Reads `joule_capabilities_raw.json` → writes `joule_capabilities_clean.json`
+
+1. **Prompts → Notes**: Moves descriptive/instructional text out of prompts arrays
+   - "Joule displays...", "You must...", "Reading through..." etc.
+   - Field labels like "Full Name Business Partner ID"
+   - Long multi-sentence descriptions
+2. **Notes → Prompts**: Moves actual user commands out of notes arrays
+   - "For the BP 17100010, show me industry details"
+   - "Show me...", "Display...", "Create..." patterns
+3. **Type Reclassification**: Re-evaluates capability_type based on title and use case analysis
+   - Infers Informational/Transactional/Navigational/Analytical/Mixed
+4. **Rebuilds sample_prompts**: From cleaned use case prompts
+
+### Pattern Lists
+- `NOT_A_PROMPT_PATTERNS`: 50+ regex patterns for descriptive text
+- `FIELD_LABEL_PATTERNS`: 30+ patterns for column headers/field labels
+- `NOTE_IS_PROMPT_PATTERNS`: Patterns for commands that ended up in notes
+- `DESCRIPTIVE_PROMPT_PATTERNS`: Long description patterns
 
 ---
 
@@ -95,6 +143,7 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 ## Site Generator (`site_generator.py`)
 
 ### Features
+- Reads `joule_capabilities_clean.json` (falls back to raw if clean not found)
 - Responsive single-page HTML with embedded CSS/JS
 - Product filter sidebar with capability counts
 - Capability type filter (color-coded badges)
@@ -103,6 +152,7 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 - SAP Help Portal deep links
 - Arkansas "crawl-walk-run" framing
 - Mobile-friendly layout
+- JS-level `isExplanatoryText()` as safety net (data is pre-cleaned)
 
 ---
 
@@ -117,8 +167,6 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 ### Known Limitations
 - Text-only pages (no tables) → captures sidebar nav instead
   - **Workaround**: `TEXT_ONLY_PAGE_FALLBACK` in `enrich_toc.py`
-- Some Signavio prompts still have description fragments starting uppercase
-  - Minor issue, prompts are still usable
 
 ---
 
@@ -143,18 +191,30 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 3. ✅ Re-added site/ as regular tracked directory (CNAME + index.html)
 4. ✅ Removed duplicate files from old site/ repo (.github/workflows, old HTML)
 
+### Session 3 (v16): Data Quality Cleaning Pipeline
+1. ✅ Identified 50+ data quality issues (notes as prompts, wrong types)
+2. ✅ Created `pipeline/clean_data.py` — systematic data cleaner
+3. ✅ Moved 165 descriptive texts from prompts → notes
+4. ✅ Moved 8 actual commands from notes → prompts
+5. ✅ Reclassified 31 capability types (better Informational/Transactional/Mixed split)
+6. ✅ Updated site generator to read clean data (with raw fallback)
+7. ✅ Integrated clean step into `main.py` pipeline and `Makefile`
+8. ✅ Fixed Python SyntaxWarning (escaped regex in JS template)
+9. ✅ Regenerated site from clean data — no warnings
+
 ### Commits
 - v13: Add fallback data for text-only pages
 - v14: Clean up Signavio prompts - filter descriptions/fragments
 - v15: Fix site/ broken submodule — convert to regular tracked directory
+- v16: Data quality cleaning pipeline — fix prompts/notes/types
 
 ---
 
 ## Remaining Work / Known Issues
 
 ### Minor
-- A few Signavio prompts still have uppercase description fragments (e.g., "Process Intelligence based on..." in Performance Indicator Recommender)
 - 102 entries still "title-only" — these are branch/category nodes without their own capability pages
+- JS `isExplanatoryText()` still runs as safety net — could be removed now that data is pre-cleaned
 
 ### Future Enhancements
 - Improve scraper to handle text-only pages natively
@@ -169,26 +229,30 @@ Filters out non-capability pages: What's New, Archive, Glossary, Configuration, 
 ## How to Continue
 
 ```bash
-# Re-run enrichment pipeline
-python3 -m pipeline.enrich_toc
+# Full pipeline (enrich → clean → generate → deploy)
+make all
 
-# Regenerate site
-python3 -m pipeline.generators.site_generator
+# Individual steps
+make enrich      # Re-enrich from TOC + scraped data
+make cleandata   # Clean data quality (prompts↔notes, fix types)
+make generate    # Regenerate site from clean data
+make deploy      # Git commit + push
 
-# Deploy
-cp site/index.html index.html
-git add -A && git commit -m "description" && git push
-
-# Full pipeline
-make all  # or: python3 -m pipeline.main
+# Or via Python
+python3 -m pipeline.main build    # analyze + clean + generate
+python3 -m pipeline.main clean    # just clean data
 
 # Re-scrape (takes ~8 min)
 node pipeline/sources/scrape_help.js
+
+# Local preview
+make serve  # → http://localhost:4000
 ```
 
 ### Key Files to Edit
 - **Add products**: `PRODUCT_MAP` in `enrich_toc.py`
-- **Fix data quality**: `_is_note()`, `_is_parameter()`, `_DESCRIPTION_STARTS` in `enrich_toc.py`
+- **Fix data quality**: `clean_data.py` (add patterns to NOT_A_PROMPT_PATTERNS etc.)
+- **Fix enrichment**: `_is_note()`, `_is_parameter()`, `_DESCRIPTION_STARTS` in `enrich_toc.py`
 - **Add fallback data**: `TEXT_ONLY_PAGE_FALLBACK` in `enrich_toc.py`
 - **Change site design**: `site_generator.py`
 - **Update TOC**: `pipeline/sources/toc_tree.txt`

@@ -1,6 +1,7 @@
 """Generate the Joule Capabilities Explorer site as a hierarchical drilldown.
 
-Reads pipeline/data/joule_capabilities_raw.json → site/index.html
+Reads pipeline/data/joule_capabilities_clean.json → site/index.html
+(Falls back to joule_capabilities_raw.json if clean version not found.)
 Builds a tree-based UI: Product → Business Area → Use Cases
 with capability type filtering and sample prompts.
 
@@ -12,12 +13,16 @@ import json
 from pathlib import Path
 
 WORKSPACE = Path(__file__).resolve().parent.parent.parent
-DATA_FILE = WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json"
+DATA_FILE_CLEAN = WORKSPACE / "pipeline" / "data" / "joule_capabilities_clean.json"
+DATA_FILE_RAW = WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json"
 OUT_FILE = WORKSPACE / "site" / "index.html"
 
 
 def generate():
-    data = json.load(open(DATA_FILE))
+    # Prefer cleaned data; fall back to raw
+    data_file = DATA_FILE_CLEAN if DATA_FILE_CLEAN.exists() else DATA_FILE_RAW
+    print(f"📂 Reading: {data_file.name}")
+    data = json.load(open(data_file))
     caps = data["capabilities"]
     meta = data["metadata"]
 
@@ -392,7 +397,7 @@ function isExplanatoryText(text) {{
   // Explanatory starters — sentences describing behavior, not commands
   if (/^(?:You need to|You can |You must |If you |If no |If the |If a |If several |When Joule|When you |Joule (?:automatically|checks|creates|displays|supports|adjusts|uses|shows|will)|Note that |Please note|This (?:feature|function|capability)|The (?:system|app)|In (?:this|the) )/i.test(t)) return true;
   // Long multi-sentence explanations (>120 chars with at least one period mid-text)
-  if (t.length > 120 && /\.\s+[A-Z]/.test(t)) return true;
+  if (t.length > 120 && /\\.\\s+[A-Z]/.test(t)) return true;
   return false;
 }}
 

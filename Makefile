@@ -1,7 +1,7 @@
-.PHONY: all scrape enrich generate deploy serve clean
+.PHONY: all scrape enrich cleandata generate deploy serve clean
 
-# Full pipeline: scrape → enrich → generate → deploy
-all: enrich generate deploy
+# Full pipeline: scrape → enrich → clean → generate → deploy
+all: enrich cleandata generate deploy
 
 # Scrape SAP Help Portal (requires Node.js + Puppeteer, ~8 min)
 scrape:
@@ -11,7 +11,11 @@ scrape:
 enrich:
 	python3 -m pipeline.enrich_toc
 
-# Generate HTML site
+# Clean data quality (move notes↔prompts, fix types)
+cleandata:
+	python3 pipeline/clean_data.py
+
+# Generate HTML site (uses clean data if available)
 generate:
 	python3 -m pipeline.generators.site_generator
 	cp site/index.html index.html
