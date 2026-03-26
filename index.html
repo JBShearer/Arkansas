@@ -527,6 +527,18 @@ function renderUseCase(c) {
     html += badge;
     html += link;
     html += '</div>';
+    // Show description if available (capability-level or from single use case)
+    const desc = c.description || (c.use_cases && c.use_cases.length === 1 && c.use_cases[0].description ? c.use_cases[0].description : '');
+    if (desc) {
+      html += '<div style="width:100%;padding:0.3rem 0 0.2rem 3.5rem;font-size:0.82rem;color:#444;">' + desc + '</div>';
+    }
+    // Show single use case name if it differs from title
+    if (c.use_cases && c.use_cases.length === 1 && !hasPrompts) {
+      const uc = c.use_cases[0];
+      if (uc.name && uc.name !== c.title) {
+        html += '<div style="width:100%;padding:0.15rem 0 0.15rem 3.5rem;font-size:0.78rem;color:#555;"><strong>Use Case:</strong> ' + uc.name + '</div>';
+      }
+    }
     if (hasPrompts) {
       html += '<div class="sample-prompts">';
       html += '<ul>';
