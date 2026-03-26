@@ -355,6 +355,9 @@ def _is_note(text):
     # Response option descriptions (button behavior)
     if _RESPONSE_OPTION_RE.match(t):
         return True
+    # Description-style text (Signavio samplePrompts often include descriptions)
+    if _DESCRIPTION_STARTS.match(t):
+        return True
     # Pure instructional prefix with no content
     if t.lower().rstrip(':') in ('ask for example', 'for example', 'example'):
         return True
@@ -718,11 +721,12 @@ def extract_use_cases_from_scraped(page_data):
                 cleaned.append(p)
         final_prompts = cleaned
 
-        # Filter continuation fragments (start lowercase or "to ...")
+        # Filter continuation fragments (start lowercase, or start with preposition)
         final_prompts = [
             p for p in final_prompts
-            if not (p[0].islower() and len(p) < 40)  # "to 25th July 2001."
-            and not re.match(r'^(?:to |and |or |of |in |for |with )\w', p, re.IGNORECASE)
+            if not (p[0].islower())  # Any line starting lowercase is a continuation
+            and not re.match(r'^(?:to |and |or |of |in |for |with |from |along |based on )\w', p, re.IGNORECASE)
+            and not re.match(r'^"[A-Z]', p)  # Quoted references like '"Describe process model"'
         ]
 
         # Filter out fragment prompts (too short to be useful)
