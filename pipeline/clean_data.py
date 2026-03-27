@@ -148,8 +148,49 @@ def is_note_actually_prompt(text: str) -> bool:
     return False
 
 
-def infer_uc_type(uc: dict) -> str:
-    """Infer capability_type for a single use case based on its name and prompts."""
+def is_app_name(text: str) -> bool:
+    """Return True if text looks like a Fiori app name rather than a user prompt.
+
+    App names are short, title-cased, contain no question mark, and start with
+    a capitalised noun or verb-as-noun (e.g. "Manage Purchase Orders").
+    They never start with a lowercase word or a pronoun like "Show", "Where", "Which".
+    """
+    t = text.strip()
+    if not t or '?' in t or len(t) > 80:
+        return False
+    # Must start with an uppercase letter
+    if not t[0].isupper():
+        return False
+    # Prompt-starter words that indicate a user sentence, not an app name
+    prompt_starters = {
+        'show', 'display', 'find', 'search', 'get', 'list', 'fetch',
+        'create', 'change', 'update', 'delete', 'post', 'cancel',
+        'where', 'which', 'what', 'how', 'who', 'when', 'why',
+        'i', 'help', 'open', 'navigate', 'go',
+    }
+    first_word = re.split(r'\s+', t)[0].rstrip('.,').lower()
+    if first_word in prompt_starters:
+        return False
+    # Must look like title case (most words capitalised)
+    words = re.split(r'\s+', t)
+    short_words = {'a', 'an', 'the', 'of', 'for', 'in', 'to', 'and', 'or', 'by', 'with', 'on', 'at'}
+    cap_words = [w for w in words if w not in short_words]
+    if not cap_words:
+        return False
+    frac = sum(1 for w in cap_words if w and w[0].isupper()) / len(cap_words)
+    return frac >= 0.75
+
+
+def infer_uc_type(uc: dict, parent_type: str = None) -> str:
+    """Infer capability_type for a single use case based on its name and prompts.
+
+    If the parent capability is Navigational, the UC inherits that type directly —
+    the heuristics should not override a known-good parent classification.
+    """
+    # Navigational parent always wins — don't second-guess it with word heuristics
+    if parent_type == 'Navigational':
+        return 'Navigational'
+
     name = uc.get('name', '').lower()
     prompts = uc.get('prompts', [])
     prompt_text = ' '.join(prompts).lower()
@@ -251,8 +292,13 @@ def infer_capability_type(cap: dict) -> str:
     return existing
 
 
-def clean_use_case(uc: dict) -> dict:
-    """Clean a single use case: fix prompts vs notes."""
+def clean_use_case(uc: dict, parent_type: str = None) -> dict:
+    """Clean a single use case: fix prompts vs notes.
+
+    For Navigational use cases, items in the prompts array that look like
+    Fiori app names are moved to parameters (they are navigation targets,
+    not things the user types).
+    """
     prompts = uc.get('prompts', [])
     notes = uc.get('notes', [])
 
@@ -271,9 +317,14 @@ def clean_use_case(uc: dict) -> dict:
             p = m.group(1).strip()
         if is_not_a_prompt(p):
             new_notes.append(p)
+        elif parent_type == 'Navigational' and is_app_name(p):
+            # This is a Fiori app name (navigation target), not a user-typed prompt
+            existing_params = uc.setdefault('parameters', [])
+            if p not in existing_params:
+                existing_params.append(p)
         else:
             clean_prompts.append(p)
-    
+
     # Check if any notes are actually prompts
     remaining_notes = []
     for n in new_notes:
@@ -284,11 +335,11 @@ def clean_use_case(uc: dict) -> dict:
             clean_prompts.append(n)
         else:
             remaining_notes.append(n)
-    
+
     uc['prompts'] = clean_prompts
     uc['notes'] = remaining_notes
     # Infer use-case-level capability type
-    uc['capability_type'] = infer_uc_type(uc)
+    uc['capability_type'] = infer_uc_type(uc, parent_type=parent_type)
     return uc
 
 
@@ -339,13 +390,14 @@ def clean_data(input_path: str, output_path: str):
     
     for cap in data['capabilities']:
         old_type = cap.get('capability_type')
-        
+        parent_type = cap.get('capability_type')
+
         for uc in cap.get('use_cases', []):
             old_prompts = len(uc.get('prompts', []))
             old_notes = len(uc.get('notes', []))
-            
-            clean_use_case(uc)
-            
+
+            clean_use_case(uc, parent_type=parent_type)
+
             new_prompts = len(uc.get('prompts', []))
             new_notes = len(uc.get('notes', []))
             
