@@ -163,6 +163,13 @@ async function scrapePage(browser, url, title) {
           h.includes('response') || h.includes('joule') || h.includes('description')
         );
 
+        // Reject tables that are clearly prerequisites/config (not use case content)
+        const isPrereqTable = headers.some(h =>
+          h.includes('business catalog') || h.includes('technical name') ||
+          h.includes('prerequisite') || h.includes('authorization') || h.includes('role name')
+        );
+        if (isPrereqTable) continue;
+
         // Accept table if it has any relevant header, OR has ≥2 columns and some content
         const isUseCaseTable = hasUseCase || hasPrompts || hasResponse;
         const couldBeUseCaseTable = !isUseCaseTable && headers.length >= 2;
@@ -226,14 +233,13 @@ async function scrapePage(browser, url, title) {
       // ── 4a. h2-scoped extraction: "Examples" / "Use Cases" sections ──────────
       // Many pages use an <h2>Examples</h2> or <h2>Use Cases</h2> heading
       // followed by <li> items that are the actual sample prompts.
-      // This is unambiguous — collect everything between the heading and
-      // the next sibling heading as prompts for a use case named after the page title.
+      // Always run this — a prerequisites table false-positive above must not block it.
       // NOTE: SAP Help h2 elements contain a <span> + icon <button>, so we use
       // innerText (strips icon font chars) and includes() not strict equality.
-      if (result.useCases.length === 0) {
+      {
         const headings = contentArea.querySelectorAll('h2, h3');
         for (const heading of headings) {
-          const headText = (heading.innerText || heading.textContent || '').trim().toLowerCase();
+          const headText = (heading.innerText || heading.textContent || '').replace(/[^\x00-\x7F]/g, '').trim().toLowerCase();
           if (headText.includes('examples') || headText === 'use cases' || headText === 'example') {
             const prompts = [];
             let sibling = heading.nextElementSibling;
@@ -248,6 +254,15 @@ async function scrapePage(browser, url, title) {
                   if (text.length >= 5 && text.length < 250) {
                     prompts.push(text);
                   }
+                }
+              }
+              // Collect "You: <prompt>" dialogue lines from paragraph-based example sections
+              if (tag === 'p') {
+                const text = (sibling.innerText || sibling.textContent || '').trim();
+                if (text.startsWith('You:')) {
+                  const prompt = text.replace(/^You:\s*/i, '').trim();
+                  // Must be a real question/statement (has a space, not just a lookup value)
+                  if (prompt.length >= 10 && prompt.includes(' ')) prompts.push(prompt);
                 }
               }
               sibling = sibling.nextElementSibling;
