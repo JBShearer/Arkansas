@@ -124,9 +124,15 @@ async function scrapePage(browser, url, title) {
       );
 
       // ── 2. Get page description from main content ───────────────────────────
-      const firstP = contentArea.querySelector('p');
-      if (firstP) {
-        result.description = firstP.textContent.trim();
+      // Use the first substantive paragraph (skip very short ones that are
+      // just "Learn about..." navigation stubs).
+      const allParas = contentArea.querySelectorAll('p');
+      for (const p of allParas) {
+        const text = p.textContent.trim().replace(/\s+/g, ' ');
+        if (text.length > 40) {
+          result.description = text;
+          break;
+        }
       }
 
       // ── 3. Extract tables ───────────────────────────────────────────────────
@@ -139,7 +145,7 @@ async function scrapePage(browser, url, title) {
         if (allRows.length > 100) continue;
 
         const headers = [...table.querySelectorAll('thead th, tr:first-child th, tr:first-child td')]
-          .map(th => th.textContent.trim().toLowerCase());
+          .map(th => (th.innerText || th.textContent || '').trim().toLowerCase());
 
         const hasUseCase = headers.some(h => h.includes('use case'));
         const hasPrompts = headers.some(h => h.includes('prompt') || h.includes('example'));
@@ -156,16 +162,22 @@ async function scrapePage(browser, url, title) {
         const rows = table.querySelectorAll('tbody tr, tr:not(:first-child)');
 
         for (const row of rows) {
-          const cells = [...row.querySelectorAll('td')];
+          const cells = [...row.querySelectorAll('td, th')];
           if (cells.length < 2) continue;
 
-          const name = cells[0] ? cells[0].textContent.trim() : '';
+          const name = cells[0] ? (cells[0].innerText || cells[0].textContent || '').trim() : '';
 
           // Skip rows with empty name or name that looks like a sidebar nav item
           if (!name) continue;
           if (name === 'Joule' || name === 'SAP' || name.startsWith('What\'s New')) continue;
+          // Skip rows that look like column headers (short text, title-case, no spaces common in data)
+          const looksLikeHeader = cells.every(c => {
+            const t = (c.innerText || c.textContent || '').trim();
+            return t.length < 40 && !/\d/.test(t);
+          }) && cells[0].tagName.toLowerCase() === 'th';
+          if (looksLikeHeader) continue;
           // Skip rows where all cells are very short (likely a separator or header row)
-          const totalText = cells.map(c => c.textContent.trim()).join('').length;
+          const totalText = cells.map(c => (c.innerText || c.textContent || '').trim()).join('').length;
           if (totalText < 5) continue;
 
           const useCase = { name, prompts: [], response: '' };
@@ -186,10 +198,10 @@ async function scrapePage(browser, url, title) {
             }
           }
 
-          // Extract response/description from cell[2] (or cell[1] if only 2 cols)
+          // Extract response/description from cell[2]
           const responseCell = cells.length >= 3 ? cells[2] : null;
           if (responseCell) {
-            useCase.response = responseCell.textContent.trim().substring(0, 500);
+            useCase.response = (responseCell.innerText || responseCell.textContent || '').trim().substring(0, 500);
           }
 
           if (useCase.name || useCase.prompts.length > 0) {
@@ -198,8 +210,45 @@ async function scrapePage(browser, url, title) {
         }
       }
 
-      // ── 4. Fallback: bullet lists in main content ───────────────────────────
-      // Only trigger when no table data was found.
+      // ── 4a. h2-scoped extraction: "Examples" / "Use Cases" sections ──────────
+      // Many pages use an <h2>Examples</h2> or <h2>Use Cases</h2> heading
+      // followed by <li> items that are the actual sample prompts.
+      // This is unambiguous — collect everything between the heading and
+      // the next sibling heading as prompts for a use case named after the page title.
+      // NOTE: SAP Help h2 elements contain a <span> + icon <button>, so we use
+      // innerText (strips icon font chars) and includes() not strict equality.
+      if (result.useCases.length === 0) {
+        const headings = contentArea.querySelectorAll('h2, h3');
+        for (const heading of headings) {
+          const headText = (heading.innerText || heading.textContent || '').trim().toLowerCase();
+          if (headText.includes('examples') || headText === 'use cases' || headText === 'example') {
+            const prompts = [];
+            let sibling = heading.nextElementSibling;
+            while (sibling) {
+              const tag = sibling.tagName.toLowerCase();
+              // Stop at next heading
+              if (['h1','h2','h3','h4'].includes(tag)) break;
+              // Collect list items
+              if (tag === 'ul' || tag === 'ol') {
+                for (const li of sibling.querySelectorAll('li')) {
+                  const text = (li.innerText || li.textContent || '').trim().replace(/\s+/g, ' ');
+                  if (text.length >= 5 && text.length < 250) {
+                    prompts.push(text);
+                  }
+                }
+              }
+              sibling = sibling.nextElementSibling;
+            }
+            if (prompts.length > 0) {
+              result.useCases.push({ name: 'General', prompts, response: '' });
+              break; // one Examples section per page is enough
+            }
+          }
+        }
+      }
+
+      // ── 4b. Fallback: bullet lists in main content ──────────────────────────
+      // Only trigger when no table data AND no h2-scoped data was found.
       // Scoped strictly to contentArea to avoid sidebar nav lists.
       if (result.useCases.length === 0) {
         const listItems = contentArea.querySelectorAll('ul li, ol li');
