@@ -44,19 +44,19 @@ def generate():
 <style>
 :root {{
   --joule:        #7b2fbe;
-  --joule-light:  #9b4fd8;
-  --joule-dim:    rgba(123,47,190,0.15);
+  --joule-light:  #b57bee;
+  --joule-dim:    rgba(123,47,190,0.18);
   --bg:           #0e0f14;
   --bg-raised:    #16181f;
   --bg-surface:   #1c1f2a;
-  --border:       rgba(255,255,255,0.08);
-  --text:         #dde2ec;
-  --text-muted:   rgba(221,226,236,0.45);
-  --link:         #a78bfa;
-  --type-info:    #22d3ee;
-  --type-nav:     #a78bfa;
-  --type-trans:   #4ade80;
-  --type-anal:    #fb923c;
+  --border:       rgba(255,255,255,0.1);
+  --text:         #eef1f7;
+  --text-muted:   #8b92a8;
+  --link:         #c4a6f5;
+  --type-info:    #5edfff;
+  --type-nav:     #c4a6f5;
+  --type-trans:   #6ee89a;
+  --type-anal:    #ffab6e;
 }}
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }}
@@ -265,15 +265,15 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 
 /* Caution boxes */
 .uc-caution {{ width:100%; padding:0.25rem 0 0.25rem 4.25rem; }}
-.caution-box {{ background:rgba(249,168,37,0.08); border-left:3px solid #f9a825; border-radius:4px; padding:0.38rem 0.65rem; font-size:0.74rem; color:#e8c87a; line-height:1.4; }}
+.caution-box {{ background:rgba(249,168,37,0.12); border-left:3px solid #f9a825; border-radius:4px; padding:0.38rem 0.65rem; font-size:0.74rem; color:#fcd57a; line-height:1.4; }}
 .caution-box::before {{ content:'⚠️ '; }}
 
 /* Info notes */
 .uc-info-note {{ width:100%; padding:0.18rem 0 0.18rem 4.25rem; }}
-.info-note-text {{ font-size:0.76rem; color:var(--text-muted); line-height:1.5; padding:0.18rem 0; }}
+.info-note-text {{ font-size:0.76rem; color:#b0b8cc; line-height:1.5; padding:0.18rem 0; }}
 .uc-params {{ width:100%; padding:0.12rem 0 0.25rem 4.25rem; }}
 .uc-params .param-list {{ display:flex; flex-wrap:wrap; gap:0.3rem; }}
-.uc-params .param-tag {{ font-size:0.7rem; background:rgba(251,191,36,0.08); color:#d4a843; padding:0.12rem 0.5rem; border-radius:10px; border:1px solid rgba(251,191,36,0.2); }}
+.uc-params .param-tag {{ font-size:0.7rem; background:rgba(251,191,36,0.1); color:#e8c96a; padding:0.12rem 0.5rem; border-radius:10px; border:1px solid rgba(251,191,36,0.25); }}
 .uc-params .param-tag::before {{ content:'⚙️ '; font-size:0.63rem; }}
 
 /* Special note */
@@ -304,20 +304,20 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .uc-child:hover {{ background:rgba(123,47,190,0.05); }}
 .uc-child .uc-main {{ display:flex; align-items:center; gap:0.55rem; flex:1; min-width:200px; }}
 .uc-child .uc-name {{ font-size:0.8rem; flex:1; }}
-.uc-child .uc-desc {{ width:100%; font-size:0.76rem; color:var(--text-muted); line-height:1.4; margin-top:0.18rem; }}
+.uc-child .uc-desc {{ width:100%; font-size:0.76rem; color:#b0b8cc; line-height:1.4; margin-top:0.18rem; }}
 .uc-child-prompts {{ width:100%; padding:0.18rem 0 0.28rem 0; }}
 .uc-child-prompts ul {{ list-style:none; display:flex; flex-wrap:wrap; gap:0.3rem; }}
 .uc-child-prompts li {{ font-size:0.73rem; color:var(--joule-light); background:var(--joule-dim); padding:0.18rem 0.55rem; border-radius:12px; font-style:italic; cursor:default; border:1px solid rgba(123,47,190,0.25); }}
 .uc-child-prompts li::before {{ content:'💬 '; }}
 
 /* Subcategory headers */
-.subcat-header {{ margin:0.45rem 0 0.18rem 0; font-size:0.78rem; font-weight:600; color:var(--text-muted); border-bottom:1px solid var(--border); padding-bottom:0.18rem; }}
+.subcat-header {{ margin:0.45rem 0 0.18rem 0; font-size:0.78rem; font-weight:600; color:#b0b8cc; border-bottom:1px solid var(--border); padding-bottom:0.18rem; }}
 .subcat-list {{ list-style:none; display:flex; flex-wrap:wrap; gap:0.3rem; }}
-.subcat-item {{ font-size:0.76rem; color:var(--text); background:rgba(255,255,255,0.05); padding:0.22rem 0.65rem; border-radius:6px; border:1px solid var(--border); }}
+.subcat-item {{ font-size:0.76rem; color:var(--text); background:rgba(255,255,255,0.07); padding:0.22rem 0.65rem; border-radius:6px; border:1px solid var(--border); }}
 
-.uc-inline-desc {{ font-size:0.76rem; color:var(--text-muted); margin-left:0.45rem; }}
-.cap-desc {{ width:100%; padding:0.25rem 0 0.18rem 3.25rem; font-size:0.8rem; color:var(--text-muted); }}
-.cap-single-uc {{ width:100%; padding:0.12rem 0 0.12rem 3.25rem; font-size:0.76rem; color:var(--text-muted); }}
+.uc-inline-desc {{ font-size:0.76rem; color:#b0b8cc; margin-left:0.45rem; }}
+.cap-desc {{ width:100%; padding:0.25rem 0 0.18rem 3.25rem; font-size:0.8rem; color:#b0b8cc; }}
+.cap-single-uc {{ width:100%; padding:0.12rem 0 0.12rem 3.25rem; font-size:0.76rem; color:#b0b8cc; }}
 .flat-badge-row {{ padding:0.45rem 1.25rem 0.25rem; display:flex; gap:0.55rem; align-items:center; flex-wrap:wrap; }}
 
 .empty {{ padding:3rem; text-align:center; color:var(--text-muted); }}
@@ -401,14 +401,13 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 
     <!-- MAIN CONTENT -->
     <div class="main">
-      <div class="stats" id="stats"></div>
-      <div class="type-cards" id="typeCards"></div>
       <div class="filter-bar">
-        <input type="text" id="searchDesktop" placeholder="Search capabilities..." oninput="applyFilters()" autocomplete="off" style="display:none">
         <select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select>
         <select id="areaFilter" onchange="applyFilters()"><option value="">All Business Areas</option></select>
         <select id="typeFilter" onchange="applyFilters()"><option value="">All Types</option></select>
       </div>
+      <div id="stats" style="display:none"></div>
+      <div id="typeCards" style="display:none"></div>
       <div class="tree-section" id="treeContent"></div>
     </div>
 
