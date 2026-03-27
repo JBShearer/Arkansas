@@ -29,449 +29,502 @@ def generate():
     caps_json = json.dumps(caps, ensure_ascii=False)
 
     products = set(c["product"] for c in caps)
-    leaves = [c for c in caps if c["is_leaf"]]
-    type_counts = {}
-    for c in caps:
-        t = c["capability_type"]
-        type_counts[t] = type_counts.get(t, 0) + 1
+    leaves = [c for c in caps if c.get("is_leaf")]
+    updated_date = meta.get("enriched_at", "")[:10]
+    total_entries = meta.get("total_entries", len(caps))
+    total_leaves  = meta.get("total_leaves", len(leaves))
+    num_products  = meta.get("products", len(set(c["product"] for c in caps)))
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SAP Business AI — Joule Capabilities Explorer</title>
+<title>Joule Capabilities Explorer</title>
 <style>
-* {{ margin: 0; padding: 0; box-sizing: border-box; }}
-body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; }}
+:root {{
+  --bg-base:      #080c18;
+  --bg-surface:   #0d1224;
+  --bg-card:      rgba(255,255,255,0.055);
+  --bg-card-hover:rgba(255,255,255,0.09);
+  --accent:       #4a9eff;
+  --type-info:    #22d3ee;
+  --type-trans:   #4ade80;
+  --type-nav:     #c084fc;
+  --type-anal:    #fb923c;
+  --type-info-bg: rgba(34,211,238,0.12);
+  --type-trans-bg:rgba(74,222,128,0.12);
+  --type-nav-bg:  rgba(192,132,252,0.12);
+  --type-anal-bg: rgba(251,146,60,0.12);
+  --text-primary: #e8edf5;
+  --text-muted:   rgba(232,237,245,0.38);
+  --border:       rgba(255,255,255,0.07);
+}}
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg-base); color:var(--text-primary); min-height:100vh; }}
 
-/* Header */
-.header {{ background: linear-gradient(135deg, #0a1628 0%, #1a3a5c 50%, #2d6a9f 100%); color: white; padding: 2rem 1.5rem 1.5rem; text-align: center; }}
-.header h1 {{ font-size: 2rem; margin-bottom: 0.3rem; }}
-.header .subtitle {{ opacity: 0.85; font-size: 0.95rem; }}
-.phase-bar {{ display: flex; justify-content: center; gap: 0; margin-top: 1rem; }}
-.phase {{ padding: 0.5rem 1.5rem; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.3); }}
-.phase:first-child {{ border-radius: 6px 0 0 6px; }}
-.phase:last-child {{ border-radius: 0 6px 6px 0; }}
-.phase.active {{ background: #0a6ed1; border-color: #0a6ed1; }}
-.phase.next {{ background: rgba(255,255,255,0.1); }}
-.phase.future {{ background: rgba(255,255,255,0.05); }}
+/* ── HEADER ── */
+.header {{
+  position:sticky; top:0; z-index:200;
+  background:linear-gradient(90deg,var(--bg-surface) 0%,#0f1a30 100%);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:1rem; padding:0 1.25rem; height:52px;
+  backdrop-filter:blur(10px);
+}}
+.header-logo {{ display:flex; align-items:center; gap:0.55rem; flex-shrink:0; }}
+.hamburger {{ display:none; background:none; border:none; color:var(--text-primary); cursor:pointer; padding:4px; font-size:1.1rem; line-height:1; }}
+.logo-mark {{ font-size:1.15rem; }}
+.logo-title {{ font-size:0.92rem; font-weight:700; letter-spacing:0.01em; white-space:nowrap; }}
+.logo-title span {{ color:var(--accent); }}
+.header-search {{ flex:1; max-width:380px; position:relative; }}
+.header-search input {{
+  width:100%; padding:0.38rem 0.75rem 0.38rem 2.1rem;
+  background:rgba(255,255,255,0.07); border:1px solid var(--border);
+  border-radius:6px; color:var(--text-primary); font-size:0.82rem;
+  outline:none; transition:border-color .2s, background .2s;
+}}
+.header-search input::placeholder {{ color:var(--text-muted); }}
+.header-search input:focus {{ border-color:var(--accent); background:rgba(74,158,255,0.08); }}
+.header-search .search-icon {{ position:absolute; left:0.6rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.8rem; pointer-events:none; }}
+.header-count {{ margin-left:auto; flex-shrink:0; font-size:0.78rem; color:var(--text-muted); white-space:nowrap; }}
+.header-count strong {{ color:var(--accent); }}
 
-/* AI banner */
-.ai-banner {{ background: linear-gradient(90deg, #e3f2fd, #f3e5f5, #e8f5e9); padding: 0.7rem 1.5rem; text-align: center; font-size: 0.85rem; border-bottom: 1px solid #e0e0e0; }}
-.ai-banner strong {{ color: #0a6ed1; }}
+/* ── LAYOUT ── */
+.layout {{ display:flex; min-height:calc(100vh - 52px); }}
 
-/* Breadcrumb */
-.breadcrumb {{ background: white; padding: 0.8rem 1.5rem; border-bottom: 1px solid #e0e0e0; font-size: 0.85rem; }}
-.breadcrumb a {{ color: #0a6ed1; text-decoration: none; cursor: pointer; }}
-.breadcrumb a:hover {{ text-decoration: underline; }}
-.breadcrumb span {{ color: #666; }}
+/* ── SIDEBAR ── */
+.sidebar {{
+  width:236px; flex-shrink:0;
+  background:var(--bg-surface);
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  overflow-y:auto; position:sticky; top:52px; height:calc(100vh - 52px);
+}}
+.sidebar-inner {{ padding:0.75rem 0; }}
+.sidebar-label {{ font-size:0.65rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); padding:0.5rem 1rem 0.3rem; }}
+.sidebar-item {{
+  display:flex; align-items:center; gap:0.55rem;
+  padding:0.42rem 1rem; cursor:pointer; font-size:0.82rem;
+  border-left:3px solid transparent; transition:all .15s;
+  color:var(--text-muted);
+}}
+.sidebar-item:hover {{ background:rgba(74,158,255,0.07); color:var(--text-primary); }}
+.sidebar-item.active {{
+  background:rgba(34,211,238,0.1);
+  border-left-color:var(--accent);
+  color:var(--accent); font-weight:600;
+}}
+.sidebar-dot {{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }}
+.sidebar-name {{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+.sidebar-badge {{
+  font-size:0.65rem; padding:0.1rem 0.4rem; border-radius:10px;
+  background:rgba(255,255,255,0.08); color:var(--text-muted);
+  font-weight:600; flex-shrink:0;
+}}
+.sidebar-item.active .sidebar-badge {{ background:rgba(74,158,255,0.2); color:var(--accent); }}
 
-/* Main */
-.main {{ max-width: 1200px; margin: 0 auto; padding: 1.5rem; }}
+/* Sidebar overlay (mobile) */
+.sidebar-overlay {{ display:none; position:fixed; inset:0; z-index:149; background:rgba(0,0,0,0.55); }}
 
-/* Stats bar */
-.stats {{ display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }}
-.stat {{ background: white; border-radius: 8px; padding: 1rem 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); text-align: center; flex: 1; min-width: 100px; }}
-.stat .num {{ font-size: 1.8rem; font-weight: 700; color: #0a6ed1; }}
-.stat .label {{ font-size: 0.7rem; color: #666; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }}
+/* ── MAIN ── */
+.main {{ flex:1; min-width:0; display:flex; flex-direction:column; }}
 
-/* Type cards */
-.type-cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }}
-.type-card {{ background: white; border-radius: 10px; padding: 1.2rem; cursor: pointer; border: 2px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.08); transition: all 0.2s; }}
-.type-card:hover {{ box-shadow: 0 4px 12px rgba(0,0,0,0.12); transform: translateY(-2px); }}
-.type-card.active {{ border-color: #0a6ed1; box-shadow: 0 4px 12px rgba(10,110,209,0.2); }}
-.type-card .icon {{ font-size: 1.8rem; margin-bottom: 0.4rem; }}
-.type-card h3 {{ font-size: 0.95rem; margin-bottom: 0.3rem; }}
-.type-card .desc {{ font-size: 0.78rem; color: #666; line-height: 1.4; margin-bottom: 0.5rem; }}
-.type-card .count {{ font-size: 1.3rem; font-weight: 700; color: #0a6ed1; }}
-.type-info {{ border-left: 3px solid #17a2b8; }}
-.type-nav {{ border-left: 3px solid #6f42c1; }}
-.type-trans {{ border-left: 3px solid #28a745; }}
-.type-anal {{ border-left: 3px solid #fd7e14; }}
+/* ── TOOLBAR ── */
+.toolbar {{
+  position:sticky; top:52px; z-index:100;
+  background:rgba(13,18,36,0.92); border-bottom:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  display:flex; align-items:center; gap:0.5rem; padding:0.6rem 1.25rem; flex-wrap:wrap;
+}}
+.toolbar-label {{ font-size:0.7rem; color:var(--text-muted); margin-right:0.2rem; }}
+.type-chip {{
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.3rem 0.75rem; border-radius:20px; font-size:0.75rem; font-weight:600;
+  border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);
+  color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none;
+}}
+.type-chip:hover {{ color:var(--text-primary); border-color:rgba(255,255,255,0.2); }}
+.type-chip .chip-dot {{ width:6px; height:6px; border-radius:50%; }}
+.type-chip.active-info  {{ background:var(--type-info-bg);  border-color:var(--type-info);  color:var(--type-info); }}
+.type-chip.active-trans {{ background:var(--type-trans-bg); border-color:var(--type-trans); color:var(--type-trans); }}
+.type-chip.active-nav   {{ background:var(--type-nav-bg);   border-color:var(--type-nav);   color:var(--type-nav); }}
+.type-chip.active-anal  {{ background:var(--type-anal-bg);  border-color:var(--type-anal);  color:var(--type-anal); }}
+.toolbar-spacer {{ flex:1; }}
+.result-meta {{ font-size:0.72rem; color:var(--text-muted); white-space:nowrap; }}
+.result-meta strong {{ color:var(--text-primary); }}
+.reset-btn {{
+  font-size:0.72rem; padding:0.25rem 0.6rem; border-radius:5px;
+  background:rgba(255,255,255,0.06); border:1px solid var(--border);
+  color:var(--text-muted); cursor:pointer; transition:all .15s;
+}}
+.reset-btn:hover {{ background:rgba(255,255,255,0.12); color:var(--text-primary); }}
 
-/* Filter bar */
-.filter-bar {{ background: white; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }}
-.filter-bar input {{ flex: 1; min-width: 200px; padding: 0.5rem 0.8rem; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 0.9rem; }}
-.filter-bar input:focus {{ outline: none; border-color: #0a6ed1; box-shadow: 0 0 0 2px rgba(10,110,209,0.15); }}
-.filter-bar select {{ padding: 0.5rem; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 0.85rem; background: white; }}
+/* ── CARD GRID ── */
+.card-grid-wrap {{ padding:1.1rem 1.25rem 2rem; flex:1; }}
+.card-grid {{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));
+  gap:0.85rem;
+}}
+.empty-state {{
+  grid-column:1/-1; text-align:center; padding:4rem 1rem; color:var(--text-muted);
+}}
+.empty-state .empty-icon {{ font-size:2.5rem; margin-bottom:0.75rem; }}
+.empty-state p {{ font-size:0.9rem; }}
 
-/* Tree/product/BA/use-case */
-.tree-section {{ background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; }}
-.product-section {{ margin-bottom: 0.5rem; }}
-.product-header {{ display: flex; align-items: center; padding: 0.8rem 1.5rem; background: #f8f9fa; cursor: pointer; border-bottom: 1px solid #e8e8e8; gap: 0.8rem; }}
-.product-header:hover {{ background: #eef2f7; }}
-.product-header h3 {{ flex: 1; font-size: 0.95rem; }}
-.product-header .count {{ font-size: 0.85rem; color: #666; }}
-.product-body {{ display: none; }}
-.product-body.open {{ display: block; }}
-.tree-expand {{ width: 20px; font-size: 0.7rem; color: #999; flex-shrink: 0; text-align: center; }}
+/* ── CAPABILITY CARD ── */
+.cap-card {{
+  background:var(--bg-card);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:10px;
+  border-left:3px solid var(--card-accent, var(--accent));
+  display:flex; flex-direction:column;
+  transition:transform .18s, box-shadow .18s, background .18s;
+  overflow:hidden;
+}}
+.cap-card:hover {{
+  transform:translateY(-2px);
+  background:var(--bg-card-hover);
+  box-shadow:0 8px 32px rgba(0,0,0,0.35);
+}}
+.card-head {{ padding:0.75rem 0.85rem 0.5rem; }}
+.card-title-row {{ display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:0.3rem; }}
+.card-title {{
+  font-size:0.88rem; font-weight:700; line-height:1.35;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  flex:1;
+}}
+.card-title a {{ color:var(--text-primary); text-decoration:none; }}
+.card-title a:hover {{ color:var(--accent); }}
+.card-help-link {{
+  flex-shrink:0; font-size:0.75rem; color:var(--text-muted);
+  text-decoration:none; transition:color .15s; padding-top:0.05rem;
+  line-height:1;
+}}
+.card-help-link:hover {{ color:var(--accent); }}
+.card-breadcrumb {{ font-size:0.7rem; color:var(--text-muted); margin-bottom:0.45rem; }}
+.card-badges {{ display:flex; gap:0.35rem; flex-wrap:wrap; margin-bottom:0.45rem; }}
+.badge {{
+  font-size:0.65rem; font-weight:700; padding:0.15rem 0.5rem;
+  border-radius:10px; white-space:nowrap; letter-spacing:0.01em;
+}}
+.badge-info  {{ background:var(--type-info-bg);  color:var(--type-info);  border:1px solid rgba(34,211,238,0.3); }}
+.badge-trans {{ background:var(--type-trans-bg); color:var(--type-trans); border:1px solid rgba(74,222,128,0.3); }}
+.badge-nav   {{ background:var(--type-nav-bg);   color:var(--type-nav);   border:1px solid rgba(192,132,252,0.3); }}
+.badge-anal  {{ background:var(--type-anal-bg);  color:var(--type-anal);  border:1px solid rgba(251,146,60,0.3); }}
+.badge-premium {{ background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.35); }}
+.badge-pending {{ background:rgba(255,255,255,0.07); color:var(--text-muted); border:1px solid var(--border); font-style:italic; }}
+.badge-soon    {{ background:rgba(74,158,255,0.1);   color:var(--accent);       border:1px solid rgba(74,158,255,0.3); }}
 
-.ba-section {{ border-bottom: 1px solid #f0f0f0; }}
-.ba-header {{ display: flex; align-items: center; padding: 0.7rem 1.5rem 0.7rem 2.5rem; cursor: pointer; gap: 0.8rem; background: #fafbfc; }}
-.ba-header:hover {{ background: #f0f4f8; }}
-.ba-header h4 {{ flex: 1; font-size: 0.9rem; font-weight: 600; }}
-.ba-header .count {{ font-size: 0.8rem; color: #888; }}
-.ba-body {{ display: none; }}
-.ba-body.open {{ display: block; }}
+/* Prompt chips */
+.card-prompts {{ padding:0 0.85rem 0.5rem; display:flex; flex-direction:column; gap:0.3rem; flex:1; }}
+.prompt-chip {{
+  font-size:0.72rem; color:var(--accent); background:rgba(74,158,255,0.08);
+  border:1px solid rgba(74,158,255,0.18); border-radius:6px;
+  padding:0.28rem 0.6rem; line-height:1.35;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}}
+.card-desc {{ padding:0 0.85rem 0.5rem; font-size:0.74rem; color:var(--text-muted); line-height:1.5; }}
 
-/* Use case row */
-.use-case {{ display: flex; align-items: flex-start; padding: 0.6rem 1.5rem 0.6rem 3.5rem; border-bottom: 1px solid #f5f5f5; gap: 0.8rem; flex-wrap: wrap; }}
-.use-case:last-child {{ border-bottom: none; }}
-.use-case:hover {{ background: #fafcff; }}
-.use-case .uc-main {{ display: flex; align-items: center; gap: 0.8rem; flex: 1; min-width: 200px; }}
-.use-case .uc-title {{ flex: 1; font-size: 0.85rem; }}
-.use-case .uc-title a {{ color: #1a1a2e; text-decoration: none; }}
-.use-case .uc-title a:hover {{ color: #0a6ed1; text-decoration: underline; }}
+/* Expand button */
+.card-footer {{ padding:0.45rem 0.85rem 0.6rem; border-top:1px solid var(--border); margin-top:auto; }}
+.expand-btn {{
+  width:100%; background:none; border:none; color:var(--text-muted);
+  font-size:0.74rem; cursor:pointer; text-align:left; padding:0;
+  display:flex; align-items:center; gap:0.3rem; transition:color .15s;
+}}
+.expand-btn:hover {{ color:var(--accent); }}
+.expand-arrow {{ display:inline-block; transition:transform .2s; }}
+.expand-btn.open .expand-arrow {{ transform:rotate(180deg); }}
 
-/* Badges */
-.badge {{ font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 600; white-space: nowrap; }}
-.badge-info {{ background: #e8f4f8; color: #0c7c9e; }}
-.badge-nav {{ background: #f0e6f6; color: #6f42c1; }}
-.badge-trans {{ background: #e6f4ea; color: #1e7e34; }}
-.badge-anal {{ background: #fff3e0; color: #e65100; }}
-.badge-pending {{ font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 3px; font-weight: 600; white-space: nowrap; background: #f0f0f0; color: #999; font-style: italic; }}
-.title-only-entry {{ opacity: 0.7; }}
-.help-link {{ font-size: 0.75rem; color: #0a6ed1; text-decoration: none; white-space: nowrap; }}
-.help-link:hover {{ text-decoration: underline; }}
+/* Expanded panel */
+.card-expanded {{
+  display:none; border-top:1px solid var(--border);
+  padding:0.6rem 0.85rem 0.75rem; background:rgba(0,0,0,0.15);
+}}
+.card-expanded.open {{ display:block; }}
+.uc-block {{ margin-bottom:0.85rem; }}
+.uc-block:last-child {{ margin-bottom:0; }}
+.uc-name {{
+  font-size:0.75rem; font-weight:700; color:var(--text-primary);
+  margin-bottom:0.35rem; display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;
+}}
+.uc-prompts {{ display:flex; flex-direction:column; gap:0.25rem; margin-bottom:0.3rem; }}
+.uc-prompt {{
+  font-size:0.71rem; color:var(--accent); background:rgba(74,158,255,0.07);
+  border:1px solid rgba(74,158,255,0.15); border-radius:5px;
+  padding:0.22rem 0.55rem; line-height:1.35;
+}}
+.uc-prompt::before {{ content:'💬 '; }}
+.uc-desc {{ font-size:0.71rem; color:var(--text-muted); line-height:1.45; margin-bottom:0.25rem; }}
+.uc-caution {{
+  font-size:0.7rem; color:#fbbf24; background:rgba(251,191,36,0.07);
+  border-left:2px solid rgba(251,191,36,0.4); border-radius:0 4px 4px 0;
+  padding:0.25rem 0.55rem; margin-top:0.25rem; line-height:1.4;
+}}
+.uc-caution::before {{ content:'⚠ '; }}
+.uc-note {{ font-size:0.7rem; color:var(--text-muted); line-height:1.4; padding:0.2rem 0; }}
 
-/* Tier badges */
-.tier-badge {{ font-size: 0.65rem; padding: 0.1rem 0.45rem; border-radius: 10px; font-weight: 700; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px; }}
-.tier-base {{ background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }}
-.tier-premium {{ background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }}
-.tier-eac {{ background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }}
-.tier-beta {{ background: #fce4ec; color: #c62828; border: 1px solid #f48fb1; }}
+/* ── FOOTER ── */
+.footer {{
+  text-align:center; padding:1.25rem 1rem;
+  font-size:0.74rem; color:var(--text-muted);
+  border-top:1px solid var(--border);
+}}
+.footer strong {{ color:var(--text-primary); }}
 
-/* Sample prompts — always visible */
-.sample-prompts {{ width: 100%; padding: 0.3rem 0 0.4rem 3.5rem; }}
-.sample-prompts ul {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }}
-.sample-prompts li {{ font-size: 0.78rem; color: #0a6ed1; background: #e8f4f8; padding: 0.25rem 0.7rem; border-radius: 14px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
-.sample-prompts li::before {{ content: '💬 '; }}
-
-/* Notes & Parameters */
-.uc-notes {{ width: 100%; padding: 0.3rem 0 0.2rem 4.5rem; }}
-.uc-notes details {{ font-size: 0.78rem; }}
-.uc-notes summary {{ cursor: pointer; color: #7b6d00; font-weight: 600; font-size: 0.78rem; }}
-.uc-notes summary:hover {{ color: #5a4f00; }}
-.uc-notes .note-item {{ display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.2rem 0; font-size: 0.78rem; color: #555; line-height: 1.4; }}
-.uc-notes .note-item::before {{ content: ''; }}
-
-/* Caution boxes — limitations/warnings rendered below prompts */
-.uc-caution {{ width: 100%; padding: 0.3rem 0 0.3rem 4.5rem; }}
-.caution-box {{ background: #fff8e1; border-left: 3px solid #f9a825; border-radius: 4px; padding: 0.4rem 0.7rem; font-size: 0.76rem; color: #5d4037; line-height: 1.4; }}
-.caution-box::before {{ content: '⚠️ '; }}
-
-/* Info notes — descriptive text rendered above prompts */
-.uc-info-note {{ width: 100%; padding: 0.2rem 0 0.2rem 4.5rem; }}
-.info-note-text {{ font-size: 0.78rem; color: #555; line-height: 1.5; padding: 0.2rem 0; }}
-.uc-params {{ width: 100%; padding: 0.15rem 0 0.3rem 4.5rem; }}
-.uc-params .param-list {{ display: flex; flex-wrap: wrap; gap: 0.3rem; }}
-.uc-params .param-tag {{ font-size: 0.72rem; background: #f5f0e0; color: #7b6d00; padding: 0.15rem 0.55rem; border-radius: 10px; border: 1px solid #e8e0c0; }}
-.uc-params .param-tag::before {{ content: '⚙️ '; font-size: 0.65rem; }}
-
-/* Special note */
-.special-note {{ width: 100%; padding: 0.5rem 1rem 0.5rem 3.5rem; }}
-.note-box {{ background: linear-gradient(135deg, #e3f2fd, #f3e5f5); border-radius: 8px; padding: 1rem; border-left: 4px solid #0a6ed1; font-size: 0.82rem; color: #333; line-height: 1.5; }}
-.note-box strong {{ color: #0a6ed1; }}
-
-/* Sub-area */
-.sub-area-header {{ display: flex; align-items: center; padding: 0.6rem 1.5rem 0.6rem 3.5rem; cursor: pointer; gap: 0.8rem; }}
-.sub-area-header:hover {{ background: #f5f8ff; }}
-.sub-area-header h5 {{ flex: 1; font-size: 0.85rem; font-weight: 600; }}
-.sub-area-body {{ display: none; }}
-.sub-area-body.open {{ display: block; }}
-.sub-area-body .use-case {{ padding-left: 4.5rem; }}
-.sub-area-body .sample-prompts {{ padding-left: 4.5rem; }}
-
-/* Capability group (parent with multiple use cases) */
-.cap-group-header {{ display: flex; align-items: center; padding: 0.6rem 1.5rem 0.6rem 3.5rem; cursor: pointer; gap: 0.8rem; border-bottom: 1px solid #f5f5f5; }}
-.cap-group-header:hover {{ background: #f5f8ff; }}
-.cap-group-header .cg-title {{ flex: 1; font-size: 0.85rem; font-weight: 600; }}
-.cap-group-header .cg-title a {{ color: #1a1a2e; text-decoration: none; }}
-.cap-group-header .cg-title a:hover {{ color: #0a6ed1; text-decoration: underline; }}
-.cap-group-body {{ display: none; }}
-.cap-group-body.open {{ display: block; }}
-.cap-group-body .use-case {{ padding-left: 4.5rem; border-left: 2px solid #e0e8f0; margin-left: 3.5rem; padding-left: 1rem; }}
-.cap-group-body .sample-prompts {{ padding-left: 4.5rem; }}
-.uc-child {{ display: flex; align-items: flex-start; padding: 0.5rem 1.5rem 0.5rem 4.5rem; border-bottom: 1px solid #f8f8f8; gap: 0.6rem; flex-wrap: wrap; }}
-.uc-child:hover {{ background: #fafcff; }}
-.uc-child .uc-main {{ display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 200px; }}
-.uc-child .uc-name {{ font-size: 0.82rem; flex: 1; }}
-.uc-child .uc-desc {{ width: 100%; font-size: 0.78rem; color: #666; padding-left: 0; line-height: 1.4; margin-top: 0.2rem; }}
-.uc-child-prompts {{ width: 100%; padding: 0.2rem 0 0.3rem 4.5rem; }}
-.uc-child-prompts ul {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.3rem; }}
-.uc-child-prompts li {{ font-size: 0.75rem; color: #0a6ed1; background: #e8f4f8; padding: 0.2rem 0.6rem; border-radius: 12px; font-style: italic; cursor: default; border: 1px solid #d0e8f0; }}
-.uc-child-prompts li::before {{ content: '💬 '; }}
-
-/* Subcategory headers inside child use cases */
-.subcat-header {{ margin: 0.5rem 0 0.2rem 0; font-size: 0.8rem; font-weight: 600; color: #444; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.2rem; }}
-.subcat-list {{ list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem; }}
-.subcat-item {{ font-size: 0.78rem; color: #333; background: #f4f6f8; padding: 0.25rem 0.7rem; border-radius: 6px; border: 1px solid #dde2e8; }}
-
-/* Inline description next to use case name */
-.uc-inline-desc {{ font-size: 0.78rem; color: #666; margin-left: 0.5rem; }}
-
-/* Capability-level description */
-.cap-desc {{ width: 100%; padding: 0.3rem 0 0.2rem 3.5rem; font-size: 0.82rem; color: #444; }}
-
-/* Single use case name shown under title */
-.cap-single-uc {{ width: 100%; padding: 0.15rem 0 0.15rem 3.5rem; font-size: 0.78rem; color: #555; }}
-
-/* Flattened product badge/link row */
-.flat-badge-row {{ padding: 0.5rem 1.5rem 0.3rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }}
-
-.empty {{ padding: 3rem; text-align: center; color: #999; }}
-.footer {{ text-align: center; padding: 2rem; color: #999; font-size: 0.8rem; }}
-
-@media (max-width: 768px) {{
-  .header h1 {{ font-size: 1.4rem; }}
-  .stats {{ gap: 0.5rem; }}
-  .stat {{ padding: 0.7rem; min-width: 70px; }}
-  .stat .num {{ font-size: 1.2rem; }}
-  .type-cards {{ grid-template-columns: repeat(2, 1fr); }}
-  .filter-bar {{ flex-direction: column; }}
-  .filter-bar input {{ min-width: auto; }}
-  .use-case {{ padding-left: 2.5rem; }}
-  .sample-prompts {{ padding-left: 2.5rem; }}
-  .sub-area-body .use-case {{ padding-left: 3rem; }}
+/* ── MOBILE ── */
+@media (max-width:768px) {{
+  .hamburger {{ display:flex; align-items:center; justify-content:center; }}
+  .header-search {{ max-width:none; flex:1; }}
+  .sidebar {{
+    position:fixed; top:0; left:-260px; width:260px; height:100vh;
+    z-index:150; transition:left .25s; top:0;
+  }}
+  .sidebar.open {{ left:0; }}
+  .sidebar-overlay.open {{ display:block; }}
+  .layout {{ display:block; }}
+  .main {{ min-height:calc(100vh - 52px); }}
+  .toolbar {{ top:52px; }}
+  .card-grid {{ grid-template-columns:1fr; }}
+  .card-grid-wrap {{ padding:0.75rem; }}
 }}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>🤖 SAP Business AI — Joule Capabilities Explorer</h1>
-  <div class="subtitle">State of Arkansas · Crawl → Walk → Run Adoption Framework</div>
-  <div class="phase-bar">
-    <div class="phase active">🐣 Crawl — Unified Joule<br><small>✓ Current</small></div>
-    <div class="phase next">🚶 Walk — Embedded AI<br><small>Next</small></div>
-    <div class="phase future">🏃 Run — Custom AI Projects<br><small>Future</small></div>
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">&#9776;</button>
+    <span class="logo-mark">✦</span>
+    <span class="logo-title">Joule <span>Capabilities Explorer</span></span>
   </div>
-</div>
-
-<div class="ai-banner">
-  🤖 <strong>All capabilities below are powered by Joule</strong> — SAP's generative AI copilot. Ask in natural language and Joule handles the rest.
-</div>
-
-<div class="breadcrumb" id="breadcrumb">
-  <a onclick="navigateTo('home')">Home</a>
-</div>
-
-<div class="main">
-  <div class="stats" id="stats"></div>
-  <div class="type-cards" id="typeCards"></div>
-  <div class="filter-bar">
-    <input type="text" id="search" placeholder="Search capabilities..." oninput="applyFilters()">
-    <select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select>
-    <select id="areaFilter" onchange="applyFilters()"><option value="">All Business Areas</option></select>
-    <select id="typeFilter" onchange="applyFilters()"><option value="">All Types</option></select>
+  <div class="header-search">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" id="searchInput" placeholder="Search capabilities, prompts..." autocomplete="off">
   </div>
-  <div class="tree-section" id="treeContent"></div>
-</div>
+  <div class="header-count" id="headerCount"><strong>171</strong> capabilities</div>
+</header>
 
-<div class="footer">
-  Generated by SAP Business AI Pipeline · Data from SAP Help Portal Joule Capabilities Guide<br>
-  {meta['total_entries']} entries · {meta['total_leaves']} use cases · {meta['products']} products · Updated {meta['enriched_at'][:10]}
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-label">Products</div>
+      <div id="sidebarItems"></div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar" id="toolbar">
+      <span class="toolbar-label">Type:</span>
+      <button class="type-chip" data-type="Informational" onclick="toggleType(this)">
+        <span class="chip-dot" style="background:var(--type-info)"></span>Informational
+        <span class="chip-count" id="cnt-Informational"></span>
+      </button>
+      <button class="type-chip" data-type="Transactional" onclick="toggleType(this)">
+        <span class="chip-dot" style="background:var(--type-trans)"></span>Transactional
+        <span class="chip-count" id="cnt-Transactional"></span>
+      </button>
+      <button class="type-chip" data-type="Navigational" onclick="toggleType(this)">
+        <span class="chip-dot" style="background:var(--type-nav)"></span>Navigational
+        <span class="chip-count" id="cnt-Navigational"></span>
+      </button>
+      <button class="type-chip" data-type="Analytical" onclick="toggleType(this)">
+        <span class="chip-dot" style="background:var(--type-anal)"></span>Analytical
+        <span class="chip-count" id="cnt-Analytical"></span>
+      </button>
+      <div class="toolbar-spacer"></div>
+      <span class="result-meta" id="resultMeta"></span>
+      <button class="reset-btn" onclick="resetFilters()">&#x2715; Reset</button>
+    </div>
+
+    <!-- CARD GRID -->
+    <div class="card-grid-wrap">
+      <div class="card-grid" id="cardGrid"></div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <strong>{total_entries}</strong> entries &middot; <strong>{total_leaves}</strong> use cases &middot; <strong>{num_products}</strong> products &middot; Updated {updated_date}
+    </footer>
+  </div>
 </div>
 
 <script>
 const ALL_CAPS = {caps_json};
 
-const TYPE_INFO = {{
-  'Informational': {{
-    icon: 'ℹ️', badgeClass: 'badge-info', borderClass: 'type-info',
-    desc: 'Display and retrieve data — view business partners, account balances, order details, search records.'
-  }},
-  'Navigational': {{
-    icon: '🧭', badgeClass: 'badge-nav', borderClass: 'type-nav',
-    desc: 'Navigate to SAP Fiori apps — ask Joule to open the right application screen directly.'
-  }},
-  'Transactional': {{
-    icon: '⚡', badgeClass: 'badge-trans', borderClass: 'type-trans',
-    desc: 'Create, change, and process business documents — manage orders, post journals, execute workflows.'
-  }},
-  'Analytical': {{
-    icon: '📊', badgeClass: 'badge-anal', borderClass: 'type-anal',
-    desc: 'AI-assisted analysis and insights — anomaly detection, forecasting, and data-driven decisions.'
-  }}
+/* ── STATE ── */
+const state = {{
+  activeProduct: null,
+  activeTypes: new Set(),
+  searchQuery: '',
 }};
 
-let activeType = null;
+let searchTimer = null;
 
-function getTierBadge(tier) {{
-  if (!tier || tier === 'base') return '';
-  const labels = {{ premium: 'Premium', eac: 'EAC', beta: 'Beta' }};
-  const label = labels[tier] || tier;
-  return '<span class="tier-badge tier-' + tier + '">' + label + '</span>';
+/* ── HELPERS ── */
+function escHtml(s) {{
+  if (!s) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
 }}
 
-function ucCount(c) {{
-  // If a capability has use_cases, count total individual capabilities
-  if (c.use_cases && c.use_cases.length > 0) {{
-    let total = 0;
-    c.use_cases.forEach(uc => {{
-      // Each prompt is an individual capability; at minimum count the use case itself
-      total += (uc.prompts && uc.prompts.length > 0) ? uc.prompts.length : 1;
-    }});
-    return total > 1 ? total : 1;
-  }}
-  return 1;
+const TYPE_COLOR = {{
+  'Informational': 'var(--type-info)',
+  'Transactional':  'var(--type-trans)',
+  'Navigational':   'var(--type-nav)',
+  'Analytical':     'var(--type-anal)',
+}};
+const TYPE_BADGE_CLASS = {{
+  'Informational': 'badge-info',
+  'Transactional':  'badge-trans',
+  'Navigational':   'badge-nav',
+  'Analytical':     'badge-anal',
+}};
+const TYPE_CHIP_ACTIVE = {{
+  'Informational': 'active-info',
+  'Transactional':  'active-trans',
+  'Navigational':   'active-nav',
+  'Analytical':     'active-anal',
+}};
+
+/* product display name: strip "SAP " prefix, shorten long names */
+function shortProduct(p) {{
+  return p.replace(/^SAP\\s+/, '');
 }}
 
-function buildTree(caps) {{
-  const tree = {{}};
-  caps.forEach(c => {{
-    // Skip pure branch category nodes — they are TOC structural nodes, not capabilities
-    if (c.is_branch && !c.use_cases?.length && !c.sample_prompts?.length) return;
-    const prod = c.product;
-    if (!tree[prod]) tree[prod] = {{ areas: {{}}, count: 0 }};
-    const ba = c.business_area || '(General)';
-    if (c.is_leaf) {{
-      if (!tree[prod].areas[ba]) tree[prod].areas[ba] = {{ subareas: {{}}, items: [] }};
-      const sa = c.sub_area;
-      if (sa) {{
-        if (!tree[prod].areas[ba].subareas[sa]) tree[prod].areas[ba].subareas[sa] = [];
-        tree[prod].areas[ba].subareas[sa].push(c);
-      }} else {{
-        tree[prod].areas[ba].items.push(c);
-      }}
-      tree[prod].count += ucCount(c);
-    }}
-  }});
-  return tree;
-}}
+/* unique color per product index */
+const PROD_COLORS = ['#4a9eff','#22d3ee','#4ade80','#c084fc','#fb923c','#f472b6','#a3e635','#38bdf8','#e879f9','#34d399','#fbbf24','#60a5fa','#f87171','#a78bfa','#2dd4bf','#facc15','#fb7185','#818cf8'];
 
-function getTypeBadge(type) {{
-  const ti = TYPE_INFO[type] || TYPE_INFO['Informational'];
-  return '<span class="badge ' + ti.badgeClass + '">' + type + '</span>';
-}}
-
-function renderStats(caps) {{
-  const leaves = caps.filter(c => c.is_leaf).length;
-  const products = new Set(caps.map(c => c.product)).size;
-  const types = {{}};
-  caps.forEach(c => {{ types[c.capability_type] = (types[c.capability_type] || 0) + 1; }});
-  
-  let html = '<div class="stat"><div class="num">' + caps.length + '</div><div class="label">Total Entries</div></div>';
-  html += '<div class="stat"><div class="num">' + leaves + '</div><div class="label">Use Cases</div></div>';
-  html += '<div class="stat"><div class="num">' + products + '</div><div class="label">SAP Products</div></div>';
-  const withPrompts = caps.filter(c => c.sample_prompts && c.sample_prompts.length > 0).length;
-  html += '<div class="stat"><div class="num">' + withPrompts + '</div><div class="label">With Sample Prompts</div></div>';
-  document.getElementById('stats').innerHTML = html;
-}}
-
+/* collect all use case types for a capability */
 function getUCTypes(c) {{
-  // Get all unique capability types present in a capability's use cases
   if (c.use_cases && c.use_cases.length > 0) {{
     return [...new Set(c.use_cases.map(uc => uc.capability_type).filter(Boolean))];
   }}
-  return [c.capability_type].filter(Boolean);
+  return c.capability_type ? [c.capability_type] : [];
 }}
 
-function renderTypeCards(caps) {{
-  const types = {{}};
-  caps.forEach(c => {{
-    getUCTypes(c).forEach(t => {{ types[t] = (types[t] || 0) + 1; }});
-  }});
-  
-  const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
-  let html = '';
-  order.forEach(t => {{
-    if (!types[t]) return;
-    const ti = TYPE_INFO[t];
-    const activeClass = activeType === t ? 'active' : '';
-    html += '<div class="type-card ' + ti.borderClass + ' ' + activeClass + '" onclick="toggleType(\\'' + t + '\\')">';
-    html += '<div class="icon">' + ti.icon + '</div>';
-    html += '<h3>' + t + '</h3>';
-    html += '<div class="desc">' + ti.desc + '</div>';
-    html += '<div class="count">' + types[t] + '</div>';
-    html += '</div>';
-  }});
-  document.getElementById('typeCards').innerHTML = html;
+/* is this cap a "leaf" we should show in grid? */
+function isShowable(c) {{
+  if (c.is_leaf) return true;
+  if (c.is_branch && c.use_cases && c.use_cases.length > 0) return true;
+  return false;
 }}
 
-function populateFilters(caps) {{
-  const products = [...new Set(caps.map(c => c.product))].sort();
-  const areas = [...new Set(caps.map(c => c.business_area).filter(Boolean))].sort();
-  const types = [...new Set(caps.flatMap(c => getUCTypes(c)))].sort();
-  
-  const pSel = document.getElementById('productFilter');
-  pSel.innerHTML = '<option value="">All Products</option>' + products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
-  
-  const aSel = document.getElementById('areaFilter');
-  aSel.innerHTML = '<option value="">All Business Areas</option>' + areas.map(a => '<option value="' + a + '">' + a + '</option>').join('');
-  
-  const tSel = document.getElementById('typeFilter');
-  tSel.innerHTML = '<option value="">All Types</option>' + types.map(t => '<option value="' + t + '">' + t + '</option>').join('');
-}}
-
+/* ── FILTER LOGIC ── */
 function getFilteredCaps() {{
-  let caps = ALL_CAPS;
-  const search = document.getElementById('search').value.toLowerCase();
-  const product = document.getElementById('productFilter').value;
-  const area = document.getElementById('areaFilter').value;
-  const type = document.getElementById('typeFilter').value;
-  
-  if (activeType) caps = caps.filter(c => getUCTypes(c).includes(activeType));
-  if (search) caps = caps.filter(c => {{
-    if (c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search)) return true;
-    if ((c.description || '').toLowerCase().includes(search)) return true;
-    if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search) || (uc.prompts || []).some(p => p.toLowerCase().includes(search)));
-    return false;
+  const q = state.searchQuery;
+  return ALL_CAPS.filter(c => {{
+    if (!isShowable(c)) return false;
+    // product filter
+    if (state.activeProduct && c.product !== state.activeProduct) return false;
+    // type filter (multi-select: empty = show all)
+    if (state.activeTypes.size > 0) {{
+      const capTypes = getUCTypes(c);
+      if (c.capability_type) capTypes.push(c.capability_type);
+      const unique = [...new Set(capTypes)];
+      if (!unique.some(t => state.activeTypes.has(t))) return false;
+    }}
+    // search
+    if (q) {{
+      const ql = q.toLowerCase();
+      if (c.title.toLowerCase().includes(ql)) return true;
+      if ((c.business_area || '').toLowerCase().includes(ql)) return true;
+      if ((c.description || '').toLowerCase().includes(ql)) return true;
+      if ((c.sample_prompts || []).some(p => p.toLowerCase().includes(ql))) return true;
+      if (c.use_cases && c.use_cases.some(uc =>
+        (uc.name || '').toLowerCase().includes(ql) ||
+        (uc.prompts || []).some(p => p.toLowerCase().includes(ql))
+      )) return true;
+      return false;
+    }}
+    return true;
   }});
-  if (product) caps = caps.filter(c => c.product === product);
-  if (area) caps = caps.filter(c => c.business_area === area);
-  if (type) caps = caps.filter(c => getUCTypes(c).includes(type));
-  
-  return caps;
 }}
 
-let promptCounter = 0;
+/* ── BUILD PRODUCT SIDEBAR ── */
+function buildSidebarData() {{
+  // Count leaf caps per product
+  const counts = {{}};
+  ALL_CAPS.forEach(c => {{
+    if (!isShowable(c)) return;
+    counts[c.product] = (counts[c.product] || 0) + 1;
+  }});
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return {{ total, sorted }};
+}}
+
+function renderSidebar() {{
+  const {{ total, sorted }} = buildSidebarData();
+  const container = document.getElementById('sidebarItems');
+  let html = '';
+  // All row
+  const allActive = state.activeProduct === null ? 'active' : '';
+  html += `<div class="sidebar-item ${{allActive}}" onclick="selectProduct(null)">
+    <span class="sidebar-dot" style="background:var(--accent)"></span>
+    <span class="sidebar-name">All Products</span>
+    <span class="sidebar-badge">${{total}}</span>
+  </div>`;
+  sorted.forEach(([prod, cnt], idx) => {{
+    const active = state.activeProduct === prod ? 'active' : '';
+    const color = PROD_COLORS[idx % PROD_COLORS.length];
+    const name = escHtml(shortProduct(prod));
+    html += `<div class="sidebar-item ${{active}}" data-product="${{escHtml(prod)}}" onclick="selectProduct(this.dataset.product)">
+      <span class="sidebar-dot" style="background:${{color}}"></span>
+      <span class="sidebar-name" title="${{escHtml(prod)}}">${{name}}</span>
+      <span class="sidebar-badge">${{cnt}}</span>
+    </div>`;
+  }});
+  container.innerHTML = html;
+}}
+
+/* ── RENDER TYPE CHIP COUNTS ── */
+function updateChipCounts(caps) {{
+  const types = ['Informational','Transactional','Navigational','Analytical'];
+  types.forEach(t => {{
+    const cnt = caps.filter(c => {{
+      const ts = getUCTypes(c);
+      if (c.capability_type) ts.push(c.capability_type);
+      return [...new Set(ts)].includes(t);
+    }}).length;
+    const el = document.getElementById('cnt-' + t);
+    if (el) el.textContent = cnt ? ' ' + cnt : '';
+  }});
+  // update active state on chips
+  document.querySelectorAll('.type-chip').forEach(chip => {{
+    const t = chip.dataset.type;
+    chip.className = 'type-chip';
+    if (state.activeTypes.has(t)) chip.classList.add(TYPE_CHIP_ACTIVE[t]);
+  }});
+}}
+
+/* ── RENDER A SINGLE CARD ── */
+let cardIdCounter = 0;
 
 function isExplanatoryText(text) {{
-  // Detect explanatory/instructional text that was misclassified as a prompt
   const t = text.trim();
-  const tl = t.toLowerCase();
-  // Explanatory starters — sentences describing behavior, not commands
   if (/^(?:You need to|You can |You must |If you |If no |If the |If a |If several |When Joule|When you |Joule (?:automatically|checks|creates|displays|supports|adjusts|uses|shows|will)|Note that |Please note|This (?:feature|function|capability)|The (?:system|app)|In (?:this|the) )/i.test(t)) return true;
-  // Long multi-sentence explanations (>120 chars with at least one period mid-text)
   if (t.length > 120 && /\\.\\s+[A-Z]/.test(t)) return true;
   return false;
 }}
 
-function renderChildUseCase(uc) {{
-  const name = uc.name || 'Use Case';
-  const desc = uc.description || '';
-  const rawPrompts = uc.prompts || [];
-  
-  // Separate real prompts from explanatory text misclassified as prompts
-  const prompts = [];
-  const promptNotes = [];
-  rawPrompts.forEach(p => {{
-    if (isExplanatoryText(p)) {{
-      promptNotes.push(p);
-    }} else {{
-      prompts.push(p);
-    }}
-  }});
-  
-  const notes = (uc.notes || []).concat(promptNotes).filter(n => {{
-    const nl = n.toLowerCase();
-    if (nl.includes('you can choose one of the following')) return false;
-    if (nl.includes('you can choose') && nl.endsWith(':')) return false;
-    if (/^(?:Submit|Cancel|Retype|Save Draft|Reject|Approve|Confirm|Discard|Close|Accept|Decline|Go Back|Try Again|Submit with Governance|Save Draft Governance Process)\\s*[:–—]/i.test(n)) return false;
-    if (/^(?:Show|Perform|Do) the following\\s*:?\\s*$/i.test(n)) return false;
-    if (/^(?:Ask for example|For example)\\s*:?\\s*$/i.test(n)) return false;
-    return true;
-  }});
-  const params = uc.parameters || [];
-  const subcategories = uc.subcategories || {{}};
-  const resp = uc.response_summary || '';
-  const hasSubs = Object.keys(subcategories).length > 0;
-  
-  // Classify notes into info notes vs cautions
-  const infoNotes = [];
-  const cautions = [];
+function classifyNotes(notes) {{
+  const info = [], caution = [];
   notes.forEach(n => {{
     const nl = n.toLowerCase();
     if (nl.startsWith('currently') || nl.startsWith('note:') || nl.startsWith('note that') ||
@@ -480,345 +533,218 @@ function renderChildUseCase(uc) {{
         nl.includes('currently') || nl.includes('restricted to') || nl.includes('does not') ||
         nl.includes('cannot') || nl.includes('only available') || nl.includes('only supported') ||
         nl.includes('make sure') || nl.includes('ensure that') || nl.includes('be aware')) {{
-      cautions.push(n);
+      caution.push(n);
     }} else {{
-      infoNotes.push(n);
+      info.push(n);
     }}
   }});
-
-  let html = '<div class="uc-child">';
-  html += '<div class="uc-main">';
-  html += '<span class="uc-name"><strong>' + name + '</strong></span>';
-  // Render per-use-case type badge
-  if (uc.capability_type) {{
-    html += ' ' + getTypeBadge(uc.capability_type);
-  }}
-  if (desc) {{
-    html += '<span class="uc-inline-desc">' + desc.substring(0, 200) + '</span>';
-  }}
-  html += '</div>';
-  // Info notes — always on new line, left-aligned, full width
-  if (infoNotes.length > 0) {{
-    html += '<div class="uc-info-note">';
-    infoNotes.forEach(n => {{
-      html += '<div class="info-note-text">' + n + '</div>';
-    }});
-    html += '</div>';
-  }}
-
-  // Parameters as compact tags
-  if (params.length > 0) {{
-    html += '<div class="uc-params"><div class="param-list">';
-    params.forEach(p => {{
-      html += '<span class="param-tag">' + p + '</span>';
-    }});
-    html += '</div></div>';
-  }}
-
-  // If subcategories exist, group prompts under category headers
-  if (hasSubs) {{
-    html += '<div class="uc-child-prompts">';
-    Object.keys(subcategories).forEach(cat => {{
-      html += '<div class="subcat-header">' + cat + '</div>';
-      html += '<ul class="subcat-list">';
-      subcategories[cat].forEach(p => {{
-        html += '<li class="subcat-item">' + p + '</li>';
-      }});
-      html += '</ul>';
-    }});
-    html += '</div>';
-  }} else if (prompts.length > 0) {{
-    // Flat prompt list
-    html += '<div class="uc-child-prompts"><ul>';
-    prompts.forEach(p => {{
-      html += '<li>' + p + '</li>';
-    }});
-    html += '</ul></div>';
-  }}
-
-  // Cautions — rendered below prompts with warning style
-  if (cautions.length > 0) {{
-    html += '<div class="uc-caution">';
-    cautions.forEach(n => {{
-      html += '<div class="caution-box">' + n + '</div>';
-    }});
-    html += '</div>';
-  }}
-
-  html += '</div>'; // close uc-child
-  return html;
+  return {{ info, caution }};
 }}
 
-function renderUseCase(c) {{
-  const badge = getTypeBadge(c.capability_type);
-  const tierBadge = getTierBadge(c.tier);
-  const link = c.sap_help_url ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
-  const titleText = c.sap_help_url
-    ? '<a href="' + c.sap_help_url + '" target="_blank" rel="noopener">' + c.title + '</a>'
-    : c.title;
+function renderExpandedUC(uc) {{
+  const rawPrompts = uc.prompts || [];
+  const prompts = rawPrompts.filter(p => !isExplanatoryText(p));
+  const explanatory = rawPrompts.filter(p => isExplanatoryText(p));
+  const allNotes = (uc.notes || []).concat(explanatory);
+  const {{ info: infoNotes, caution: cautions }} = classifyNotes(allNotes);
+  let h = '<div class="uc-block">';
+  h += '<div class="uc-name">' + escHtml(uc.name || '');
+  if (uc.capability_type && TYPE_BADGE_CLASS[uc.capability_type]) {{
+    h += ' <span class="badge ' + TYPE_BADGE_CLASS[uc.capability_type] + '">' + escHtml(uc.capability_type) + '</span>';
+  }}
+  h += '</div>';
+  if (uc.description) h += '<div class="uc-desc">' + escHtml(uc.description) + '</div>';
+  infoNotes.forEach(n => {{ h += '<div class="uc-note">' + escHtml(n) + '</div>'; }});
+  if (prompts.length > 0) {{
+    h += '<div class="uc-prompts">';
+    prompts.forEach(p => {{ h += '<div class="uc-prompt">' + escHtml(p) + '</div>'; }});
+    h += '</div>';
+  }}
+  cautions.forEach(n => {{ h += '<div class="uc-caution">' + escHtml(n) + '</div>'; }});
+  h += '</div>';
+  return h;
+}}
 
-  const hasChildUCs = c.use_cases && (c.use_cases.length > 1 || (c.use_cases.length === 1 && c.use_cases[0].subcategories && Object.keys(c.use_cases[0].subcategories).length > 0));
-  const hasUCs = c.use_cases && c.use_cases.length > 0;
-  const hasPrompts = c.sample_prompts && c.sample_prompts.length > 0;
-  const hasNote = c.special_note;
+function renderCard(c) {{
   const isTitleOnly = c.data_source === 'title-only';
+  const isDescOnly  = c.data_source === 'description-only';
+  const isPremium   = c.tier === 'premium';
+  const hasUCs      = c.use_cases && c.use_cases.length > 0;
+  const hasPrompts  = c.sample_prompts && c.sample_prompts.length > 0;
 
-  let html = '';
+  // Card accent color
+  const types = getUCTypes(c);
+  if (c.capability_type) types.push(c.capability_type);
+  const primaryType = [...new Set(types)][0] || 'Informational';
+  const accentColor = TYPE_COLOR[primaryType] || 'var(--accent)';
 
-  // Suppress pure branch/category nodes with no real content
-  if (c.is_branch && !hasUCs && !hasPrompts) {{
-    return '';
-  }}
+  const cardId = 'card-' + (cardIdCounter++);
 
-  if (isTitleOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
-    // Title-only entry with no real content — still show with pending badge
-    html += '<div class="use-case title-only-entry">';
-    html += '<div class="uc-main">';
-    html += '<span class="uc-title">' + titleText + '</span>';
-    html += badge + ' ' + tierBadge;
-    html += '<span class="badge-pending">📋 Documentation Pending</span>';
-    html += link;
-    html += '</div>';
-    html += '</div>';
-    return html;
-  }}
+  // Title
+  const titleHtml = c.sap_help_url
+    ? `<a href="${{escHtml(c.sap_help_url)}}" target="_blank" rel="noopener">${{escHtml(c.title)}}</a>`
+    : escHtml(c.title);
+  const helpLink = c.sap_help_url
+    ? `<a href="${{escHtml(c.sap_help_url)}}" target="_blank" rel="noopener" class="card-help-link" title="Open in SAP Help">&#8599;</a>`
+    : '';
 
-  const isDescOnly = c.data_source === 'description-only';
-  if (isDescOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
-    // Scraped page with description prose but no examples table yet
-    html += '<div class="use-case">';
-    html += '<div class="uc-main">';
-    html += '<span class="uc-title">' + titleText + '</span>';
-    html += badge + ' ' + tierBadge;
-    html += '<span class="badge-pending">🔜 Examples Coming Soon</span>';
-    html += link;
-    html += '</div>';
-    if (c.description) {{
-      html += '<div class="cap-desc">' + c.description + '</div>';
-    }}
-    html += '</div>';
-    return html;
-  }}
+  // Badges
+  let badges = '';
+  const badgeClass = TYPE_BADGE_CLASS[primaryType] || 'badge-info';
+  badges += `<span class="badge ${{badgeClass}}">${{escHtml(primaryType)}}</span>`;
+  if (isPremium) badges += '<span class="badge badge-premium">&#9733; Premium</span>';
+  if (isTitleOnly) badges += '<span class="badge badge-pending">&#128203; Documentation Pending</span>';
+  else if (isDescOnly) badges += '<span class="badge badge-soon">&#128282; Examples Coming Soon</span>';
 
-  if (hasChildUCs) {{
-    // Render as collapsible group with child use cases
-    const gid = 'capgroup-' + (promptCounter++);
-    html += '<div class="cap-group-header" onclick="toggleSection(this)">';
-    html += '<span class="tree-expand">\\u25B6</span>';
-    html += '<span class="cg-title">' + titleText + '</span>';
-    html += tierBadge;
-    html += '<span class="count">' + c.use_cases.length + ' use cases</span>';
-    html += link;
-    html += '</div>';
-    html += '<div class="cap-group-body">';
-    if (c.description) {{
-      html += '<div class="cap-desc">' + c.description + '</div>';
-    }}
-    c.use_cases.forEach(uc => {{
-      html += renderChildUseCase(uc);
+  // Prompt chips (up to 3, shown on card face)
+  let promptChips = '';
+  if (!isTitleOnly) {{
+    const facePrompts = hasPrompts
+      ? c.sample_prompts.slice(0, 3)
+      : (hasUCs ? (c.use_cases[0].prompts || []).filter(p => !isExplanatoryText(p)).slice(0, 3) : []);
+    facePrompts.forEach(p => {{
+      promptChips += `<div class="prompt-chip">&#128172; ${{escHtml(p)}}</div>`;
     }});
-    html += '</div>';
-  }} else {{
-    // Render as simple row
-    html += '<div class="use-case">';
-    html += '<div class="uc-main">';
-    html += '<span class="uc-title">' + titleText + '</span>';
-    html += badge + ' ' + tierBadge;
-    html += link;
-    html += '</div>';
-    // Show description if available (capability-level or from single use case)
-    const desc = c.description || (hasUCs && c.use_cases[0].description ? c.use_cases[0].description : '');
-    if (desc) {{
-      html += '<div class="cap-desc">' + desc + '</div>';
+    if (isDescOnly && c.description) {{
+      promptChips += `<div class="card-desc">${{escHtml(c.description.substring(0,200))}}</div>`;
     }}
-    // Show single use case name + description even when no prompts
-    if (hasUCs && c.use_cases.length === 1) {{
-      const uc = c.use_cases[0];
-      if (uc.name && uc.name !== c.title) {{
-        html += '<div class="cap-single-uc"><strong>Use Case:</strong> ' + uc.name + '</div>';
-      }}
-      // Show use case description if different from cap description
-      if (uc.description && uc.description !== desc) {{
-        html += '<div class="cap-desc" style="padding-top:0">' + uc.description + '</div>';
-      }}
-      // Show notes even when no prompts
-      if (uc.notes && uc.notes.length > 0) {{
-        html += '<div class="uc-info-note">';
-        uc.notes.forEach(n => {{ html += '<div class="info-note-text">' + n + '</div>'; }});
-        html += '</div>';
-      }}
-      // Show parameters
-      if (uc.parameters && uc.parameters.length > 0) {{
-        html += '<div class="uc-params"><div class="param-list">';
-        uc.parameters.forEach(p => {{ html += '<span class="param-tag">' + p + '</span>'; }});
-        html += '</div></div>';
-      }}
-    }}
-    if (hasPrompts) {{
-      html += '<div class="sample-prompts">';
-      html += '<ul>';
-      c.sample_prompts.forEach(p => {{
-        html += '<li>' + p + '</li>';
-      }});
-      html += '</ul></div>';
-    }}
-    html += '</div>';
   }}
 
-  if (hasNote) {{
-    html += '<div class="special-note"><div class="note-box">';
-    html += '<strong>🔮 Coming Soon:</strong> ' + c.special_note;
-    html += '</div></div>';
+  // Expanded use case panel
+  let expandedHtml = '';
+  let expandBtn = '';
+  const expandableUCs = hasUCs
+    ? c.use_cases.filter(uc => (uc.prompts && uc.prompts.length > 0) || uc.description || (uc.notes && uc.notes.length > 0))
+    : [];
+  if (!isTitleOnly && expandableUCs.length > 0) {{
+    expandedHtml = '<div class="card-expanded" id="exp-' + cardId + '">';
+    expandableUCs.forEach(uc => {{ expandedHtml += renderExpandedUC(uc); }});
+    expandedHtml += '</div>';
+    expandBtn = `<div class="card-footer">
+      <button class="expand-btn" onclick="toggleCard(this, 'exp-${{cardId}}')" data-count="${{expandableUCs.length}}">
+        <span class="expand-arrow">&#9660;</span> Show ${{expandableUCs.length}} use case${{expandableUCs.length !== 1 ? 's' : ''}}
+      </button>
+    </div>`;
   }}
 
-  return html;
+  // Breadcrumb
+  const breadcrumb = c.business_area
+    ? `<div class="card-breadcrumb">${{escHtml(c.business_area)}}</div>`
+    : '';
+
+  return `<div class="cap-card" style="--card-accent:${{accentColor}}">
+    <div class="card-head">
+      <div class="card-title-row">
+        <div class="card-title">${{titleHtml}}</div>
+        ${{helpLink}}
+      </div>
+      ${{breadcrumb}}
+      <div class="card-badges">${{badges}}</div>
+    </div>
+    <div class="card-prompts">${{promptChips}}</div>
+    ${{expandBtn}}
+    ${{expandedHtml}}
+  </div>`;
 }}
 
-function renderTree(caps) {{
-  const tree = buildTree(caps);
-  const productNames = Object.keys(tree).sort((a, b) => tree[b].count - tree[a].count);
-  
-  if (productNames.length === 0) {{
-    document.getElementById('treeContent').innerHTML = '<div class="empty">No capabilities match your filters.</div>';
+/* ── RENDER ALL CARDS ── */
+function renderCards(caps) {{
+  cardIdCounter = 0;
+  const grid = document.getElementById('cardGrid');
+  if (caps.length === 0) {{
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128269;</div><p>No capabilities match your filters.</p></div>';
     return;
   }}
-  
-  promptCounter = 0;
-  let html = '';
-  productNames.forEach(prod => {{
-    const pt = tree[prod];
-    const areaNames = Object.keys(pt.areas).sort();
-    const isOpen = productNames.length === 1 || !!activeType;
-    
-    html += '<div class="product-section">';
-    html += '<div class="product-header" onclick="toggleSection(this)">';
-    html += '<span class="tree-expand">' + (isOpen ? '\\u25BC' : '\\u25B6') + '</span>';
-    html += '<h3>' + prod + '</h3>';
-    html += '<span class="count">' + pt.count + ' capabilities</span>';
-    html += '</div>';
-    html += '<div class="product-body' + (isOpen ? ' open' : '') + '">';
-    
-    /* Helper: render area contents (items + subareas) without wrapper */
-    function renderAreaContents(areaData) {{
-      let h = '';
-      areaData.items.forEach(c => {{ h += renderUseCase(c); }});
-      Object.keys(areaData.subareas).sort().forEach(sa => {{
-        const saItems = areaData.subareas[sa];
-        h += '<div class="sub-area-header" onclick="toggleSection(this)">';
-        h += '<span class="tree-expand">\\u25B6</span>';
-        h += '<h5>' + sa + '</h5>';
-        h += '<span class="count">' + saItems.length + '</span>';
-        h += '</div>';
-        h += '<div class="sub-area-body">';
-        saItems.forEach(c => {{ h += renderUseCase(c); }});
-        h += '</div>';
-      }});
-      return h;
-    }}
-
-    /* Skip the BA level when there's only a single area */
-    const skipBA = areaNames.length === 1;
-
-    /* Also: if single area has exactly 1 item with use_cases, flatten completely —
-       render child use cases directly under the product header */
-    let flattenedToProduct = false;
-    if (skipBA) {{
-      const areaData = pt.areas[areaNames[0]];
-      const totalItems = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
-      if (totalItems === 1 && areaData.items.length === 1) {{
-        const singleCap = areaData.items[0];
-        if (singleCap.use_cases && singleCap.use_cases.length > 1) {{
-          /* Render use cases directly — skip the capability header */
-          flattenedToProduct = true;
-          const link = singleCap.sap_help_url ? '<a href="' + singleCap.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
-          const badge = getTypeBadge(singleCap.capability_type);
-          const tierBadge = getTierBadge(singleCap.tier);
-          html += '<div class="flat-badge-row">' + badge + ' ' + tierBadge + link + '</div>';
-          if (singleCap.description) {{
-            html += '<div class="cap-desc">' + singleCap.description + '</div>';
-          }}
-          singleCap.use_cases.forEach(uc => {{
-            html += renderChildUseCase(uc);
-          }});
-          if (singleCap.special_note) {{
-            html += '<div class="special-note"><div class="note-box"><strong>🔮 Coming Soon:</strong> ' + singleCap.special_note + '</div></div>';
-          }}
-        }}
-      }}
-    }}
-
-    if (!flattenedToProduct) {{
-    areaNames.forEach(area => {{
-      const areaData = pt.areas[area];
-      const areaTotal = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
-      if (areaTotal === 0) return;
-      
-      if (skipBA) {{
-        /* Render items directly under the product — no BA header */
-        html += renderAreaContents(areaData);
-      }} else {{
-        const areaOpen = areaNames.length <= 3 || !!activeType;
-        html += '<div class="ba-section">';
-        html += '<div class="ba-header" onclick="toggleSection(this)">';
-        html += '<span class="tree-expand">' + (areaOpen ? '\\u25BC' : '\\u25B6') + '</span>';
-        html += '<h4>' + area + '</h4>';
-        html += '<span class="count">' + areaTotal + '</span>';
-        html += '</div>';
-        html += '<div class="ba-body' + (areaOpen ? ' open' : '') + '">';
-        html += renderAreaContents(areaData);
-        html += '</div></div>';
-      }}
-    }});
-    }} /* end if !flattenedToProduct */
-    
-    html += '</div></div>';
-  }});
-  
-  document.getElementById('treeContent').innerHTML = html;
+  grid.innerHTML = caps.map(renderCard).join('');
 }}
 
-function toggleSection(el) {{
-  const body = el.nextElementSibling;
-  const expand = el.querySelector('.tree-expand');
-  body.classList.toggle('open');
-  expand.textContent = body.classList.contains('open') ? '\\u25BC' : '\\u25B6';
+/* ── UPDATE HEADER COUNT ── */
+function updateHeaderCount(caps) {{
+  const el = document.getElementById('headerCount');
+  el.innerHTML = `<strong>${{caps.length}}</strong> capabilit${{caps.length === 1 ? 'y' : 'ies'}}`;
 }}
 
-function togglePrompts(id) {{
-  const el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
+/* ── UPDATE RESULT META ── */
+function updateResultMeta(caps) {{
+  const el = document.getElementById('resultMeta');
+  const total = ALL_CAPS.filter(isShowable).length;
+  if (caps.length === total && state.activeTypes.size === 0 && !state.searchQuery) {{
+    el.textContent = '';
+  }} else {{
+    el.innerHTML = `<strong>${{caps.length}}</strong> of ${{total}} shown`;
+  }}
 }}
 
-function toggleType(type) {{
-  activeType = activeType === type ? null : type;
-  render();
-}}
-
-function applyFilters() {{
-  render();
-}}
-
-function navigateTo() {{
-  activeType = null;
-  document.getElementById('search').value = '';
-  document.getElementById('productFilter').value = '';
-  document.getElementById('areaFilter').value = '';
-  document.getElementById('typeFilter').value = '';
-  render();
-}}
-
+/* ── MAIN RENDER ── */
 function render() {{
   const caps = getFilteredCaps();
-  renderStats(caps);
-  renderTypeCards(caps);
-  renderTree(caps);
-  
-  let bc = '<a onclick="navigateTo()">Home</a>';
-  if (activeType) bc += ' <span>\\u203A</span> <span>' + activeType + ' Capabilities</span>';
-  document.getElementById('breadcrumb').innerHTML = bc;
+  renderSidebar();
+  updateChipCounts(caps);
+  renderCards(caps);
+  updateHeaderCount(caps);
+  updateResultMeta(caps);
 }}
 
-populateFilters(ALL_CAPS);
+/* ── ACTIONS ── */
+function selectProduct(p) {{
+  state.activeProduct = p || null;
+  // close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+  render();
+}}
+
+function toggleType(btn) {{
+  const t = btn.dataset.type;
+  if (state.activeTypes.has(t)) {{
+    state.activeTypes.delete(t);
+  }} else {{
+    state.activeTypes.add(t);
+  }}
+  render();
+}}
+
+function resetFilters() {{
+  state.activeProduct = null;
+  state.activeTypes.clear();
+  state.searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  render();
+}}
+
+function toggleCard(btn, expId) {{
+  const panel = document.getElementById(expId);
+  const isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  const count = btn.dataset.count;
+  const arrow = btn.querySelector('.expand-arrow');
+  if (isOpen) {{
+    btn.childNodes[btn.childNodes.length - 1].textContent = ` Hide use case${{count !== '1' ? 's' : ''}}`;
+  }} else {{
+    btn.childNodes[btn.childNodes.length - 1].textContent = ` Show ${{count}} use case${{count !== '1' ? 's' : ''}}`;
+  }}
+}}
+
+/* ── SEARCH (debounced) ── */
+document.getElementById('searchInput').addEventListener('input', function(e) {{
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {{
+    state.searchQuery = e.target.value.trim();
+    render();
+  }}, 120);
+}});
+
+/* ── HAMBURGER ── */
+document.getElementById('hamburgerBtn').addEventListener('click', function() {{
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}});
+document.getElementById('sidebarOverlay').addEventListener('click', function() {{
+  document.getElementById('sidebar').classList.remove('open');
+  this.classList.remove('open');
+}});
+
+/* ── INIT ── */
 render();
 </script>
 </body>
