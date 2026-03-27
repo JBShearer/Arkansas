@@ -255,14 +255,20 @@ def clean_use_case(uc: dict) -> dict:
     """Clean a single use case: fix prompts vs notes."""
     prompts = uc.get('prompts', [])
     notes = uc.get('notes', [])
-    
+
     clean_prompts = []
     new_notes = list(notes)
-    
+
     for p in prompts:
         p = p.strip()
         if not p:
             continue
+        # Strip " Joule provides/explains/compares/..." appended after the user question.
+        # SAP Help "Informational Capability" page uses format: "What is X? Joule provides Y."
+        # The real user prompt is everything up to and including the first "?".
+        m = re.match(r'^(.+?\?)\s+Joule\b.+', p, re.DOTALL)
+        if m:
+            p = m.group(1).strip()
         if is_not_a_prompt(p):
             new_notes.append(p)
         else:
@@ -291,19 +297,31 @@ def clean_capability(cap: dict) -> dict:
     # Clean use cases
     for uc in cap.get('use_cases', []):
         clean_use_case(uc)
-    
+
     # Rebuild sample_prompts from cleaned use case prompts
     all_prompts = []
     for uc in cap.get('use_cases', []):
         all_prompts.extend(uc.get('prompts', []))
     cap['sample_prompts'] = all_prompts[:10]  # Keep top 10
-    
+
     # Re-evaluate capability type for leaf nodes with use cases
     if cap.get('is_leaf') and cap.get('use_cases'):
         new_type = infer_capability_type(cap)
         if new_type != cap.get('capability_type'):
             cap['capability_type'] = new_type
-    
+
+    # Downgrade data_source for scraped pages where all UCs are empty after cleaning.
+    # Also remove the empty UC shells so the renderer uses the description-only path.
+    if cap.get('data_source') == 'scraped' and not cap.get('sample_prompts'):
+        ucs = cap.get('use_cases', [])
+        all_empty = all(
+            not uc.get('prompts') and not uc.get('notes') and not uc.get('description', '').strip()
+            for uc in ucs
+        ) if ucs else True
+        if all_empty:
+            cap['data_source'] = 'description-only' if cap.get('description') else 'title-only'
+            cap['use_cases'] = []  # Remove empty shells so renderer picks the right path
+
     return cap
 
 
@@ -342,13 +360,25 @@ def clean_data(input_path: str, output_path: str):
         for uc in cap.get('use_cases', []):
             all_prompts.extend(uc.get('prompts', []))
         cap['sample_prompts'] = all_prompts[:10]
-        
+
         # Re-evaluate capability type
         if cap.get('is_leaf') and cap.get('use_cases'):
             new_type = infer_capability_type(cap)
             if new_type != old_type:
                 stats['type_changes'] += 1
                 cap['capability_type'] = new_type
+
+        # Downgrade data_source for scraped pages where all UCs are empty after cleaning.
+        # Also remove the empty UC shells so the renderer uses the description-only path.
+        if cap.get('data_source') == 'scraped' and not cap.get('sample_prompts'):
+            ucs = cap.get('use_cases', [])
+            all_empty = all(
+                not uc.get('prompts') and not uc.get('notes') and not uc.get('description', '').strip()
+                for uc in ucs
+            ) if ucs else True
+            if all_empty:
+                cap['data_source'] = 'description-only' if cap.get('description') else 'title-only'
+                cap['use_cases'] = []  # Remove empty shells so renderer picks the right path
     
     # Write cleaned data
     with open(output_path, 'w') as f:

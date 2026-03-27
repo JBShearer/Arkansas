@@ -30,8 +30,8 @@ def main():
         from pipeline.analysis.analyzer import run
         run(config, WORKSPACE)
     elif cmd == "generate":
-        from pipeline.generators.site_generator import run
-        run(config, WORKSPACE)
+        from pipeline.generators.site_generator import generate
+        generate()
     elif cmd == "clean":
         from pipeline.clean_data import clean_data
         raw = str(WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json")

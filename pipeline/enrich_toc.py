@@ -121,6 +121,66 @@ TEXT_ONLY_PAGE_FALLBACK = {
         ],
         "capability_type": "Transactional",
     },
+    "Finding Apps with Navigational Capability": {
+        "description": "Joule supports navigation to selected SAP Fiori apps. Type a request and Joule identifies and proposes the most suitable SAP Fiori apps, which you can open directly to proceed further.",
+        "use_cases": [
+            {
+                "name": "Sourcing and Procurement",
+                "description": "Find apps for procurement tasks.",
+                "prompts": [
+                    "Where can I create a purchase order for material AB0123?",
+                    "Find apps to check item quantity in purchase order 012345678",
+                    "Are there apps for uploading a supplier invoice?",
+                    "Where can I see overdue purchase requisitions?",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+            {
+                "name": "Finance",
+                "description": "Find apps for finance tasks.",
+                "prompts": [
+                    "Show me apps to define cost rates for the consulting hours activity",
+                    "Where can I import a payment file?",
+                    "Need to find an app where I can create multiple G/L accounts",
+                    "Where can I change clarification cases?",
+                    "Where can I find billing plans for Convergent Invoicing?",
+                    "Which app can I use to manage billing requests?",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+            {
+                "name": "Sales",
+                "description": "Find apps for sales tasks.",
+                "prompts": [
+                    "In which app can I find return orders to release?",
+                    "Where can I define preliminary billing?",
+                    "I'd like to find an app where I can extend contract validity",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+            {
+                "name": "Cross-Area",
+                "description": "Find apps across business areas.",
+                "prompts": [
+                    "Which applications should I use to create a customer?",
+                    "Which app allows me to approve a business partner?",
+                    "Where can I check and monitor the logs after data destruction?",
+                    "Show me an app to design an email?",
+                    "Which application can I use to create, display, or change a freight order?",
+                ],
+                "notes": [],
+                "parameters": [],
+                "response_summary": "",
+            },
+        ],
+        "capability_type": "Navigational",
+    },
 }
 
 # ── Skip list ────────────────────────────────────────────────────
@@ -129,6 +189,12 @@ SKIP_TITLES = [
     "Multi Language", "Glossary", "Important Notes", "Initial Setup",
     "Release-Specific", "Configuring", "Configuration",
 ]
+
+# ── URL overrides for pages that SAP moved to a non-slug URL ─────
+HELP_URL_OVERRIDES = {
+    "Finding Apps with Navigational Capability":
+        "https://help.sap.com/docs/joule/capabilities-guide/navigational-use-cases-2cb92d849e3b4fa99fddfd1deffec500",
+}
 
 # ── Capability type classification ───────────────────────────────
 # NO "Mixed" — every capability gets exactly one type.
@@ -1039,8 +1105,10 @@ def enrich():
         page_data = _fuzzy_match_scraped_page(title, scraped)
         has_good_data = is_good_scraped_data(page_data)
 
-        # Use actual scraped URL if available, otherwise generate from slug
+        # Use actual scraped URL if available, otherwise check manual overrides, otherwise generate from slug
+        # Manual overrides take highest priority (SAP moved page to a non-slug URL)
         scraped_url = page_data.get("url", "") if page_data else ""
+        help_url = HELP_URL_OVERRIDES.get(title) or scraped_url or f"https://help.sap.com/docs/joule/capabilities-guide/{slug}"
 
         use_cases = []
         sample_prompts = []
@@ -1097,7 +1165,7 @@ def enrich():
             "depth": depth,
             "hierarchy": path_str,
             "slug": slug,
-            "sap_help_url": scraped_url if scraped_url else f"https://help.sap.com/docs/joule/capabilities-guide/{slug}",
+            "sap_help_url": help_url,
             "children_count": len(children_map[i]),
             "description": description,
             "use_cases": use_cases,

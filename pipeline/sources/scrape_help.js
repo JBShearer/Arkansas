@@ -77,6 +77,8 @@ const URL_OVERRIDES = {
     'https://help.sap.com/docs/joule/capabilities-guide/joule-in-sap-signavio-process-transformation-suite',
   'searching-for-outbound-delivery-orders':
     'https://help.sap.com/docs/joule/capabilities-guide/querying-outbound-delivery-orders',
+  'finding-apps-with-navigational-capability':
+    'https://help.sap.com/docs/joule/capabilities-guide/navigational-use-cases-2cb92d849e3b4fa99fddfd1deffec500',
 };
 
 async function scrapePage(browser, url, title) {
@@ -95,9 +97,12 @@ async function scrapePage(browser, url, title) {
     // Small extra wait for lazy-rendered JS content
     await new Promise(r => setTimeout(r, 300));
 
-    // Guard: if we were redirected to What's New, this page has no capability data
+    // Guard: if we were redirected to What's New, this page has no capability data.
+    // Only flag as redirected for What's New destinations — not for pages SAP silently
+    // renamed/moved, which may still have valid content at the new URL.
     const finalUrl = page.url();
-    if (finalUrl.includes('what-s-new-for-joule') || finalUrl.includes('whats-new')) {
+    const isWhatsNewRedirect = finalUrl.includes('what-s-new-for-joule') || finalUrl.includes('whats-new');
+    if (isWhatsNewRedirect) {
       await page.close();
       return { description: '', useCases: [], prerequisites: [], redirected: true };
     }
