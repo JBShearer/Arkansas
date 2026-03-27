@@ -360,9 +360,19 @@ function renderStats(caps) {{
   document.getElementById('stats').innerHTML = html;
 }}
 
+function getUCTypes(c) {{
+  // Get all unique capability types present in a capability's use cases
+  if (c.use_cases && c.use_cases.length > 0) {{
+    return [...new Set(c.use_cases.map(uc => uc.capability_type).filter(Boolean))];
+  }}
+  return [c.capability_type].filter(Boolean);
+}}
+
 function renderTypeCards(caps) {{
   const types = {{}};
-  caps.forEach(c => {{ types[c.capability_type] = (types[c.capability_type] || 0) + 1; }});
+  caps.forEach(c => {{
+    getUCTypes(c).forEach(t => {{ types[t] = (types[t] || 0) + 1; }});
+  }});
   
   const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
   let html = '';
@@ -383,7 +393,7 @@ function renderTypeCards(caps) {{
 function populateFilters(caps) {{
   const products = [...new Set(caps.map(c => c.product))].sort();
   const areas = [...new Set(caps.map(c => c.business_area).filter(Boolean))].sort();
-  const types = [...new Set(caps.map(c => c.capability_type))].sort();
+  const types = [...new Set(caps.flatMap(c => getUCTypes(c)))].sort();
   
   const pSel = document.getElementById('productFilter');
   pSel.innerHTML = '<option value="">All Products</option>' + products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
@@ -402,16 +412,16 @@ function getFilteredCaps() {{
   const area = document.getElementById('areaFilter').value;
   const type = document.getElementById('typeFilter').value;
   
-  if (activeType) caps = caps.filter(c => c.capability_type === activeType);
+  if (activeType) caps = caps.filter(c => getUCTypes(c).includes(activeType));
   if (search) caps = caps.filter(c => {{
     if (c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search)) return true;
     if ((c.description || '').toLowerCase().includes(search)) return true;
-    if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search));
+    if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search) || (uc.prompts || []).some(p => p.toLowerCase().includes(search)));
     return false;
   }});
   if (product) caps = caps.filter(c => c.product === product);
   if (area) caps = caps.filter(c => c.business_area === area);
-  if (type) caps = caps.filter(c => c.capability_type === type);
+  if (type) caps = caps.filter(c => getUCTypes(c).includes(type));
   
   return caps;
 }}

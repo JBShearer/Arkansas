@@ -95,6 +95,13 @@ async function scrapePage(browser, url, title) {
     // Small extra wait for lazy-rendered JS content
     await new Promise(r => setTimeout(r, 300));
 
+    // Guard: if we were redirected to What's New, this page has no capability data
+    const finalUrl = page.url();
+    if (finalUrl.includes('what-s-new-for-joule') || finalUrl.includes('whats-new')) {
+      await page.close();
+      return { description: '', useCases: [], prerequisites: [], redirected: true };
+    }
+
     const data = await page.evaluate(() => {
       const result = {
         description: '',
@@ -285,10 +292,19 @@ async function scrapePage(browser, url, title) {
         for (const p of proseParagraphs) {
           const text = (p.innerText || p.textContent || '').trim();
           // Match "ask Joule to <prompt>" or "ask Joule <prompt>" (no "to")
-          const matches = text.matchAll(/ask Joule(?:\s+to)?\s+([A-Z][^.?!]{10,150})/g);
+          // Also match inline prompt patterns: 'Enter the prompt <prompt>'
+          // Allow lowercase start — SAP writes "ask Joule to explain the error of..."
+          const matches = text.matchAll(/ask Joule(?:\s+to)?\s+([a-zA-Z][^.?!\n]{10,150})/g);
           for (const m of matches) {
             const prompt = m[1].trim();
-            // Basic sanity: ends with a sentence fragment, no sidebar-like text
+            if (prompt.length > 10 && prompt.length < 200) {
+              extractedPrompts.push(prompt);
+            }
+          }
+          // Also catch 'Enter the prompt <prompt>' patterns
+          const enterMatches = text.matchAll(/(?:enter|use)\s+the\s+prompt\s+[""]?([a-zA-Z][^"".\n]{10,150})[""]?/gi);
+          for (const m of enterMatches) {
+            const prompt = m[1].trim();
             if (prompt.length > 10 && prompt.length < 200) {
               extractedPrompts.push(prompt);
             }
@@ -413,7 +429,10 @@ async function main() {
     data.url = url;
     data.path = entry.path;
 
-    results[entry.title] = data;
+    // Only store results with real data — don't overwrite a good entry with a redirect
+    if (!data.redirected || !results[entry.title]) {
+      results[entry.title] = data;
+    }
 
     if (data.useCases.length > 0) {
       withUseCases++;
@@ -422,6 +441,8 @@ async function main() {
     } else if (data.error) {
       discarded++;
       console.log(` ✗ error: ${data.error.substring(0, 60)}`);
+    } else if (data.redirected) {
+      console.log(' — redirected to What\'s New (no capability page)');
     } else {
       console.log(' — no content found');
     }
