@@ -457,7 +457,6 @@ function renderChildUseCase(uc) {{
   const params = uc.parameters || [];
   const subcategories = uc.subcategories || {{}};
   const resp = uc.response_summary || '';
-  const CAP_TYPES = ['Informational','Transactional','Navigational','Analytical'];
   const hasSubs = Object.keys(subcategories).length > 0;
   
   // Classify notes into info notes vs cautions
@@ -480,15 +479,12 @@ function renderChildUseCase(uc) {{
   let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
   html += '<span class="uc-name"><strong>' + name + '</strong></span>';
-  // Render description as type badges if it contains capability type names
+  // Render per-use-case type badge
+  if (uc.capability_type) {{
+    html += ' ' + getTypeBadge(uc.capability_type);
+  }}
   if (desc) {{
-    const parts = desc.split(',').map(s => s.trim()).filter(Boolean);
-    const allTypes = parts.every(p => CAP_TYPES.includes(p));
-    if (allTypes) {{
-      parts.forEach(t => {{ html += ' ' + getTypeBadge(t); }});
-    }} else {{
-      html += '<span class="uc-inline-desc">' + desc.substring(0, 200) + '</span>';
-    }}
+    html += '<span class="uc-inline-desc">' + desc.substring(0, 200) + '</span>';
   }}
   html += '</div>';
   // Info notes — always on new line, left-aligned, full width
@@ -600,7 +596,7 @@ function renderUseCase(c) {{
     html += '<div class="cap-group-header" onclick="toggleSection(this)">';
     html += '<span class="tree-expand">\\u25B6</span>';
     html += '<span class="cg-title">' + titleText + '</span>';
-    html += badge + ' ' + tierBadge;
+    html += tierBadge;
     html += '<span class="count">' + c.use_cases.length + ' use cases</span>';
     html += link;
     html += '</div>';

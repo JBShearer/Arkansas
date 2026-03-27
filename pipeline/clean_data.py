@@ -148,6 +148,54 @@ def is_note_actually_prompt(text: str) -> bool:
     return False
 
 
+def infer_uc_type(uc: dict) -> str:
+    """Infer capability_type for a single use case based on its name and prompts."""
+    name = uc.get('name', '').lower()
+    prompts = uc.get('prompts', [])
+    prompt_text = ' '.join(prompts).lower()
+    # Use word-level matching to avoid substring false positives (e.g. "approver" matching "approve")
+    name_words = set(re.split(r'[\s\-/,.()\[\]]+', name))
+
+    nav_keywords = {'navigate', 'launch', 'open'}
+    nav_phrases = ['finding apps', 'go to']
+    if name_words & nav_keywords or any(k in name for k in nav_phrases):
+        return 'Navigational'
+
+    anal_keywords = {'analytical', 'insights', 'analytics', 'analysis'}
+    if name_words & anal_keywords or 'report' in name:
+        return 'Analytical'
+
+    info_words = {'display', 'view', 'show', 'fetch', 'search', 'list', 'get', 'find',
+                  'summarize', 'summarise', 'read', 'check', 'query'}
+    trans_words = {'create', 'change', 'edit', 'update', 'delete', 'manage', 'post', 'clear',
+                   'assign', 'complete', 'cancel', 'reject', 'release', 'approve', 'perform',
+                   'process', 'submit', 'resubmit', 'execute', 'add', 'remove', 'set', 'send', 'generate',
+                   'schedule', 'confirm', 'activate', 'deploy', 'transfer', 'modify', 'close',
+                   'open', 'resolve', 'handle', 'apply', 'save', 'publish', 'lock', 'unlock'}
+
+    name_is_info = bool(name_words & info_words)
+    name_is_trans = bool(name_words & trans_words)
+
+    if name_is_info and not name_is_trans:
+        return 'Informational'
+    if name_is_trans and not name_is_info:
+        return 'Transactional'
+
+    # Fall back to checking first word of first prompt
+    trans_prompt_verbs = {'create', 'submit', 'change', 'update', 'delete', 'approve', 'reject',
+                          'process', 'post', 'log', 'assign', 'complete', 'release', 'cancel',
+                          'close', 'add', 'remove', 'set', 'send', 'generate', 'schedule', 'save'}
+    info_prompt_verbs = {'show', 'display', 'list', 'get', 'find', 'search', 'view', 'fetch',
+                         'what', 'how', 'give', 'tell', 'summarize', 'summarise', 'explain'}
+    first_word = prompt_text.split()[0].rstrip('?.,') if prompt_text.strip() else ''
+    if first_word in trans_prompt_verbs:
+        return 'Transactional'
+    if first_word in info_prompt_verbs:
+        return 'Informational'
+
+    return 'Informational'  # safe default
+
+
 def infer_capability_type(cap: dict) -> str:
     """Improve capability_type based on title and use case content."""
     title = cap.get('title', '').lower()
@@ -233,6 +281,8 @@ def clean_use_case(uc: dict) -> dict:
     
     uc['prompts'] = clean_prompts
     uc['notes'] = remaining_notes
+    # Infer use-case-level capability type
+    uc['capability_type'] = infer_uc_type(uc)
     return uc
 
 
