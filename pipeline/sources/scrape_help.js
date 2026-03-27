@@ -67,6 +67,7 @@ const SKIP_PATTERNS = [
   /what's new/i, /archive/i, /activating/i, /multi language/i,
   /glossary/i, /important notes/i, /initial setup/i,
   /release-specific/i, /configuring/i, /configuration/i,
+  /requesting access to sap business technology platform/i,
 ];
 
 // URL overrides for pages where the slug doesn't match the TOC title
@@ -74,6 +75,8 @@ const SKIP_PATTERNS = [
 const URL_OVERRIDES = {
   'joule-in-sap-signavio-process-transformation-suite':
     'https://help.sap.com/docs/joule/capabilities-guide/joule-in-sap-signavio-process-transformation-suite',
+  'searching-for-outbound-delivery-orders':
+    'https://help.sap.com/docs/joule/capabilities-guide/querying-outbound-delivery-orders',
 };
 
 async function scrapePage(browser, url, title) {
@@ -108,8 +111,8 @@ async function scrapePage(browser, url, title) {
         document.querySelector('[role="main"]') ||
         document.querySelector('.topic-content') ||
         document.querySelector('.helpContent') ||
-        document.querySelector('main') ||
         document.querySelector('.body') ||
+        document.querySelector('main') ||
         // Last resort: find the div that contains a <table> but is NOT in a nav/aside
         (() => {
           const tables = document.querySelectorAll('table');
@@ -257,7 +260,31 @@ async function scrapePage(browser, url, title) {
         }
       }
 
-      // ── 4b. Fallback: bullet lists in main content ──────────────────────────
+      // ── 4b. Fallback: inline prose prompts ─────────────────────────────────
+      // Some pages embed example prompts inline in <p> text:
+      // "you can ask Joule to List outbound delivery order items for sales order 1234"
+      // Extract the prompt fragment after "ask Joule to/ask Joule " from each paragraph.
+      if (result.useCases.length === 0) {
+        const proseParagraphs = contentArea.querySelectorAll('p');
+        const extractedPrompts = [];
+        for (const p of proseParagraphs) {
+          const text = (p.innerText || p.textContent || '').trim();
+          // Match "ask Joule to <prompt>" or "ask Joule <prompt>" (no "to")
+          const matches = text.matchAll(/ask Joule(?:\s+to)?\s+([A-Z][^.?!]{10,150})/g);
+          for (const m of matches) {
+            const prompt = m[1].trim();
+            // Basic sanity: ends with a sentence fragment, no sidebar-like text
+            if (prompt.length > 10 && prompt.length < 200) {
+              extractedPrompts.push(prompt);
+            }
+          }
+        }
+        if (extractedPrompts.length > 0) {
+          result.useCases.push({ name: 'General', prompts: extractedPrompts, response: '' });
+        }
+      }
+
+      // ── 4c. Fallback: bullet lists in main content ──────────────────────────
       // Only trigger when no table data AND no h2-scoped data was found.
       // Scoped strictly to contentArea to avoid sidebar nav lists.
       if (result.useCases.length === 0) {
