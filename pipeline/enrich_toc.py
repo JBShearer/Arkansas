@@ -1030,6 +1030,12 @@ def enrich():
             # Limit to reasonable number of prompts for display
             if len(sample_prompts) > 10:
                 sample_prompts = sample_prompts[:10]
+        elif page_data and (page_data.get("description") or "").strip():
+            # Page was scraped but had no use case table — still capture the description
+            # so the card shows meaningful text instead of "Documentation Pending".
+            description = (page_data.get("description") or "").strip()
+            # Count as partial data so data_source reflects reality
+            fallback_count += 1
         elif title in TEXT_ONLY_PAGE_FALLBACK:
             # Text-only pages where scraper got sidebar nav instead of content
             fb = TEXT_ONLY_PAGE_FALLBACK[title]
@@ -1062,7 +1068,9 @@ def enrich():
             "description": description,
             "use_cases": use_cases,
             "sample_prompts": sample_prompts,
-            "data_source": "scraped" if (has_good_data or title in TEXT_ONLY_PAGE_FALLBACK) else "title-only",
+            "data_source": "scraped" if (has_good_data or title in TEXT_ONLY_PAGE_FALLBACK)
+                           else "description-only" if description
+                           else "title-only",
         }
         capabilities.append(cap)
 

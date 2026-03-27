@@ -577,6 +577,23 @@ function renderUseCase(c) {{
     return html;
   }}
 
+  const isDescOnly = c.data_source === 'description-only';
+  if (isDescOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
+    // Scraped page with description prose but no examples table yet
+    html += '<div class="use-case">';
+    html += '<div class="uc-main">';
+    html += '<span class="uc-title">' + titleText + '</span>';
+    html += badge + ' ' + tierBadge;
+    html += '<span class="badge-pending">🔜 Examples Coming Soon</span>';
+    html += link;
+    html += '</div>';
+    if (c.description) {{
+      html += '<div class="cap-desc">' + c.description + '</div>';
+    }}
+    html += '</div>';
+    return html;
+  }}
+
   if (hasChildUCs) {{
     // Render as collapsible group with child use cases
     const gid = 'capgroup-' + (promptCounter++);
