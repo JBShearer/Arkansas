@@ -69,6 +69,13 @@ const SKIP_PATTERNS = [
   /release-specific/i, /configuring/i, /configuration/i,
 ];
 
+// URL overrides for pages where the slug doesn't match the TOC title
+// (SAP renamed pages without redirect)
+const URL_OVERRIDES = {
+  'joule-in-sap-signavio-process-transformation-suite':
+    'https://help.sap.com/docs/joule/capabilities-guide/joule-in-sap-signavio-process-transformation-suite',
+};
+
 async function scrapePage(browser, url, title) {
   const page = await browser.newPage();
   page.setDefaultTimeout(20000);
@@ -180,7 +187,10 @@ async function scrapePage(browser, url, title) {
           const totalText = cells.map(c => (c.innerText || c.textContent || '').trim()).join('').length;
           if (totalText < 5) continue;
 
-          const useCase = { name, prompts: [], response: '' };
+          const useCase = { name, prompts: [], response: '', cells: [] };
+
+          // Store all cell values for tables with non-standard column layouts
+          useCase.cells = cells.map(c => (c.innerText || c.textContent || '').trim());
 
           // Extract prompts from cell[1]
           const promptCell = cells[1];
@@ -351,7 +361,7 @@ async function main() {
 
   for (const entry of toScrape) {
     const slug = titleToSlug(entry.title);
-    const url = BASE_URL + slug;
+    const url = URL_OVERRIDES[slug] || (BASE_URL + slug);
 
     process.stdout.write(`   [${++scraped}/${toScrape.length}] ${entry.title}...`);
 

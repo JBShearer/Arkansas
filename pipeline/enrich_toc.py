@@ -35,6 +35,7 @@ PRODUCT_MAP = {
     "Joule in SAP Integrated Business Planning": "SAP Integrated Business Planning",
     "Joule in SAP Risk and Assurance Management": "SAP Risk and Assurance Management",
     "Joule in SAP Signavio Solutions": "SAP Signavio Solutions",
+    "Joule in SAP Signavio Process Transformation Suite": "SAP Signavio Solutions",
     "Joule in SAP Concur Solutions": "SAP Concur Solutions",
     "Joule in SAP Ariba Solutions": "SAP Ariba Solutions",
     "Joule in SAP Ariba Intake Management": "SAP Ariba Solutions",
@@ -645,6 +646,39 @@ def extract_use_cases_from_scraped(page_data):
                 "parameters": [],
                 "prompts": all_prompts,
                 "subcategories": subcategories if len(subcategories) > 1 else {},
+                "response_summary": "",
+            })
+        return use_cases
+
+    # ── Handle Signavio 7-column table ───────────────────────────
+    # Columns: Capability | Capability Definition | Skill/Scenario |
+    #          Skill/Scenario Definition | Skill/Scenario Type | Example Prompts | Base/Premium
+    # Detected by: rows have ≥6 cells stored in the 'cells' field
+    def _is_signavio_table(ucs):
+        for uc in ucs:
+            cells = uc.get("cells", [])
+            if len(cells) >= 6:
+                return True
+        return False
+
+    if _is_signavio_table(raw_ucs):
+        from collections import OrderedDict
+        for uc in raw_ucs:
+            cells = uc.get("cells", [])
+            if len(cells) < 6:
+                continue
+            skill_name = cells[2].strip() if len(cells) > 2 else ""
+            skill_desc = cells[3].strip() if len(cells) > 3 else ""
+            raw_prompts_text = cells[5].strip() if len(cells) > 5 else ""
+            if not skill_name:
+                continue
+            prompts = [p.strip() for p in raw_prompts_text.split("\n") if p.strip() and len(p.strip()) > 5]
+            use_cases.append({
+                "name": skill_name,
+                "description": skill_desc,
+                "notes": [],
+                "parameters": [],
+                "prompts": prompts,
                 "response_summary": "",
             })
         return use_cases
