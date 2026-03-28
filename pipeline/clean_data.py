@@ -90,6 +90,23 @@ NOT_A_PROMPT_PATTERNS = [
     r'^User selects',
     r'^User adds',
     r'^User filters',
+    r'^User creates',
+    r'^User deletes',
+    r'^User updates',
+    r'^User itemizes',
+    r'^Delete report\s*$',     # Concur bare button labels
+    r'^Update report\s*$',
+    r'^Add expense item\s*$',
+    r'^Add itemization\s*$',
+    r'^Search Criteria:\s*$',  # Column/section header label
+    r'^Show the following:\s*$',   # Section header
+    r'^Perform the following:\s*$', # Section header
+    r'^Search .+ as follows:\s*$', # Section header template
+    r'^Valid on a certain date\s*$',   # Fragment label (Logistics)
+    r'^Created by certain users\s*$',  # Fragment label (Logistics)
+    r'^Based on a certain',            # Fragment label (Logistics)
+    r'^Storage areas in a warehouse\s*$',  # Sub-header label (Logistics)
+    r'^Create storage bin\s*$',            # Sub-header label (Logistics)
     r'Navigates to \w+ app',   # Button label + nav description (DSO)
     r'Provides a multilevel',  # Feature label + description (DSO)
     r'^Order Details:',        # Feature label (DSO)
@@ -340,6 +357,47 @@ def clean_parameters(params: list, parent_type: str = None) -> list:
     return clean
 
 
+def strip_inline_note(text: str) -> str:
+    """Strip inline 'Note ...' callout text appended to a prompt string.
+
+    SAP Help pages sometimes append in-page callouts directly after a prompt
+    example, e.g.:
+      "Show me the location ... Note You can also get a list of locations via ..."
+    This function strips the ' Note ...' suffix, returning just the prompt.
+    """
+    # Match " Note " (capital N) followed by the callout — but only when preceded
+    # by at least 10 chars of real prompt content so we don't strip headings.
+    m = re.search(r'\s+Note\s+[A-Z]', text)
+    if m and m.start() >= 10:
+        return text[:m.start()].strip()
+    return text
+
+
+def is_prose_paragraph_uc_name(name: str) -> bool:
+    """Return True if a UC name looks like a prose paragraph rather than an action label.
+
+    Indicators:
+    - Very long (>120 chars)
+    - Contains a period in the middle (not just at the end)
+    - Reads like a marketing/explanatory sentence rather than an action
+    """
+    name = name.strip()
+    if len(name) > 120:
+        return True
+    # Contains internal period followed by a space + capital letter (two sentences)
+    if re.search(r'\.\s+[A-Z]', name):
+        return True
+    # Starts with "Ask Joule" / "Use Joule" — these are instructions, not UC labels
+    if re.match(r'^(Ask|Use)\s+Joule\b', name):
+        return True
+    return False
+
+
+def normalize_newlines_in_prompt(text: str) -> str:
+    """Replace newlines within a prompt string with a single space."""
+    return re.sub(r'\s*\n\s*', ' ', text).strip()
+
+
 def infer_uc_type(uc: dict, parent_type: str = None) -> str:
     """Infer capability_type for a single use case based on its name and prompts.
 
@@ -472,6 +530,9 @@ def clean_use_case(uc: dict, parent_type: str = None, is_signavio: bool = False)
     if is_signavio:
         prompts = rejoin_signavio_fragments(prompts)
 
+    # Track which notes came from being rejected from prompts (don't re-promote those)
+    rejected_from_prompts = set()
+
     clean_prompts = []
     new_notes = list(notes)
 
@@ -479,15 +540,20 @@ def clean_use_case(uc: dict, parent_type: str = None, is_signavio: bool = False)
         p = p.strip()
         if not p:
             continue
+        # Normalize internal newlines (e.g. Ariba multi-line scraped prompts)
+        p = normalize_newlines_in_prompt(p)
         # Drop SAP internal technical codes entirely
         if is_technical_id(p):
             continue
+        # Strip inline "Note ..." callout text appended after the prompt
+        p = strip_inline_note(p)
         # Strip " Joule provides/explains/..." appended after the user question
         m = re.match(r'^(.+?\?)\s+Joule\b.+', p, re.DOTALL)
         if m:
             p = m.group(1).strip()
         if is_not_a_prompt(p):
             new_notes.append(p)
+            rejected_from_prompts.add(p)
         elif parent_type == 'Navigational' and is_app_name(p):
             existing_params = uc.setdefault('parameters', [])
             if p not in existing_params:
@@ -496,15 +562,19 @@ def clean_use_case(uc: dict, parent_type: str = None, is_signavio: bool = False)
             clean_prompts.append(p)
 
     # Check if any notes are actually prompts
+    # Notes that were rejected from the prompts list above should NOT be re-promoted
     remaining_notes = []
     for n in new_notes:
         n = n.strip()
         if not n:
             continue
-        # Drop field labels that ended up in notes
-        if is_not_a_prompt(n) and any(re.match(pat, n, re.IGNORECASE) for pat in FIELD_LABEL_PATTERNS):
-            continue
-        if is_note_actually_prompt(n):
+        # Don't re-promote items we explicitly rejected from prompts
+        if n in rejected_from_prompts:
+            remaining_notes.append(n)
+        # Don't promote notes that are section headers / not-a-prompt patterns
+        elif is_not_a_prompt(n):
+            remaining_notes.append(n)
+        elif is_note_actually_prompt(n):
             clean_prompts.append(n)
         else:
             remaining_notes.append(n)
@@ -550,10 +620,18 @@ def clean_capability(cap: dict) -> dict:
             continue
         # Clean the UC name
         raw_name = uc.get('name', '')
+        # Normalize newlines in the UC name first (Ariba multi-line names)
         if '\n' in raw_name:
             clean_name, extracted_notes = clean_uc_name(raw_name)
             uc['name'] = clean_name
             uc['notes'] = list(uc.get('notes', [])) + extracted_notes
+        # If UC name is a prose paragraph, extract description and clear the name
+        if is_prose_paragraph_uc_name(uc.get('name', '')):
+            prose = uc.get('name', '').strip()
+            # Use the prose as a note if it contains useful info
+            if prose and prose not in uc.get('notes', []):
+                uc.setdefault('notes', []).append(prose)
+            uc['name'] = 'General'
         clean_use_case(uc, parent_type=parent_type, is_signavio=is_signavio)
         clean_ucs.append(uc)
 
@@ -571,14 +649,11 @@ def clean_capability(cap: dict) -> dict:
         if new_type != cap.get('capability_type'):
             cap['capability_type'] = new_type
 
-    # Downgrade data_source for scraped pages where all UCs are empty after cleaning
+    # Downgrade data_source for scraped pages where no usable prompts remain after cleaning
     if cap.get('data_source') == 'scraped' and not cap.get('sample_prompts'):
         ucs = cap.get('use_cases', [])
-        all_empty = all(
-            not uc.get('prompts') and not uc.get('notes') and not uc.get('description', '').strip()
-            for uc in ucs
-        ) if ucs else True
-        if all_empty:
+        has_any_prompt = any(uc.get('prompts') for uc in ucs)
+        if not has_any_prompt:
             cap['data_source'] = 'description-only' if cap.get('description') else 'title-only'
             cap['use_cases'] = []
 
@@ -625,6 +700,13 @@ def clean_data(input_path: str, output_path: str):
                     stats['uc_names_cleaned'] += 1
                 uc['name'] = clean_name
                 uc['notes'] = list(uc.get('notes', [])) + extracted_notes
+            # Prose-paragraph UC names → rename to 'General', move text to notes
+            if is_prose_paragraph_uc_name(uc.get('name', '')):
+                prose = uc.get('name', '').strip()
+                if prose and prose not in uc.get('notes', []):
+                    uc.setdefault('notes', []).append(prose)
+                uc['name'] = 'General'
+                stats['uc_names_cleaned'] += 1
 
         # Clean each UC
         for uc in cap['use_cases']:
@@ -661,14 +743,13 @@ def clean_data(input_path: str, output_path: str):
                 stats['type_changes'] += 1
                 cap['capability_type'] = new_type
 
-        # Downgrade data_source for scraped pages where all UCs are empty after cleaning
+        # Downgrade data_source for scraped pages where no usable prompts remain after cleaning
         if cap.get('data_source') == 'scraped' and not cap.get('sample_prompts'):
             ucs = cap.get('use_cases', [])
-            all_empty = all(
-                not uc.get('prompts') and not uc.get('notes') and not uc.get('description', '').strip()
-                for uc in ucs
-            ) if ucs else True
-            if all_empty:
+            # Downgrade if: no UCs at all, OR all UCs have zero prompts
+            # (notes-only UCs are useful as context but don't show example prompts)
+            has_any_prompt = any(uc.get('prompts') for uc in ucs)
+            if not has_any_prompt:
                 cap['data_source'] = 'description-only' if cap.get('description') else 'title-only'
                 cap['use_cases'] = []
 
