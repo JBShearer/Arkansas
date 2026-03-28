@@ -283,7 +283,54 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif
 .cap-single-uc { width:100%; padding:0.12rem 0 0.12rem 3.25rem; font-size:0.76rem; color:#b0b8cc; }
 .flat-badge-row { padding:0.45rem 1.25rem 0.25rem; display:flex; gap:0.55rem; align-items:center; flex-wrap:wrap; }
 
-.empty { padding:3rem; text-align:center; color:var(--text-muted); }
+/* ── CONFIGURE PANEL ── */
+.config-btn {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.28rem 0.65rem; border-radius:20px; font-size:0.74rem; font-weight:600;
+  border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);
+  color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none;
+}
+.config-btn:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+.config-btn.active { background:var(--joule-dim); border-color:var(--joule-light); color:var(--joule-light); }
+.config-panel {
+  display:none; background:var(--bg-surface); border-bottom:1px solid var(--border);
+  padding:0.85rem 1.25rem; gap:1.5rem; flex-wrap:wrap; align-items:flex-start;
+}
+.config-panel.open { display:flex; }
+.config-group { display:flex; flex-direction:column; gap:0.4rem; min-width:200px; flex:1; }
+.config-group-label {
+  font-size:0.65rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:0.15rem;
+}
+.config-checkboxes { display:flex; flex-wrap:wrap; gap:0.35rem; }
+.config-check {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.25rem 0.6rem; border-radius:6px; font-size:0.75rem;
+  border:1px solid var(--border); background:rgba(255,255,255,0.04);
+  color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none;
+}
+.config-check input { display:none; }
+.config-check.checked {
+  background:var(--joule-dim); border-color:var(--joule-light); color:var(--text);
+}
+.config-check .check-dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); flex-shrink:0; }
+.config-check.checked .check-dot { background:var(--joule-light); }
+.config-actions { display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem; }
+.config-link { font-size:0.72rem; color:var(--text-muted); cursor:pointer; transition:color .15s; }
+.config-link:hover { color:var(--joule-light); }
+
+/* ── ROLE CHIPS ── */
+.role-chip {
+  display:inline-flex; align-items:center; gap:0.3rem;
+  padding:0.28rem 0.7rem; border-radius:20px; font-size:0.74rem; font-weight:600;
+  border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);
+  color:var(--text-muted); cursor:pointer; transition:all .15s; user-select:none;
+}
+.role-chip:hover { color:var(--text); border-color:rgba(255,255,255,0.2); }
+.role-chip.active {
+  background:rgba(181,123,238,0.15); border-color:var(--joule-light); color:var(--joule-light);
+}
+.toolbar-divider { width:1px; height:18px; background:var(--border); flex-shrink:0; margin:0 0.15rem; }
 .footer { text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem; border-top:1px solid var(--border); }
 .footer strong { color:var(--text); }
 
@@ -339,8 +386,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif
   <!-- CONTENT -->
   <div class="content">
 
-    <!-- TOOLBAR: type filter chips -->
+    <!-- TOOLBAR: type filter chips + role chips -->
     <div class="toolbar" id="toolbar">
+      <span class="toolbar-label">Type:</span>
       <button class="type-chip" data-type="Informational" onclick="setTypeChip(this)">
         <span class="chip-dot" style="background:var(--type-info)"></span>Informational
         <span id="chip-cnt-Informational"></span>
@@ -357,20 +405,37 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif
         <span class="chip-dot" style="background:var(--type-anal)"></span>Analytical
         <span id="chip-cnt-Analytical"></span>
       </button>
+      <div class="toolbar-divider"></div>
+      <span class="toolbar-label">Role:</span>
+      <div id="roleChips"></div>
       <div class="toolbar-spacer"></div>
       <span class="result-meta" id="resultMeta"></span>
+      <button class="config-btn" id="configBtn" onclick="toggleConfigPanel()">&#9881; Products</button>
       <button class="reset-btn" onclick="resetAll()">&#215; Reset</button>
+    </div>
+
+    <!-- CONFIGURE PANEL: product multiselect -->
+    <div class="config-panel" id="configPanel">
+      <div class="config-group">
+        <div class="config-group-label">Show only these products</div>
+        <div class="config-checkboxes" id="productCheckboxes"></div>
+        <div class="config-actions">
+          <span class="config-link" onclick="selectAllProducts()">Select all</span>
+          <span style="color:var(--border)">·</span>
+          <span class="config-link" onclick="deselectAllProducts()">Deselect all</span>
+        </div>
+      </div>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="main">
-      <div class="filter-bar">
-        <select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select>
-        <select id="areaFilter" onchange="applyFilters()"><option value="">All Business Areas</option></select>
-        <select id="typeFilter" onchange="applyFilters()"><option value="">All Types</option></select>
-      </div>
       <div id="stats" style="display:none"></div>
       <div id="typeCards" style="display:none"></div>
+      <div class="filter-bar" style="display:none">
+        <select id="productFilter"><option value="">All Products</option></select>
+        <select id="areaFilter"><option value="">All Business Areas</option></select>
+        <select id="typeFilter"><option value="">All Types</option></select>
+      </div>
       <div class="tree-section" id="treeContent"></div>
     </div>
 
@@ -497,39 +562,148 @@ function renderTypeCards(caps) {
   document.getElementById('typeCards').innerHTML = html;
 }
 
+/* ── ROLE GROUPS ── */
+const ROLE_GROUPS = [
+  { id:'finance',    label:'Finance',                     areas: new Set(['Finance']) },
+  { id:'sales',      label:'Sales',                       areas: new Set(['Sales']) },
+  { id:'procure',    label:'Procurement & Supply Chain',  areas: new Set(['Procurement','Sourcing and Procurement','Supply Chain','Warehouse Management','Transportation Management','Core Logistics','Field Logistics']) },
+  { id:'mfg',        label:'Manufacturing & Engineering', areas: new Set(['Manufacturing','R&D/ Engineering','Production Planning and Detailed Scheduling','Asset Management']) },
+  { id:'service',    label:'Service',                     areas: new Set(['Service']) },
+  { id:'masterdata', label:'Master Data & Governance',    areas: new Set(['Business Partners','Master Data Governance','Business Rules Framework Plus','ILM Data Destruction']) },
+  { id:'crossarea',  label:'Cross-Area',                  areas: new Set(['Cross-Area Capabilities','Country/Region-Specific Capabilities']) },
+];
+
+let activeRole = null;
+
+function buildRoleChips() {
+  const container = document.getElementById('roleChips');
+  container.innerHTML = ROLE_GROUPS.map(rg => {
+    const active = activeRole === rg.id ? 'active' : '';
+    return `<button class="role-chip ${active}" data-role="${rg.id}" onclick="toggleRole(this)">${rg.label}</button>`;
+  }).join('');
+}
+
+function toggleRole(btn) {
+  const role = btn.dataset.role;
+  activeRole = (activeRole === role) ? null : role;
+  render();
+}
+
+/* ── PRODUCT EXCLUSION (multiselect panel) ── */
+let excludedProducts = new Set();
+
+const ALL_PRODUCTS = (function() {
+  const counts = {};
+  ALL_CAPS.forEach(c => {
+    if (!c.is_leaf && !(c.is_branch && c.use_cases && c.use_cases.length)) return;
+    const n = (c.use_cases && c.use_cases.length) ? c.use_cases.length : 1;
+    counts[c.product] = (counts[c.product] || 0) + n;
+  });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1]).map(e => e[0]);
+})();
+
+function buildProductCheckboxes() {
+  const container = document.getElementById('productCheckboxes');
+  container.innerHTML = ALL_PRODUCTS.map(p => {
+    const checked = !excludedProducts.has(p);
+    const shortName = p.replace(/^SAP\s+/, '');
+    return `<label class="config-check ${checked ? 'checked' : ''}" data-product="${p.replace(/"/g,'&quot;')}">
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleProductExclusion(this)">
+      <span class="check-dot"></span>${shortName}
+    </label>`;
+  }).join('');
+}
+
+function toggleProductExclusion(input) {
+  const label = input.closest('.config-check');
+  const prod = label.dataset.product;
+  if (input.checked) {
+    excludedProducts.delete(prod);
+    label.classList.add('checked');
+  } else {
+    excludedProducts.add(prod);
+    label.classList.remove('checked');
+  }
+  updateConfigBtn();
+  render();
+}
+
+function selectAllProducts() {
+  excludedProducts.clear();
+  buildProductCheckboxes();
+  updateConfigBtn();
+  render();
+}
+
+function deselectAllProducts() {
+  ALL_PRODUCTS.forEach(p => excludedProducts.add(p));
+  buildProductCheckboxes();
+  updateConfigBtn();
+  render();
+}
+
+function updateConfigBtn() {
+  const btn = document.getElementById('configBtn');
+  const excluded = excludedProducts.size;
+  if (excluded > 0) {
+    btn.textContent = '⚙ Products (' + (ALL_PRODUCTS.length - excluded) + '/' + ALL_PRODUCTS.length + ')';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '⚙ Products';
+    btn.classList.remove('active');
+  }
+}
+
+function toggleConfigPanel() {
+  const panel = document.getElementById('configPanel');
+  const btn = document.getElementById('configBtn');
+  const open = panel.classList.toggle('open');
+  // Keep active class if products are filtered, regardless of panel state
+  btn.classList.toggle('active', open || excludedProducts.size > 0);
+}
+
 function populateFilters(caps) {
   const products = [...new Set(caps.map(c => c.product))].sort();
   const areas = [...new Set(caps.map(c => c.business_area).filter(Boolean))].sort();
   const types = [...new Set(caps.flatMap(c => getUCTypes(c)))].sort();
-  
   const pSel = document.getElementById('productFilter');
   pSel.innerHTML = '<option value="">All Products</option>' + products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
-  
   const aSel = document.getElementById('areaFilter');
   aSel.innerHTML = '<option value="">All Business Areas</option>' + areas.map(a => '<option value="' + a + '">' + a + '</option>').join('');
-  
   const tSel = document.getElementById('typeFilter');
   tSel.innerHTML = '<option value="">All Types</option>' + types.map(t => '<option value="' + t + '">' + t + '</option>').join('');
 }
 
 function getFilteredCaps() {
   let caps = ALL_CAPS;
-  const search = document.getElementById('search').value.toLowerCase();
-  const product = document.getElementById('productFilter').value || activeSidebarProduct || '';
-  const area = document.getElementById('areaFilter').value;
-  const type = document.getElementById('typeFilter').value;
+  const search  = document.getElementById('search').value.toLowerCase();
+  const product = activeSidebarProduct || '';
 
+  // 1. Product exclusion (independent of all other filters)
+  if (excludedProducts.size > 0) {
+    caps = caps.filter(c => !excludedProducts.has(c.product));
+  }
+  // 2. Sidebar product drill-down
+  if (product) caps = caps.filter(c => c.product === product);
+  // 3. Type chip
   if (activeType) caps = caps.filter(c => getUCTypes(c).includes(activeType));
+  // 4. Role group
+  if (activeRole) {
+    const rg = ROLE_GROUPS.find(r => r.id === activeRole);
+    if (rg) caps = caps.filter(c => rg.areas.has((c.business_area || '').trim()));
+  }
+  // 5. Search
   if (search) caps = caps.filter(c => {
-    if (c.title.toLowerCase().includes(search) || c.hierarchy.toLowerCase().includes(search)) return true;
+    if (c.title.toLowerCase().includes(search)) return true;
+    if ((c.hierarchy || '').toLowerCase().includes(search)) return true;
     if ((c.description || '').toLowerCase().includes(search)) return true;
-    if (c.use_cases) return c.use_cases.some(uc => (uc.name || '').toLowerCase().includes(search) || (uc.description || '').toLowerCase().includes(search) || (uc.prompts || []).some(p => p.toLowerCase().includes(search)));
+    if (c.use_cases) return c.use_cases.some(uc =>
+      (uc.name || '').toLowerCase().includes(search) ||
+      (uc.description || '').toLowerCase().includes(search) ||
+      (uc.prompts || []).some(p => p.toLowerCase().includes(search))
+    );
     return false;
   });
-  if (product) caps = caps.filter(c => c.product === product);
-  if (area) caps = caps.filter(c => c.business_area === area);
-  if (type) caps = caps.filter(c => getUCTypes(c).includes(type));
-  
   return caps;
 }
 
@@ -908,6 +1082,7 @@ function applyFilters() {
 function navigateTo() {
   activeType = null;
   activeSidebarProduct = null;
+  activeRole = null;
   document.getElementById('search').value = '';
   document.getElementById('productFilter').value = '';
   document.getElementById('areaFilter').value = '';
@@ -916,7 +1091,15 @@ function navigateTo() {
 }
 
 function resetAll() {
-  navigateTo();
+  activeType = null;
+  activeSidebarProduct = null;
+  activeRole = null;
+  document.getElementById('search').value = '';
+  document.getElementById('productFilter').value = '';
+  document.getElementById('areaFilter').value = '';
+  document.getElementById('typeFilter').value = '';
+  // Do NOT reset product exclusions — those are a customer config choice
+  render();
 }
 
 /* ── SIDEBAR ── */
@@ -990,23 +1173,17 @@ function updateChips() {
 
 function updateResultMeta() {
   const total = ALL_CAPS.filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length))
+    .filter(c => !excludedProducts.has(c.product))
     .reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
-  const shown = ALL_CAPS.filter(c => {
-    if (!c.is_leaf && !(c.is_branch && c.use_cases && c.use_cases.length)) return false;
-    if (activeSidebarProduct && c.product !== activeSidebarProduct) return false;
-    if (activeType && !getUCTypes(c).includes(activeType)) return false;
-    const search = document.getElementById('search').value.toLowerCase();
-    if (search) {
-      return c.title.toLowerCase().includes(search) ||
-        (c.business_area||'').toLowerCase().includes(search) ||
-        (c.sample_prompts||[]).some(p=>p.toLowerCase().includes(search)) ||
-        (c.use_cases||[]).some(uc=>(uc.name||'').toLowerCase().includes(search));
-    }
-    return true;
-  }).reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
+  const filtered = getFilteredCaps()
+    .filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length))
+    .reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
   const el = document.getElementById('resultMeta');
-  if (el) el.innerHTML = (activeSidebarProduct || activeType || document.getElementById('search').value)
-    ? `<strong>${shown}</strong> of ${total} use cases` : `${total} use cases`;
+  if (!el) return;
+  const isFiltered = activeSidebarProduct || activeType || activeRole || document.getElementById('search').value;
+  el.innerHTML = isFiltered
+    ? `<strong>${filtered}</strong> of ${total} use cases`
+    : `${total} use cases`;
 }
 
 /* ── HAMBURGER ── */
@@ -1030,10 +1207,12 @@ function render() {
   renderTree(caps);
   renderSidebar();
   updateChips();
+  buildRoleChips();
   updateResultMeta();
 }
 
 populateFilters(ALL_CAPS);
+buildProductCheckboxes();
 render();
 </script>
 </body>
