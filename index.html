@@ -928,7 +928,8 @@ function buildSidebarCounts() {
   const counts = {};
   ALL_CAPS.forEach(c => {
     if (!c.is_leaf && !(c.is_branch && c.use_cases && c.use_cases.length)) return;
-    counts[c.product] = (counts[c.product] || 0) + 1;
+    const ucCount = (c.use_cases && c.use_cases.length) ? c.use_cases.length : 1;
+    counts[c.product] = (counts[c.product] || 0) + ucCount;
   });
   return counts;
 }
@@ -988,11 +989,24 @@ function updateChips() {
 }
 
 function updateResultMeta() {
-  const total = ALL_CAPS.filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length)).length;
-  const shown = document.querySelectorAll('#treeContent .use-case, #treeContent .cap-group-header').length;
+  const total = ALL_CAPS.filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length))
+    .reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
+  const shown = ALL_CAPS.filter(c => {
+    if (!c.is_leaf && !(c.is_branch && c.use_cases && c.use_cases.length)) return false;
+    if (activeSidebarProduct && c.product !== activeSidebarProduct) return false;
+    if (activeType && !getUCTypes(c).includes(activeType)) return false;
+    const search = document.getElementById('search').value.toLowerCase();
+    if (search) {
+      return c.title.toLowerCase().includes(search) ||
+        (c.business_area||'').toLowerCase().includes(search) ||
+        (c.sample_prompts||[]).some(p=>p.toLowerCase().includes(search)) ||
+        (c.use_cases||[]).some(uc=>(uc.name||'').toLowerCase().includes(search));
+    }
+    return true;
+  }).reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
   const el = document.getElementById('resultMeta');
-  if (el) el.innerHTML = activeSidebarProduct || activeType || document.getElementById('search').value
-    ? `<strong>${shown}</strong> of ${total} shown` : '';
+  if (el) el.innerHTML = (activeSidebarProduct || activeType || document.getElementById('search').value)
+    ? `<strong>${shown}</strong> of ${total} use cases` : `${total} use cases`;
 }
 
 /* ── HAMBURGER ── */
