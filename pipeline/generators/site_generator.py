@@ -17,6 +17,44 @@ DATA_FILE_CLEAN = WORKSPACE / "pipeline" / "data" / "joule_capabilities_clean.js
 DATA_FILE_RAW = WORKSPACE / "pipeline" / "data" / "joule_capabilities_raw.json"
 OUT_FILE = WORKSPACE / "site" / "index.html"
 
+# ── Landing page config ──────────────────────────────────────────────
+SITE_PASSWORD = "arkansasforward"
+
+KALTURA_SCRIPT = "https://cdnapisec.kaltura.com/p/1921661/sp/192166100/embedIframeJs/uiconf_id/35919811/partner_id/1921661?autoembed=true&entry_id=1_rlct8cij&wid=_1921661&playerId=kaltura_player_580659240&width=400&height=285"
+
+PPTX_FILES = [
+    # ("Display name", "filename-in-assets-folder.pptx"),
+    # ("Joule Overview", "joule-overview.pptx"),
+]
+
+LANDING_INTRO = """
+Arkansas is on a Crawl-Walk-Run journey with SAP Business AI (Joule).
+This portal contains everything you need to understand what Joule can do
+today and where we are headed.
+"""
+# ────────────────────────────────────────────────────────────────────
+
+
+def _build_pptx_section(pptx_files):
+    if not pptx_files:
+        return ""
+    items = ""
+    for display_name, filename in pptx_files:
+        encoded = f"https%3A%2F%2Feasyassap.com%2Fassets%2F{filename.replace(' ', '%20')}"
+        items += f"""
+      <div class="deck-item">
+        <h3 class="deck-title">{display_name}</h3>
+        <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={encoded}"
+                width="100%" height="480" frameborder="0" allowfullscreen></iframe>
+      </div>"""
+    return f"""
+  <!-- PRESENTATIONS SECTION -->
+  <section class="landing-section">
+    <h2 class="section-heading">Presentations</h2>
+    <div class="deck-grid">{items}
+    </div>
+  </section>"""
+
 
 def generate():
     # Prefer cleaned data; fall back to raw
@@ -35,12 +73,15 @@ def generate():
         t = c["capability_type"]
         type_counts[t] = type_counts.get(t, 0) + 1
 
+    pptx_section = _build_pptx_section(PPTX_FILES)
+    intro_text = LANDING_INTRO.strip()
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Joule Capabilities Explorer</title>
+<title>SAP Business AI — Arkansas</title>
 <style>
 :root {{
   --joule:        #7b2fbe;
@@ -60,6 +101,46 @@ def generate():
 }}
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }}
+
+/* ── PASSWORD GATE ── */
+.gate-overlay {{
+  position:fixed; inset:0; z-index:1000;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+}}
+.gate-card {{
+  background:var(--bg-raised); border:1px solid var(--border);
+  border-radius:16px; padding:2.5rem 2rem; width:100%; max-width:380px;
+  display:flex; flex-direction:column; align-items:center; gap:1rem;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}}
+.gate-card .joule-mark {{
+  width:48px; height:48px; border-radius:12px;
+  background:linear-gradient(135deg,#7b2fbe,#b06be8);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; font-weight:900; color:white; letter-spacing:-1px;
+}}
+.gate-card h2 {{ font-size:1.1rem; font-weight:700; text-align:center; }}
+.gate-card p {{ font-size:0.85rem; color:var(--text-muted); text-align:center; margin-top:-0.25rem; }}
+.gate-card input {{
+  width:100%; padding:0.6rem 0.9rem;
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-size:0.92rem; outline:none; transition:border-color .2s;
+  text-align:center; letter-spacing:0.05em;
+}}
+.gate-card input:focus {{ border-color:var(--joule-light); }}
+.gate-card button {{
+  width:100%; padding:0.65rem; border-radius:8px;
+  background:linear-gradient(135deg,#7b2fbe,#b06be8);
+  border:none; color:white; font-size:0.95rem; font-weight:700;
+  cursor:pointer; transition:opacity .15s;
+}}
+.gate-card button:hover {{ opacity:0.88; }}
+.gate-err {{ font-size:0.8rem; color:#fb7185; text-align:center; min-height:1.2em; margin-top:-0.5rem; }}
+
+/* ── VIEW TRANSITIONS ── */
+.view {{ animation:fadeIn .25s ease; }}
+@keyframes fadeIn {{ from {{ opacity:0; }} to {{ opacity:1; }} }}
 
 /* ── HEADER ── */
 .header {{
@@ -88,6 +169,14 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .header-search input::placeholder {{ color:var(--text-muted); }}
 .header-search input:focus {{ border-color:var(--joule-light); }}
 .header-search .si {{ position:absolute; left:0.6rem; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:0.78rem; pointer-events:none; }}
+.home-nav-btn {{
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.28rem 0.7rem; border-radius:6px; font-size:0.8rem; font-weight:600;
+  background:rgba(255,255,255,0.06); border:1px solid var(--border);
+  color:var(--text-muted); cursor:pointer; white-space:nowrap;
+  text-decoration:none; transition:all .15s; flex-shrink:0;
+}}
+.home-nav-btn:hover {{ color:var(--text); border-color:rgba(255,255,255,0.25); background:rgba(255,255,255,0.1); }}
 
 /* ── LAYOUT ── */
 .layout {{ display:flex; min-height:calc(100vh - 54px); }}
@@ -371,6 +460,71 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
 .footer {{ text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.78rem; border-top:1px solid var(--border); }}
 .footer strong {{ color:var(--text); }}
 
+/* ── LANDING PAGE ── */
+.landing-page {{
+  min-height:calc(100vh - 54px);
+  padding:2.5rem 1.25rem 3rem;
+  max-width:900px; margin:0 auto;
+  display:flex; flex-direction:column; gap:2.5rem;
+}}
+.landing-hero {{
+  display:flex; flex-direction:column; gap:0.75rem;
+}}
+.landing-hero h1 {{
+  font-size:1.7rem; font-weight:800; line-height:1.25;
+}}
+.landing-hero h1 span {{ color:var(--joule-light); }}
+.landing-intro {{
+  font-size:0.98rem; color:var(--text-muted); line-height:1.7;
+  max-width:660px;
+}}
+.section-heading {{
+  font-size:0.72rem; font-weight:700; letter-spacing:0.1em;
+  text-transform:uppercase; color:var(--text-muted);
+  margin-bottom:1rem;
+}}
+.landing-section {{
+  display:flex; flex-direction:column;
+}}
+.video-wrapper {{
+  background:var(--bg-raised); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; padding:1.25rem;
+  display:flex; justify-content:center;
+}}
+.deck-grid {{
+  display:flex; flex-direction:column; gap:1.5rem;
+}}
+.deck-item {{
+  background:var(--bg-raised); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; padding:1.25rem;
+}}
+.deck-title {{
+  font-size:0.9rem; font-weight:700; margin-bottom:0.75rem;
+  color:var(--text);
+}}
+.nav-card {{
+  background:linear-gradient(135deg, rgba(123,47,190,0.25), rgba(176,107,232,0.15));
+  border:1px solid rgba(123,47,190,0.5); border-radius:14px;
+  padding:1.75rem 1.5rem;
+  display:flex; align-items:center; gap:1.5rem;
+  cursor:pointer; transition:all .2s; text-decoration:none;
+}}
+.nav-card:hover {{
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(123,47,190,0.3);
+  border-color:var(--joule-light);
+}}
+.nav-card-icon {{
+  width:52px; height:52px; border-radius:12px; flex-shrink:0;
+  background:linear-gradient(135deg,#7b2fbe,#b06be8);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem;
+}}
+.nav-card-body {{ flex:1; }}
+.nav-card-body h3 {{ font-size:1.05rem; font-weight:700; margin-bottom:0.3rem; }}
+.nav-card-body p {{ font-size:0.85rem; color:var(--text-muted); line-height:1.5; }}
+.nav-card-arrow {{ font-size:1.4rem; color:var(--joule-light); flex-shrink:0; }}
+
 @media (max-width:768px) {{
   .hamburger {{ display:block; }}
   .header-search {{ max-width:none; flex:1; }}
@@ -388,10 +542,69 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
   .use-case {{ padding-left:2.5rem; }}
   .sample-prompts {{ padding-left:2.5rem; }}
   .sub-area-body .use-case {{ padding-left:3rem; }}
+  .landing-hero h1 {{ font-size:1.3rem; }}
 }}
 </style>
 </head>
 <body>
+
+<!-- PASSWORD GATE OVERLAY -->
+<div id="gate" class="gate-overlay">
+  <div class="gate-card">
+    <div class="joule-mark">J</div>
+    <h2>SAP Business AI &mdash; Arkansas</h2>
+    <p>Enter your access code to continue.</p>
+    <input id="gate-input" type="password" placeholder="Access code" autocomplete="off">
+    <button id="gate-btn">Enter</button>
+    <p id="gate-err" class="gate-err"></p>
+  </div>
+</div>
+
+<!-- LANDING PAGE VIEW -->
+<div id="view-landing" class="view" style="display:none">
+
+  <!-- Shared header (landing variant) -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="joule-mark">J</div>
+      <span class="header-title">SAP Business AI <span>Arkansas</span></span>
+    </div>
+  </header>
+
+  <div class="landing-page">
+
+    <!-- Hero intro -->
+    <div class="landing-hero">
+      <h1>SAP Business AI<br><span>for the State of Arkansas</span></h1>
+      <p class="landing-intro">{intro_text}</p>
+    </div>
+
+    <!-- Video section -->
+    <section class="landing-section">
+      <h2 class="section-heading">Introduction Video</h2>
+      <div class="video-wrapper">
+        <script src="{KALTURA_SCRIPT}"></script>
+      </div>
+    </section>
+{pptx_section}
+    <!-- Capabilities Guide nav card -->
+    <section class="landing-section">
+      <h2 class="section-heading">Resources</h2>
+      <a class="nav-card" href="#guide" onclick="showGuide()">
+        <div class="nav-card-icon">&#128269;</div>
+        <div class="nav-card-body">
+          <h3>Capabilities Explorer</h3>
+          <p>Browse all {len(leaves)} Joule use cases across {len(products)} SAP products — filter by type, role, and business area.</p>
+        </div>
+        <div class="nav-card-arrow">&#8594;</div>
+      </a>
+    </section>
+
+  </div>
+</div><!-- /view-landing -->
+
+<!-- CAPABILITIES GUIDE VIEW -->
+<div id="view-guide" class="view" style="display:none">
 
 <!-- HEADER -->
 <header class="header">
@@ -404,6 +617,7 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
     <span class="si">&#128269;</span>
     <input type="text" id="search" placeholder="Search capabilities, prompts..." oninput="applyFilters()" autocomplete="off">
   </div>
+  <a class="home-nav-btn" href="#landing" onclick="showLanding()">&#8592; Home</a>
 </header>
 
 <!-- LAYOUT -->
@@ -483,8 +697,89 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
   </div><!-- /content -->
 </div><!-- /layout -->
 
+</div><!-- /view-guide -->
+
 <script>
 const ALL_CAPS = {caps_json};
+const SITE_PASSWORD = '{SITE_PASSWORD}';
+
+/* ── PASSWORD GATE ── */
+function checkGate() {{
+  if (sessionStorage.getItem('joule_auth') === '1') {{
+    document.getElementById('gate').style.display = 'none';
+    routeView();
+  }} else {{
+    document.getElementById('gate').style.display = 'flex';
+  }}
+}}
+
+document.getElementById('gate-btn').addEventListener('click', submitGate);
+document.getElementById('gate-input').addEventListener('keydown', function(e) {{
+  if (e.key === 'Enter') submitGate();
+}});
+
+function submitGate() {{
+  const val = document.getElementById('gate-input').value.trim();
+  if (val === SITE_PASSWORD) {{
+    sessionStorage.setItem('joule_auth', '1');
+    document.getElementById('gate').style.display = 'none';
+    routeView();
+  }} else {{
+    document.getElementById('gate-err').textContent = 'Incorrect access code.';
+    document.getElementById('gate-input').value = '';
+    document.getElementById('gate-input').focus();
+  }}
+}}
+
+/* ── HASH ROUTING ── */
+function routeView() {{
+  const hash = location.hash;
+  if (hash === '#guide') {{
+    document.getElementById('view-landing').style.display = 'none';
+    document.getElementById('view-guide').style.display = '';
+    initGuide();
+  }} else {{
+    document.getElementById('view-guide').style.display = 'none';
+    document.getElementById('view-landing').style.display = '';
+  }}
+}}
+
+function showGuide() {{
+  location.hash = '#guide';
+}}
+
+function showLanding() {{
+  location.hash = '#landing';
+}}
+
+window.addEventListener('hashchange', function() {{
+  if (sessionStorage.getItem('joule_auth') === '1') {{
+    routeView();
+  }}
+}});
+
+window.addEventListener('load', checkGate);
+
+/* ── GUIDE INIT (run once) ── */
+let guideInitialized = false;
+function initGuide() {{
+  if (guideInitialized) return;
+  guideInitialized = true;
+  populateFilters(ALL_CAPS);
+  buildProductCheckboxes();
+  render();
+  // wire hamburger
+  const btn = document.getElementById('hamburgerBtn');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (btn) btn.addEventListener('click', function() {{
+    document.getElementById('sidebar').classList.toggle('open');
+    overlay.classList.toggle('open');
+  }});
+  if (overlay) overlay.addEventListener('click', function() {{
+    document.getElementById('sidebar').classList.remove('open');
+    overlay.classList.remove('open');
+  }});
+}}
 
 const TYPE_INFO = {{
   'Informational': {{
@@ -515,11 +810,9 @@ function getTierBadge(tier) {{
 }}
 
 function ucCount(c) {{
-  // If a capability has use_cases, count total individual capabilities
   if (c.use_cases && c.use_cases.length > 0) {{
     let total = 0;
     c.use_cases.forEach(uc => {{
-      // Each prompt is an individual capability; at minimum count the use case itself
       total += (uc.prompts && uc.prompts.length > 0) ? uc.prompts.length : 1;
     }});
     return total > 1 ? total : 1;
@@ -530,7 +823,6 @@ function ucCount(c) {{
 function buildTree(caps) {{
   const tree = {{}};
   caps.forEach(c => {{
-    // Skip pure branch category nodes — they are TOC structural nodes, not capabilities
     if (c.is_branch && !c.use_cases?.length && !c.sample_prompts?.length) return;
     const prod = c.product;
     if (!tree[prod]) tree[prod] = {{ areas: {{}}, count: 0 }};
@@ -560,7 +852,7 @@ function renderStats(caps) {{
   const products = new Set(caps.map(c => c.product)).size;
   const types = {{}};
   caps.forEach(c => {{ types[c.capability_type] = (types[c.capability_type] || 0) + 1; }});
-  
+
   let html = '<div class="stat"><div class="num">' + caps.length + '</div><div class="label">Total Entries</div></div>';
   html += '<div class="stat"><div class="num">' + leaves + '</div><div class="label">Use Cases</div></div>';
   html += '<div class="stat"><div class="num">' + products + '</div><div class="label">SAP Products</div></div>';
@@ -570,7 +862,6 @@ function renderStats(caps) {{
 }}
 
 function getUCTypes(c) {{
-  // Get all unique capability types present in a capability's use cases
   if (c.use_cases && c.use_cases.length > 0) {{
     return [...new Set(c.use_cases.map(uc => uc.capability_type).filter(Boolean))];
   }}
@@ -582,7 +873,7 @@ function renderTypeCards(caps) {{
   caps.forEach(c => {{
     getUCTypes(c).forEach(t => {{ types[t] = (types[t] || 0) + 1; }});
   }});
-  
+
   const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
   let html = '';
   order.forEach(t => {{
@@ -695,7 +986,6 @@ function toggleConfigPanel() {{
   const panel = document.getElementById('configPanel');
   const btn = document.getElementById('configBtn');
   const open = panel.classList.toggle('open');
-  // Keep active class if products are filtered, regardless of panel state
   btn.classList.toggle('active', open || excludedProducts.size > 0);
 }}
 
@@ -716,20 +1006,15 @@ function getFilteredCaps() {{
   const search  = document.getElementById('search').value.toLowerCase();
   const product = activeSidebarProduct || '';
 
-  // 1. Product exclusion (independent of all other filters)
   if (excludedProducts.size > 0) {{
     caps = caps.filter(c => !excludedProducts.has(c.product));
   }}
-  // 2. Sidebar product drill-down
   if (product) caps = caps.filter(c => c.product === product);
-  // 3. Type chip
   if (activeType) caps = caps.filter(c => getUCTypes(c).includes(activeType));
-  // 4. Role group
   if (activeRole) {{
     const rg = ROLE_GROUPS.find(r => r.id === activeRole);
     if (rg) caps = caps.filter(c => rg.areas.has((c.business_area || '').trim()));
   }}
-  // 5. Search
   if (search) caps = caps.filter(c => {{
     if (c.title.toLowerCase().includes(search)) return true;
     if ((c.hierarchy || '').toLowerCase().includes(search)) return true;
@@ -747,12 +1032,9 @@ function getFilteredCaps() {{
 let promptCounter = 0;
 
 function isExplanatoryText(text) {{
-  // Detect explanatory/instructional text that was misclassified as a prompt
   const t = text.trim();
   const tl = t.toLowerCase();
-  // Explanatory starters — sentences describing behavior, not commands
   if (/^(?:You need to|You can |You must |If you |If no |If the |If a |If several |When Joule|When you |Joule (?:automatically|checks|creates|displays|supports|adjusts|uses|shows|will)|Note that |Please note|This (?:feature|function|capability)|The (?:system|app)|In (?:this|the) )/i.test(t)) return true;
-  // Long multi-sentence explanations (>120 chars with at least one period mid-text)
   if (t.length > 120 && /\\.\\s+[A-Z]/.test(t)) return true;
   return false;
 }}
@@ -761,8 +1043,7 @@ function renderChildUseCase(uc) {{
   const name = uc.name || 'Use Case';
   const desc = uc.description || '';
   const rawPrompts = uc.prompts || [];
-  
-  // Separate real prompts from explanatory text misclassified as prompts
+
   const prompts = [];
   const promptNotes = [];
   rawPrompts.forEach(p => {{
@@ -772,7 +1053,7 @@ function renderChildUseCase(uc) {{
       prompts.push(p);
     }}
   }});
-  
+
   const notes = (uc.notes || []).concat(promptNotes).filter(n => {{
     const nl = n.toLowerCase();
     if (nl.includes('you can choose one of the following')) return false;
@@ -786,8 +1067,7 @@ function renderChildUseCase(uc) {{
   const subcategories = uc.subcategories || {{}};
   const resp = uc.response_summary || '';
   const hasSubs = Object.keys(subcategories).length > 0;
-  
-  // Classify notes into info notes vs cautions
+
   const infoNotes = [];
   const cautions = [];
   notes.forEach(n => {{
@@ -807,7 +1087,6 @@ function renderChildUseCase(uc) {{
   let html = '<div class="uc-child">';
   html += '<div class="uc-main">';
   html += '<span class="uc-name"><strong>' + name + '</strong></span>';
-  // Render per-use-case type badge
   if (uc.capability_type) {{
     html += ' ' + getTypeBadge(uc.capability_type);
   }}
@@ -815,7 +1094,6 @@ function renderChildUseCase(uc) {{
     html += '<span class="uc-inline-desc">' + desc.substring(0, 200) + '</span>';
   }}
   html += '</div>';
-  // Info notes — always on new line, left-aligned, full width
   if (infoNotes.length > 0) {{
     html += '<div class="uc-info-note">';
     infoNotes.forEach(n => {{
@@ -824,7 +1102,6 @@ function renderChildUseCase(uc) {{
     html += '</div>';
   }}
 
-  // Parameters as compact tags
   if (params.length > 0) {{
     html += '<div class="uc-params"><div class="param-list">';
     params.forEach(p => {{
@@ -833,7 +1110,6 @@ function renderChildUseCase(uc) {{
     html += '</div></div>';
   }}
 
-  // If subcategories exist, group prompts under category headers
   if (hasSubs) {{
     html += '<div class="uc-child-prompts">';
     Object.keys(subcategories).forEach(cat => {{
@@ -846,7 +1122,6 @@ function renderChildUseCase(uc) {{
     }});
     html += '</div>';
   }} else if (prompts.length > 0) {{
-    // Flat prompt list
     html += '<div class="uc-child-prompts"><ul>';
     prompts.forEach(p => {{
       html += '<li>' + p + '</li>';
@@ -854,7 +1129,6 @@ function renderChildUseCase(uc) {{
     html += '</ul></div>';
   }}
 
-  // Cautions — rendered below prompts with warning style
   if (cautions.length > 0) {{
     html += '<div class="uc-caution">';
     cautions.forEach(n => {{
@@ -863,7 +1137,7 @@ function renderChildUseCase(uc) {{
     html += '</div>';
   }}
 
-  html += '</div>'; // close uc-child
+  html += '</div>';
   return html;
 }}
 
@@ -883,13 +1157,11 @@ function renderUseCase(c) {{
 
   let html = '';
 
-  // Suppress pure branch/category nodes with no real content
   if (c.is_branch && !hasUCs && !hasPrompts) {{
     return '';
   }}
 
   if (isTitleOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
-    // Title-only entry with no real content — still show with pending badge
     html += '<div class="use-case title-only-entry">';
     html += '<div class="uc-main">';
     html += '<span class="uc-title">' + titleText + '</span>';
@@ -903,7 +1175,6 @@ function renderUseCase(c) {{
 
   const isDescOnly = c.data_source === 'description-only';
   if (isDescOnly && !hasChildUCs && !hasPrompts && !hasUCs) {{
-    // Scraped page with description prose but no examples table yet
     html += '<div class="use-case">';
     html += '<div class="uc-main">';
     html += '<span class="uc-title">' + titleText + '</span>';
@@ -919,7 +1190,6 @@ function renderUseCase(c) {{
   }}
 
   if (hasChildUCs) {{
-    // Render as collapsible group with child use cases
     const gid = 'capgroup-' + (promptCounter++);
     html += '<div class="cap-group-header" onclick="toggleSection(this)">';
     html += '<span class="tree-expand">\\u25B6</span>';
@@ -937,35 +1207,29 @@ function renderUseCase(c) {{
     }});
     html += '</div>';
   }} else {{
-    // Render as simple row
     html += '<div class="use-case">';
     html += '<div class="uc-main">';
     html += '<span class="uc-title">' + titleText + '</span>';
     html += badge + ' ' + tierBadge;
     html += link;
     html += '</div>';
-    // Show description if available (capability-level or from single use case)
     const desc = c.description || (hasUCs && c.use_cases[0].description ? c.use_cases[0].description : '');
     if (desc) {{
       html += '<div class="cap-desc">' + desc + '</div>';
     }}
-    // Show single use case name + description even when no prompts
     if (hasUCs && c.use_cases.length === 1) {{
       const uc = c.use_cases[0];
       if (uc.name && uc.name !== c.title) {{
         html += '<div class="cap-single-uc"><strong>Use Case:</strong> ' + uc.name + '</div>';
       }}
-      // Show use case description if different from cap description
       if (uc.description && uc.description !== desc) {{
         html += '<div class="cap-desc" style="padding-top:0">' + uc.description + '</div>';
       }}
-      // Show notes even when no prompts
       if (uc.notes && uc.notes.length > 0) {{
         html += '<div class="uc-info-note">';
         uc.notes.forEach(n => {{ html += '<div class="info-note-text">' + n + '</div>'; }});
         html += '</div>';
       }}
-      // Show parameters
       if (uc.parameters && uc.parameters.length > 0) {{
         html += '<div class="uc-params"><div class="param-list">';
         uc.parameters.forEach(p => {{ html += '<span class="param-tag">' + p + '</span>'; }});
@@ -995,19 +1259,19 @@ function renderUseCase(c) {{
 function renderTree(caps) {{
   const tree = buildTree(caps);
   const productNames = Object.keys(tree).sort((a, b) => tree[b].count - tree[a].count);
-  
+
   if (productNames.length === 0) {{
     document.getElementById('treeContent').innerHTML = '<div class="empty">No capabilities match your filters.</div>';
     return;
   }}
-  
+
   promptCounter = 0;
   let html = '';
   productNames.forEach(prod => {{
     const pt = tree[prod];
     const areaNames = Object.keys(pt.areas).sort();
     const isOpen = productNames.length === 1 || !!activeType;
-    
+
     html += '<div class="product-section">';
     html += '<div class="product-header" onclick="toggleSection(this)">';
     html += '<span class="tree-expand">' + (isOpen ? '\\u25BC' : '\\u25B6') + '</span>';
@@ -1015,8 +1279,7 @@ function renderTree(caps) {{
     html += '<span class="count">' + pt.count + ' capabilities</span>';
     html += '</div>';
     html += '<div class="product-body' + (isOpen ? ' open' : '') + '">';
-    
-    /* Helper: render area contents (items + subareas) without wrapper */
+
     function renderAreaContents(areaData) {{
       let h = '';
       areaData.items.forEach(c => {{ h += renderUseCase(c); }});
@@ -1034,11 +1297,8 @@ function renderTree(caps) {{
       return h;
     }}
 
-    /* Skip the BA level when there's only a single area */
     const skipBA = areaNames.length === 1;
 
-    /* Also: if single area has exactly 1 item with use_cases, flatten completely —
-       render child use cases directly under the product header */
     let flattenedToProduct = false;
     if (skipBA) {{
       const areaData = pt.areas[areaNames[0]];
@@ -1046,7 +1306,6 @@ function renderTree(caps) {{
       if (totalItems === 1 && areaData.items.length === 1) {{
         const singleCap = areaData.items[0];
         if (singleCap.use_cases && singleCap.use_cases.length > 1) {{
-          /* Render use cases directly — skip the capability header */
           flattenedToProduct = true;
           const link = singleCap.sap_help_url ? '<a href="' + singleCap.sap_help_url + '" target="_blank" rel="noopener" class="help-link">View in SAP Help \\u2192</a>' : '';
           const badge = getTypeBadge(singleCap.capability_type);
@@ -1070,9 +1329,8 @@ function renderTree(caps) {{
       const areaData = pt.areas[area];
       const areaTotal = areaData.items.length + Object.values(areaData.subareas).reduce((s, a) => s + a.length, 0);
       if (areaTotal === 0) return;
-      
+
       if (skipBA) {{
-        /* Render items directly under the product — no BA header */
         html += renderAreaContents(areaData);
       }} else {{
         const areaOpen = areaNames.length <= 3 || !!activeType;
@@ -1087,11 +1345,11 @@ function renderTree(caps) {{
         html += '</div></div>';
       }}
     }});
-    }} /* end if !flattenedToProduct */
-    
+    }}
+
     html += '</div></div>';
   }});
-  
+
   document.getElementById('treeContent').innerHTML = html;
 }}
 
@@ -1135,7 +1393,6 @@ function resetAll() {{
   document.getElementById('productFilter').value = '';
   document.getElementById('areaFilter').value = '';
   document.getElementById('typeFilter').value = '';
-  // Do NOT reset product exclusions — those are a customer config choice
   render();
 }}
 
@@ -1172,10 +1429,8 @@ function renderSidebar() {{
 
 function selectSidebarProduct(prod) {{
   activeSidebarProduct = prod || null;
-  // sync the select dropdown
   const sel = document.getElementById('productFilter');
   if (sel) sel.value = activeSidebarProduct || '';
-  // close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
   render();
@@ -1198,7 +1453,6 @@ function updateChips() {{
     chip.className = 'type-chip';
     if (activeType === t) chip.classList.add(TYPE_CHIP_ACTIVE_CLASS[t]);
   }});
-  // update chip counts
   const types = ['Informational','Transactional','Navigational','Analytical'];
   types.forEach(t => {{
     const el = document.getElementById('chip-cnt-' + t);
@@ -1223,20 +1477,6 @@ function updateResultMeta() {{
     : `${{total}} use cases`;
 }}
 
-/* ── HAMBURGER ── */
-document.addEventListener('DOMContentLoaded', function() {{
-  const btn = document.getElementById('hamburgerBtn');
-  const overlay = document.getElementById('sidebarOverlay');
-  if (btn) btn.addEventListener('click', function() {{
-    document.getElementById('sidebar').classList.toggle('open');
-    overlay.classList.toggle('open');
-  }});
-  if (overlay) overlay.addEventListener('click', function() {{
-    document.getElementById('sidebar').classList.remove('open');
-    overlay.classList.remove('open');
-  }});
-}});
-
 function render() {{
   const caps = getFilteredCaps();
   renderStats(caps);
@@ -1247,10 +1487,6 @@ function render() {{
   buildRoleChips();
   updateResultMeta();
 }}
-
-populateFilters(ALL_CAPS);
-buildProductCheckboxes();
-render();
 </script>
 </body>
 </html>"""
