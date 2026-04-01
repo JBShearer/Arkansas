@@ -734,13 +734,6 @@ function getTierBadge(tier) {
 }
 
 function ucCount(c) {
-  if (c.use_cases && c.use_cases.length > 0) {
-    let total = 0;
-    c.use_cases.forEach(uc => {
-      total += (uc.prompts && uc.prompts.length > 0) ? uc.prompts.length : 1;
-    });
-    return total > 1 ? total : 1;
-  }
   return 1;
 }
 
@@ -794,8 +787,9 @@ function getUCTypes(c) {
 
 function renderTypeCards(caps) {
   const types = {};
-  caps.forEach(c => {
-    getUCTypes(c).forEach(t => { types[t] = (types[t] || 0) + 1; });
+  caps.filter(c => c.is_leaf).forEach(c => {
+    const t = c.capability_type;
+    if (t) types[t] = (types[t] || 0) + 1;
   });
 
   const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
@@ -1328,9 +1322,8 @@ const PROD_COLORS = ['#9b4fd8','#22d3ee','#4ade80','#a78bfa','#fb923c','#f472b6'
 function buildSidebarCounts() {
   const counts = {};
   ALL_CAPS.forEach(c => {
-    if (!c.is_leaf && !(c.is_branch && c.use_cases && c.use_cases.length)) return;
-    const ucCount = (c.use_cases && c.use_cases.length) ? c.use_cases.length : 1;
-    counts[c.product] = (counts[c.product] || 0) + ucCount;
+    if (!c.is_leaf) return;
+    counts[c.product] = (counts[c.product] || 0) + 1;
   });
   return counts;
 }
@@ -1381,18 +1374,14 @@ function updateChips() {
   types.forEach(t => {
     const el = document.getElementById('chip-cnt-' + t);
     if (!el) return;
-    const n = ALL_CAPS.filter(c => getUCTypes(c).includes(t)).length;
+    const n = ALL_CAPS.filter(c => c.is_leaf && c.capability_type === t).length;
     el.textContent = n ? ' ' + n : '';
   });
 }
 
 function updateResultMeta() {
-  const total = ALL_CAPS.filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length))
-    .filter(c => !excludedProducts.has(c.product))
-    .reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
-  const filtered = getFilteredCaps()
-    .filter(c => c.is_leaf || (c.is_branch && c.use_cases && c.use_cases.length))
-    .reduce((sum, c) => sum + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
+  const total = ALL_CAPS.filter(c => c.is_leaf && !excludedProducts.has(c.product)).length;
+  const filtered = getFilteredCaps().filter(c => c.is_leaf).length;
   const el = document.getElementById('resultMeta');
   if (!el) return;
   const isFiltered = activeSidebarProduct || activeType || activeRole || document.getElementById('search').value;
