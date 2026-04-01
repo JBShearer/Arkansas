@@ -66,6 +66,7 @@ def generate():
 
     products = set(c["product"] for c in caps)
     leaves = [c for c in caps if c["is_leaf"]]
+    total_use_cases = sum(max(len(c.get("use_cases", [])), 1) for c in leaves)
     type_counts = {}
     for c in caps:
         t = c["capability_type"]
@@ -592,7 +593,7 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
         <div class="nav-card-icon">&#128269;</div>
         <div class="nav-card-body">
           <h3>Capabilities Explorer</h3>
-          <p>Browse all {len(leaves)} Joule use cases across {len(products)} SAP products — filter by type, role, and business area.</p>
+          <p>Browse all {total_use_cases} Joule use cases across {len(products)} SAP products — filter by type, role, and business area.</p>
         </div>
         <div class="nav-card-arrow">&#8594;</div>
       </a>
@@ -689,7 +690,7 @@ body {{ font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-seri
     </div>
 
     <div class="footer">
-      <strong>{meta['total_entries']}</strong> entries &middot; <strong>{meta['total_leaves']}</strong> use cases &middot; <strong>{meta['products']}</strong> products &middot; Updated {meta['enriched_at'][:10]}
+      <strong>{meta['total_entries']}</strong> entries &middot; <strong>{total_use_cases}</strong> use cases &middot; <strong>{meta['products']}</strong> products &middot; Updated {meta['enriched_at'][:10]}
     </div>
 
   </div><!-- /content -->
