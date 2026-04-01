@@ -734,7 +734,7 @@ function getTierBadge(tier) {
 }
 
 function ucCount(c) {
-  return 1;
+  return (c.use_cases && c.use_cases.length > 0) ? c.use_cases.length : 1;
 }
 
 function buildTree(caps) {
@@ -789,7 +789,7 @@ function renderTypeCards(caps) {
   const types = {};
   caps.filter(c => c.is_leaf).forEach(c => {
     const t = c.capability_type;
-    if (t) types[t] = (types[t] || 0) + 1;
+    if (t) types[t] = (types[t] || 0) + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1);
   });
 
   const order = ['Informational', 'Transactional', 'Analytical', 'Navigational'];
@@ -1323,7 +1323,7 @@ function buildSidebarCounts() {
   const counts = {};
   ALL_CAPS.forEach(c => {
     if (!c.is_leaf) return;
-    counts[c.product] = (counts[c.product] || 0) + 1;
+    counts[c.product] = (counts[c.product] || 0) + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1);
   });
   return counts;
 }
@@ -1374,14 +1374,14 @@ function updateChips() {
   types.forEach(t => {
     const el = document.getElementById('chip-cnt-' + t);
     if (!el) return;
-    const n = ALL_CAPS.filter(c => c.is_leaf && c.capability_type === t).length;
+    const n = ALL_CAPS.filter(c => c.is_leaf && c.capability_type === t).reduce((s,c) => s + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
     el.textContent = n ? ' ' + n : '';
   });
 }
 
 function updateResultMeta() {
-  const total = ALL_CAPS.filter(c => c.is_leaf && !excludedProducts.has(c.product)).length;
-  const filtered = getFilteredCaps().filter(c => c.is_leaf).length;
+  const total = ALL_CAPS.filter(c => c.is_leaf && !excludedProducts.has(c.product)).reduce((s,c) => s + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
+  const filtered = getFilteredCaps().filter(c => c.is_leaf).reduce((s,c) => s + ((c.use_cases && c.use_cases.length) ? c.use_cases.length : 1), 0);
   const el = document.getElementById('resultMeta');
   if (!el) return;
   const isFiltered = activeSidebarProduct || activeType || activeRole || document.getElementById('search').value;
