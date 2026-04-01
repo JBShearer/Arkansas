@@ -23,8 +23,9 @@ SITE_PASSWORD = "arkansasforward"
 KALTURA_SCRIPT = "https://cdnapisec.kaltura.com/p/1921661/sp/192166100/embedIframeJs/uiconf_id/35919811/partner_id/1921661?autoembed=true&entry_id=1_rlct8cij&wid=_1921661&playerId=kaltura_player_580659240&width=400&height=285"
 
 PPTX_FILES = [
-    # ("Display name", "filename-in-assets-folder.pptx"),
-    # ("Joule Overview", "joule-overview.pptx"),
+    ("SAP Business AI Strategy", "Arkansas_SAP_Business_AI_Strategy.pptx"),
+    ("SAP Business Suites Benefits", "Arkansas_SAP_Business_Suites_Benefits.pptx"),
+    ("Responsible AI", "Responsible_AI.pptx"),
 ]
 
 LANDING_INTRO = """
