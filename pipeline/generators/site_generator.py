@@ -22,12 +22,7 @@ SITE_PASSWORD = "arkansasforward"
 
 KALTURA_SCRIPT = "https://cdnapisec.kaltura.com/p/1921661/sp/192166100/embedIframeJs/uiconf_id/35919811/partner_id/1921661?autoembed=true&entry_id=1_rlct8cij&wid=_1921661&playerId=kaltura_player_580659240&width=400&height=285"
 
-PPTX_FILES = [
-    # ("Display name", "direct URL to .pptx")
-    ("SAP Business AI Strategy",     "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Arkansas_SAP_Business_AI_Strategy.pptx"),
-    ("SAP Business Suites Benefits", "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Arkansas_SAP_Business_Suites_Benefits.pptx"),
-    ("Responsible AI",               "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Responsible_AI.pptx"),
-]
+PPTX_FILES = []
 
 LANDING_INTRO = """
 Arkansas is on a Crawl-Walk-Run journey with SAP Business AI (Joule).
