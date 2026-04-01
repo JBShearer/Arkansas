@@ -23,9 +23,10 @@ SITE_PASSWORD = "arkansasforward"
 KALTURA_SCRIPT = "https://cdnapisec.kaltura.com/p/1921661/sp/192166100/embedIframeJs/uiconf_id/35919811/partner_id/1921661?autoembed=true&entry_id=1_rlct8cij&wid=_1921661&playerId=kaltura_player_580659240&width=400&height=285"
 
 PPTX_FILES = [
-    ("SAP Business AI Strategy", "Arkansas_SAP_Business_AI_Strategy.pptx"),
-    ("SAP Business Suites Benefits", "Arkansas_SAP_Business_Suites_Benefits.pptx"),
-    ("Responsible AI", "Responsible_AI.pptx"),
+    # ("Display name", "direct URL to .pptx")
+    ("SAP Business AI Strategy",     "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Arkansas_SAP_Business_AI_Strategy.pptx"),
+    ("SAP Business Suites Benefits", "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Arkansas_SAP_Business_Suites_Benefits.pptx"),
+    ("Responsible AI",               "https://github.com/JBShearer/Arkansas/releases/download/v1.0-assets/Responsible_AI.pptx"),
 ]
 
 LANDING_INTRO = """
@@ -40,8 +41,9 @@ def _build_pptx_section(pptx_files):
     if not pptx_files:
         return ""
     items = ""
-    for display_name, filename in pptx_files:
-        encoded = f"https%3A%2F%2Feasyassap.com%2Fassets%2F{filename.replace(' ', '%20')}"
+    for display_name, url in pptx_files:
+        from urllib.parse import quote
+        encoded = quote(url, safe="")
         items += f"""
       <div class="deck-item">
         <h3 class="deck-title">{display_name}</h3>
