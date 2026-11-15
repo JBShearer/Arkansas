@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://hbnmlfdauuvhpdhodohe.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07070b">
+<title>A&amp;D AI Hackathon 2026</title>
+<style>
+:root{
+  --bg:#07070b; --panel:#0e0e16; --panel2:#151521; --paper:#f5f0e6; --evil:#ff0044;
+  --gold:#ffd700; --green:#00ff88; --cyan:#00ffff; --dim:#8b8ba0; --line:#22222f;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--paper);font-family:var(--mono);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;padding:0 16px 48px}
+#app.wide{max-width:1000px}
+a{color:var(--cyan)}
+header.top{padding:28px 0 14px}
+.eyebrow{color:var(--dim);font-size:12px;letter-spacing:.14em}
+h1{margin:6px 0 4px;font-size:clamp(26px,7vw,44px);line-height:1.05;letter-spacing:.01em}
+h1 .cursor{display:inline-block;width:.5em;height:.82em;background:var(--evil);margin-left:.18em;vertical-align:-.04em}
+.sub{color:var(--evil);font-size:13px;letter-spacing:.14em;font-weight:700}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.tabs button{flex:1}
+button{font:inherit;font-weight:700;letter-spacing:.06em;color:var(--paper);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-height:46px;cursor:pointer;text-transform:uppercase;font-size:13px}
+button:hover{border-color:var(--dim)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button.on{background:var(--paper);color:var(--bg);border-color:var(--paper)}
+button.go{background:var(--evil);border-color:var(--evil);color:#fff}
+button.go:hover{filter:brightness(1.1)}
+button.quiet{background:transparent;color:var(--dim);min-height:38px;padding:8px 10px;font-size:12px}
+button.warn{border-color:var(--evil);color:var(--evil);background:transparent}
+button[disabled]{opacity:.5;cursor:default}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:0 0 14px}
+.card h2{margin:0 0 10px;font-size:13px;letter-spacing:.14em;color:var(--dim);font-weight:700}
+.card.gold{border-color:var(--gold)}
+.card.gold h2{color:var(--gold)}
+.demo{border:1px dashed var(--cyan);color:var(--cyan);font-size:13px;padding:10px 12px;border-radius:6px;margin:0 0 14px}
+.ann{border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#141207}
+.ann .lab{color:var(--gold);font-size:12px;letter-spacing:.14em;font-weight:700}
+.ann p{margin:4px 0 0}
+.ann .when{color:var(--dim);font-size:12px}
+.nn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.nn .cell{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.nn .lab{font-size:12px;letter-spacing:.14em;color:var(--dim);font-weight:700}
+.nn .cell.now .lab{color:var(--green)}
+.nn .t{font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+.nn .w{color:var(--dim);font-size:13px}
+.days{display:flex;gap:8px;margin:0 0 12px}
+.days button{flex:1;padding:10px 4px}
+.row{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .time{color:var(--gold);font-weight:700;font-size:14px;padding-top:1px}
+.row .title{font-weight:700}
+.row .detail{color:var(--dim);font-size:14px;margin-top:2px}
+.row .loc{color:var(--cyan);font-size:13px;margin-top:2px}
+.badge{display:inline-block;font-size:11px;letter-spacing:.1em;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:1px}
+.badge.now{color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--paper)}
+label{display:block;font-size:12px;letter-spacing:.12em;color:var(--dim);font-weight:700;margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--paper);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;min-height:46px}
+textarea{min-height:96px;resize:vertical}
+input.pin{font-size:24px;letter-spacing:.3em;text-align:center;-webkit-text-security:disc}
+.rowbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rowbtn button{flex:1 1 140px}
+.rowbtn button.quiet{flex:0 1 auto}
+.err{color:var(--evil);font-size:14px;margin-top:10px;min-height:1px}
+.ok{color:var(--green);font-size:14px;margin-top:10px}
+.muted{color:var(--dim);font-size:14px}
+.who{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.who .name{font-size:20px;font-weight:700;line-height:1.2}
+.who .meta{color:var(--dim);font-size:14px}
+.req{border-top:1px solid var(--line);padding:12px 0}
+.req:first-of-type{border-top:0}
+.req .head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.req .kind{font-size:12px;letter-spacing:.12em;color:var(--dim);font-weight:700}
+.req .what{font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.req .body{margin-top:2px;overflow-wrap:anywhere;white-space:pre-wrap}
+.req .meta{color:var(--dim);font-size:13px;margin-top:4px}
+.req .note{margin-top:6px;border-left:0;background:var(--panel2);border-radius:6px;padding:8px 10px;font-size:14px}
+.req .team{color:var(--gold);font-weight:700;margin-top:4px}
+.st{font-size:11px;letter-spacing:.1em;font-weight:700;border-radius:4px;padding:2px 8px;border:1px solid currentColor;white-space:nowrap}
+.st.new{color:var(--gold)} .st.claimed{color:var(--cyan)} .st.on_the_way{color:var(--green)}
+.st.done,.st.cancelled{color:var(--dim)}
+.pinshow{font-size:clamp(28px,9vw,44px);letter-spacing:.24em;font-weight:700;color:var(--gold);margin:8px 0;overflow-wrap:anywhere}
+.door{border-top:1px solid var(--line);padding:12px 0}
+.door:first-of-type{border-top:0}
+.door .n{font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+footer .ebl{color:var(--paper);font-weight:700;letter-spacing:.08em;margin-top:8px}
+footer .ebl span{color:var(--evil)}
+@media (max-width:420px){.row{grid-template-columns:74px 1fr}.grid2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){h1 .cursor{animation:blink 1.2s steps(1) infinite}}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>This site needs JavaScript turned on.</noscript>
+<script>
+(function () {
+  'use strict';
+  const CONFIG = {"mode":"live","url":"https://hbnmlfdauuvhpdhodohe.supabase.co","keys":["sb_publishable_7asZnEgU-EkSCXJSD45iYw_WbJT9z-9","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhibm1sZmRhdXV2aHBkaG9kb2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3Njg4NzIsImV4cCI6MjExMDM0NDg3Mn0.jf_BFoZSHNJ_jyeFiIuUK0BbMomDlnUQFv4BN0r9Bng"]};
+  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison"},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium"},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium"},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium"},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms"},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms"},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null},{"id":12,"day":"2026-11-18","start":"19:00","time_label":"Evening","title":"Reception","detail":"Evening reception for all participants. Details to follow.","location":null},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium"},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium"}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori, UI5, SAP Build Apps"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
+
+  // ------------------------------------------------------------ helpers
+  const mem = {};
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); return v === null ? (mem[k] || null) : v; } catch (e) { return mem[k] || null; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    if (attrs) for (const k in attrs) {
+      const v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, '');
+      else el.setAttribute(k, v);
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid == null || kid === false || kid === '') continue;
+      el.appendChild(typeof kid === 'string' || typeof kid === 'number' ? document.createTextNode(String(kid)) : kid);
+    }
+    return el;
+  }
+
+  const TZ = 'America/New_York';
+  const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const etFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function etNow() {
+    const p = {};
+    for (const x of etFmt.formatToParts(new Date(Date.now() + state.offset))) p[x.type] = x.value;
+    return { day: p.year + '-' + p.month + '-' + p.day, hm: p.hour + ':' + p.minute };
+  }
+  function fmtTime(hm) {
+    const parts = hm.split(':'), H = +parts[0], M = parts[1];
+    return (H % 12 || 12) + ':' + M + ' ' + (H >= 12 ? 'PM' : 'AM');
+  }
+  function dayLabel(iso) {
+    const d = new Date(iso + 'T12:00:00Z');
+    return DOW[d.getUTCDay()] + ' ' + d.getUTCDate();
+  }
+  function ago(iso) {
+    const s = Math.max(0, Math.round((Date.now() + state.offset - new Date(iso).getTime()) / 1000));
+    if (s < 60) return 'just now';
+    const m = Math.round(s / 60);
+    if (m < 60) return m + ' min ago';
+    const hr = Math.round(m / 60);
+    if (hr < 24) return hr + ' hr ago';
+    return Math.round(hr / 24) + ' d ago';
+  }
+  const KIND = { session: 'EXPERT SESSION', technical: 'TECHNICAL REQUEST', stay_late: 'STAY LATE' };
+  const STATUS = { new: 'NEW', claimed: 'CLAIMED', on_the_way: 'ON THE WAY', done: 'DONE', cancelled: 'CANCELLED' };
+  const TECH = ['Synthetic data', 'Front end', 'Back end', 'Business AI Platform', 'Environment access', "Something's broken", 'Other'];
+  const ERR = {
+    invalid: 'That PIN did not work. Check it and try again.',
+    locked: 'Too many wrong tries from this network. Wait 15 minutes, or find a cowboy hat.',
+    auth: 'Your session ended. Enter the PIN again.',
+    name_required: 'Add your first name first.',
+    slow_down: 'One at a time. Try again in a few seconds.',
+    too_many_open: 'Your team has 15 open requests. Cancel one or wait for the crew.',
+    already_asked: 'Your team already asked to stay late tonight.',
+    empty: 'Say what you need.',
+    name_taken: 'That name is already in use.',
+    full: 'The list is full. Find a cowboy hat.',
+    not_found: 'That item is gone. Refresh and try again.',
+    cannot_disable_self: 'You cannot turn off the door you came in through.',
+    cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
+    network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
+  };
+  const msg = code => ERR[code] || 'Something went wrong. Try again.';
+
+  // -------------------------------------------------------------- state
+  const state = {
+    pub: null, offset: 0, token: store.get('ev_token'), me: null,
+    team: null, crew: null, staff: null,
+    tab: 'schedule', day: null, form: null, crewTab: 'open',
+    drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
+    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
+  };
+
+  // ---------------------------------------------------------------- api
+  // Each key is tried two ways (with and without the Authorization header) so a
+  // change in how the API gateway treats keys cannot take the site down.
+  const VARIANTS = [];
+  for (const k of (CONFIG.keys || [])) { VARIANTS.push({ key: k, auth: true }); VARIANTS.push({ key: k, auth: false }); }
+  if (!VARIANTS.length) VARIANTS.push(null);
+  let variant = 0;
+  async function api(fn, args) {
+    if (CONFIG.mode === 'demo') return demo(fn, args || {});
+    for (let i = 0; i < VARIANTS.length; i++) {
+      const idx = (variant + i) % VARIANTS.length, v = VARIANTS[idx];
+      const headers = { 'Content-Type': 'application/json' };
+      if (v) { headers.apikey = v.key; if (v.auth) headers.Authorization = 'Bearer ' + v.key; }
+      const opts = { method: 'POST', headers, body: JSON.stringify(args || {}) };
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) opts.signal = AbortSignal.timeout(12000);
+      const res = await fetch(CONFIG.url + '/rest/v1/rpc/' + fn, opts);
+      if (res.status === 401 || res.status === 403) continue;
+      if (!res.ok) throw new Error('http ' + res.status);
+      variant = idx;
+      return res.json();
+    }
+    throw new Error('http auth');
+  }
+  async function call(fn, args) {
+    try {
+      const r = await api(fn, args);
+      if (state.offline) { state.offline = false; }
+      return r;
+    } catch (e) {
+      state.offline = true;
+      return { ok: false, error: 'network' };
+    }
+  }
+
+  // ------------------------------------------------------------ loaders
+  function changed(key, data) {
+    const s = JSON.stringify(data);
+    if (state.last[key] === s) return false;
+    state.last[key] = s;
+    return true;
+  }
+  function pickDay() {
+    const days = uniqueDays(), today = etNow().day;
+    state.day = days.indexOf(today) >= 0 ? today : days[0];
+  }
+  async function loadPublic(force) {
+    const r = await call('event_public', {});
+    if (!r.ok) {
+      // Server unreachable: show the schedule that shipped with the page.
+      if (!state.pub && FALLBACK) {
+        state.pub = { schedule: FALLBACK.schedule, announcements: [], topics: FALLBACK.topics };
+        pickDay();
+      }
+      state.loaded = true; render();
+      return;
+    }
+    state.offset = new Date(r.now).getTime() - Date.now();
+    const data = { schedule: r.schedule, announcements: r.announcements, topics: r.topics };
+    const first = !state.pub || !state.day;
+    if (changed('pub', data) || force) {
+      state.pub = data;
+      if (first) pickDay();
+      state.loaded = true;
+      render();
+    }
+  }
+  async function loadTeam(force) {
+    if (!state.token) return;
+    const r = await call('event_team_state', { p_token: state.token });
+    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    const was = state.me ? state.me.kind : null;
+    state.me = r.me;
+    if (changed('team', r) || force) { state.team = r; render(); }
+    if (!was && state.me.kind !== 'team') loadCrew(true);
+  }
+  async function loadCrew(force) {
+    if (!state.token || !state.me || state.me.kind === 'team') return;
+    const r = await call('event_crew_queue', { p_token: state.token });
+    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    const n = r.open.filter(q => q.status === 'new').length + r.free_agents.filter(f => !f.placed).length;
+    document.title = (n ? '(' + n + ') ' : '') + 'A&D AI Hackathon 2026';
+    if (changed('crew', r) || force) { state.crew = r; render(); }
+  }
+  async function loadStaff(force) {
+    if (!state.token || !state.me || state.me.kind !== 'staff') return;
+    const r = await call('event_staff_state', { p_token: state.token });
+    if (!r.ok) return;
+    if (changed('staff', r) || force) { state.staff = r; render(); }
+  }
+  function signedOut(why) {
+    state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
+    state.last = { pub: state.last.pub };
+    store.del('ev_token');
+    state.err.pin = why || null;
+    state.tab = 'team';
+    document.title = 'A&D AI Hackathon 2026';
+    render();
+  }
+  function uniqueDays() {
+    const out = [];
+    for (const it of state.pub.schedule) if (out.indexOf(it.day) < 0) out.push(it.day);
+    return out;
+  }
+
+  // ------------------------------------------------------------- actions
+  async function withBusy(key, fn) {
+    if (state.busy[key]) return;
+    state.busy[key] = true; render();
+    try { await fn(); } finally { state.busy[key] = false; render(); }
+  }
+  function doLogin() {
+    return withBusy('pin', async () => {
+      state.err.pin = null;
+      const pin = (state.drafts.pin || '').replace(/\D/g, '');
+      if (pin.length < 6) { state.err.pin = 'Enter the full PIN.'; return; }
+      const r = await call('event_login', { p_pin: pin });
+      if (!r.ok) { state.err.pin = msg(r.error); return; }
+      state.token = r.token; state.me = r.me; state.drafts.pin = '';
+      store.set('ev_token', r.token);
+      state.tab = r.me.kind === 'team' ? 'team' : 'crew';
+      await loadTeam(true);
+      if (r.me.kind !== 'team') await loadCrew(true);
+      if (r.me.kind === 'staff') await loadStaff(true);
+    });
+  }
+  function doName() {
+    return withBusy('name', async () => {
+      state.err.name = null;
+      const r = await call('event_set_name', { p_token: state.token, p_name: state.drafts.name || '' });
+      if (!r.ok) { state.err.name = msg(r.error); return; }
+      state.me = r.me; state.drafts.name = '';
+      if (state.team) state.team.me = r.me;
+    });
+  }
+  async function doLogout() {
+    const t = state.token;
+    signedOut(null);
+    if (t) await call('event_logout', { p_token: t });
+  }
+  function submitRequest(kind) {
+    return withBusy('req', async () => {
+      state.err.req = null;
+      const d = state.drafts;
+      let args;
+      if (kind === 'session') {
+        const topic = d.s_topic === '__own' ? (d.s_own || '') : (d.s_topic || '');
+        args = { p_kind: 'session', p_category: null, p_topic: topic, p_details: d.s_details || '', p_preferred_time: d.s_when || '' };
+      } else if (kind === 'technical') {
+        args = { p_kind: 'technical', p_category: d.t_cat || TECH[0], p_topic: null, p_details: d.t_details || '', p_preferred_time: d.t_when || '' };
+        if (!(d.t_details || '').trim()) { state.err.req = msg('empty'); return; }
+      } else {
+        args = { p_kind: 'stay_late', p_category: null, p_topic: null, p_details: null, p_preferred_time: d.l_until || '' };
+      }
+      args.p_token = state.token;
+      const r = await call('event_create_request', args);
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.req = msg(r.error); return; }
+      ['s_topic', 's_own', 's_details', 's_when', 't_cat', 't_details', 't_when', 'l_until'].forEach(k => delete d[k]);
+      state.form = null;
+      state.note.req = 'Sent. The Flight Crew has it.';
+      setTimeout(() => { state.note.req = null; render(); }, 6000);
+      await loadTeam(true);
+    });
+  }
+  function twoTap(key, fn) {
+    if (state.confirm === key) { state.confirm = null; fn(); return; }
+    state.confirm = key; render();
+    setTimeout(() => { if (state.confirm === key) { state.confirm = null; render(); } }, 4000);
+  }
+  async function cancelRequest(id) {
+    const r = await call('event_cancel_request', { p_token: state.token, p_id: id });
+    if (!r.ok && r.error === 'auth') return signedOut(msg('auth'));
+    await loadTeam(true);
+  }
+  async function crewUpdate(id, status, note) {
+    state.err.crew = null;
+    const r = await call('event_crew_update', { p_token: state.token, p_id: id, p_status: status, p_note: note });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.crew = msg(r.error); render(); return; }
+    if (note != null) { state.noteOpen = null; delete state.drafts['note_' + id]; }
+    await loadCrew(true);
+  }
+  async function placeAgent(id, placed) {
+    const r = await call('event_crew_place_agent', { p_token: state.token, p_id: id, p_placed: placed, p_team: state.drafts['fa_' + id] || null });
+    if (!r.ok && r.error === 'auth') return signedOut(msg('auth'));
+    delete state.drafts['fa_' + id];
+    await loadCrew(true);
+  }
+  function joinPool() {
+    return withBusy('join', async () => {
+      state.err.join = null;
+      const d = state.drafts;
+      const r = await call('event_free_agent_join', { p_name: d.fa_name || '', p_company: d.fa_company || '', p_note: d.fa_note || '' });
+      if (!r.ok) { state.err.join = msg(r.error); return; }
+      state.joined = true;
+      ['fa_name', 'fa_company', 'fa_note'].forEach(k => delete d[k]);
+    });
+  }
+  function staffAnnounce() {
+    return withBusy('ann', async () => {
+      state.err.ann = null;
+      const r = await call('event_staff_announce', { p_token: state.token, p_body: state.drafts.ann || '' });
+      if (!r.ok) { state.err.ann = msg(r.error); return; }
+      state.drafts.ann = '';
+      await Promise.all([loadStaff(true), loadPublic(true)]);
+    });
+  }
+  async function staffAnnounceOff(id) {
+    await call('event_staff_announce_off', { p_token: state.token, p_id: id });
+    await Promise.all([loadStaff(true), loadPublic(true)]);
+  }
+  function staffCreateDoor() {
+    return withBusy('door', async () => {
+      state.err.door = null;
+      const d = state.drafts;
+      const r = await call('event_staff_create_door', { p_token: state.token, p_kind: d.d_kind || 'team', p_name: d.d_name || '', p_room: d.d_room || null, p_coach: d.d_coach || null });
+      if (!r.ok) { state.err.door = msg(r.error); return; }
+      state.pinReveal = { name: r.name, kind: r.kind, pin: r.pin };
+      ['d_name', 'd_room', 'd_coach'].forEach(k => delete d[k]);
+      await loadStaff(true);
+    });
+  }
+  async function staffSaveDoor(id) {
+    const d = state.drafts;
+    const r = await call('event_staff_update_door', { p_token: state.token, p_door_id: id, p_name: d.e_name || null, p_room: d.e_room || '', p_coach: d.e_coach || '', p_active: null });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    state.editDoor = null; state.err.staff = null;
+    await loadStaff(true);
+  }
+  async function staffToggleDoor(door) {
+    const r = await call('event_staff_update_door', { p_token: state.token, p_door_id: door.id, p_name: null, p_room: null, p_coach: null, p_active: !door.active });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    await loadStaff(true);
+  }
+  async function staffResetPin(door) {
+    const r = await call('event_staff_reset_pin', { p_token: state.token, p_door_id: door.id });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    state.pinReveal = { name: door.name, kind: door.kind, pin: r.pin };
+    window.scrollTo(0, 0);
+    await loadStaff(true);
+  }
+
+  // -------------------------------------------------------------- fields
+  function input(key, attrs) {
+    const el = h('input', Object.assign({ 'data-key': key, autocomplete: 'off' }, attrs));
+    el.value = state.drafts[key] || '';
+    el.addEventListener('input', () => { state.drafts[key] = el.value; });
+    return el;
+  }
+  function textarea(key, attrs) {
+    const el = h('textarea', Object.assign({ 'data-key': key }, attrs));
+    el.value = state.drafts[key] || '';
+    el.addEventListener('input', () => { state.drafts[key] = el.value; });
+    return el;
+  }
+  function select(key, options, attrs) {
+    const el = h('select', Object.assign({ 'data-key': key }, attrs));
+    for (const o of options) {
+      if (o.group) el.appendChild(h('optgroup', { label: o.group }, o.items.map(i => h('option', { value: i.value }, i.label))));
+      else el.appendChild(h('option', { value: o.value }, o.label));
+    }
+    if (state.drafts[key] != null) el.value = state.drafts[key];
+    state.drafts[key] = el.value;
+    el.addEventListener('change', () => { state.drafts[key] = el.value; render(); });
+    return el;
+  }
+  function form(onsubmit, ...kids) {
+    return h('form', { onsubmit: e => { e.preventDefault(); onsubmit(); }, novalidate: true }, kids);
+  }
+  const errLine = key => state.err[key] ? h('div', { class: 'err', role: 'alert' }, state.err[key]) : null;
+
+  // -------------------------------------------------------------- render
+  function render() {
+    const app = document.getElementById('app');
+    const ae = document.activeElement;
+    const fkey = ae && ae.dataset ? ae.dataset.key : null;
+    let ss = null, se = null;
+    if (fkey && ae.tagName !== 'SELECT') { try { ss = ae.selectionStart; se = ae.selectionEnd; } catch (e) {} }
+
+    const kids = [];
+    kids.push(h('header', { class: 'top' },
+      h('div', { class: 'eyebrow' }, 'NOV 16-19 · IBM ONE MADISON · NYC'),
+      h('h1', null, 'A&D AI HACKATHON', h('span', { class: 'cursor', 'aria-hidden': 'true' })),
+      h('div', { class: 'sub' }, 'PARTNER EDITION · COMPANION SITE')));
+
+    if (CONFIG.mode === 'demo') kids.push(h('div', { class: 'demo' }, demo.hint));
+    if (state.offline) kids.push(h('div', { class: 'err', role: 'alert' }, msg('network')));
+
+    const kind = state.me ? state.me.kind : null;
+    const tabs = [['schedule', 'Schedule']];
+    if (!kind) tabs.push(['team', 'Enter PIN']);
+    if (kind === 'team') tabs.push(['team', 'My team']);
+    if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
+    if (kind === 'staff') tabs.push(['staff', 'Staff']);
+    if (!tabs.some(t => t[0] === state.tab)) state.tab = 'schedule';
+    kids.push(h('nav', { class: 'tabs', 'aria-label': 'Sections' }, tabs.map(t =>
+      h('button', { type: 'button', class: state.tab === t[0] ? 'on' : null, 'data-tab': t[0], onclick: () => go(t[0]) }, t[1]))));
+
+    if (state.pub && state.pub.announcements.length) kids.push(state.pub.announcements.map(a =>
+      h('div', { class: 'ann' }, h('div', { class: 'lab' }, 'ANNOUNCEMENT'), h('p', null, a.body), h('div', { class: 'when' }, ago(a.at)))));
+
+    if (!state.loaded) kids.push(h('p', { class: 'muted' }, 'Loading...'));
+    else if (state.tab === 'schedule') kids.push(viewSchedule());
+    else if (state.tab === 'team') kids.push(kind === 'team' ? viewTeam() : viewDoor());
+    else if (state.tab === 'crew') kids.push(viewCrew());
+    else if (state.tab === 'staff') kids.push(viewStaff());
+
+    kids.push(h('footer', null,
+      h('div', null, 'Unofficial companion site for the SAP Aerospace & Defense AI Hackathon 2026: Partner Edition. Not an SAP system. Do not enter proprietary, export-controlled, or classified information.'),
+      h('div', { class: 'ebl' }, 'PRODUCED BY EVIL BRAIN LABS ', h('span', null, '· THIRD WORST IN AI'))));
+
+    app.className = (state.tab === 'crew' || state.tab === 'staff') ? 'wide' : '';
+    app.replaceChildren(...kids.flat(Infinity).filter(Boolean));
+
+    if (fkey) {
+      const el = app.querySelector('[data-key="' + fkey.replace(/"/g, '') + '"]');
+      if (el) {
+        el.focus({ preventScroll: true });
+        if (ss != null) { try { el.setSelectionRange(ss, se); } catch (e) {} }
+      }
+    }
+  }
+  function go(tab) {
+    state.tab = tab; state.err = {}; state.confirm = null;
+    if (tab === 'crew') loadCrew(true);
+    if (tab === 'staff') loadStaff(true);
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  // ------------------------------------------------------- view: schedule
+  function viewSchedule() {
+    if (!state.pub) return h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The schedule is not available right now. Try again in a minute.'));
+    const items = state.pub.schedule, n = etNow(), nowKey = n.day + ' ' + n.hm;
+    let cur = null, next = null;
+    for (const it of items) { if (it.day + ' ' + it.start <= nowKey) cur = it; else { next = it; break; } }
+    if (cur && cur.day !== n.day) cur = null;
+    const when = it => (it.day === n.day ? '' : dayLabel(it.day) + ' · ') + (it.time_label || fmtTime(it.start)) + ' ET';
+
+    const out = [];
+    out.push(h('div', { class: 'nn' },
+      h('div', { class: 'cell now' }, h('div', { class: 'lab' }, 'NOW'),
+        h('div', { class: 't' }, cur ? cur.title : (next ? 'Between sessions' : 'That is a wrap')),
+        h('div', { class: 'w' }, cur ? 'since ' + (cur.time_label || fmtTime(cur.start)) + ' ET' : (next ? '' : 'See you at the next one'))),
+      h('div', { class: 'cell' }, h('div', { class: 'lab' }, 'NEXT'),
+        h('div', { class: 't' }, next ? next.title : 'Nothing scheduled'),
+        h('div', { class: 'w' }, next ? when(next) : ''))));
+
+    out.push(h('div', { class: 'days', role: 'tablist' }, uniqueDays().map(d =>
+      h('button', { type: 'button', class: state.day === d ? 'on' : null, 'data-day': d, onclick: () => { state.day = d; render(); } }, dayLabel(d)))));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, dayLabel(state.day) + ' · ALL TIMES EASTERN'),
+      items.filter(it => it.day === state.day).map(it =>
+        h('div', { class: 'row' },
+          h('div', { class: 'time' }, it.time_label || fmtTime(it.start)),
+          h('div', null,
+            h('div', { class: 'title' }, it.title, cur && cur.id === it.id ? h('span', { class: 'badge now' }, 'NOW') : null),
+            it.detail ? h('div', { class: 'detail' }, it.detail) : null,
+            it.location ? h('div', { class: 'loc' }, it.location) : null)))));
+
+    if (state.pub.topics.length) {
+      const groups = [];
+      for (const t of state.pub.topics) { let g = groups.find(x => x.name === t.grp); if (!g) groups.push(g = { name: t.grp, items: [] }); g.items.push(t.name); }
+      out.push(h('div', { class: 'card' }, h('h2', null, 'WHAT THE FLIGHT CREW COVERS'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Enter your team PIN to request an expert on any of these, or on a topic of your own.'),
+        groups.map(g => [h('label', null, g.name.toUpperCase()), h('div', { class: 'chips' }, g.items.map(n2 => h('span', { class: 'chip' }, n2)))])));
+    }
+    return out;
+  }
+
+  // ----------------------------------------------------------- view: door
+  function viewDoor() {
+    const out = [];
+    out.push(h('div', { class: 'card' }, h('h2', null, 'TEAM DOOR'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Enter the PIN your coach gave you. Your phone stays signed in all week.'),
+      form(doLogin,
+        h('label', { for: 'pin' }, 'PIN'),
+        input('pin', { id: 'pin', class: 'pin', inputmode: 'numeric', pattern: '[0-9 ]*', maxlength: '12', 'aria-label': 'PIN' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.pin, id: 'pin-go' }, state.busy.pin ? 'Checking...' : 'Enter')),
+        errLine('pin'))));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, 'NO TEAM YET?'),
+      state.joined
+        ? h('p', { class: 'ok', id: 'joined' }, 'You are on the list. Come to the 4 PM orientation on Monday. Staff will place you with a team and give you its PIN.')
+        : [h('p', { class: 'muted', style: 'margin-top:0' }, 'Add yourself to the matchmaking list. Teams and staff will see what you enter here.'),
+          form(joinPool,
+            h('label', { for: 'fa_name' }, 'FIRST NAME'), input('fa_name', { id: 'fa_name', maxlength: '40' }),
+            h('label', { for: 'fa_company' }, 'COMPANY'), input('fa_company', { id: 'fa_company', maxlength: '60' }),
+            h('label', { for: 'fa_note' }, 'WHAT YOU BRING'), input('fa_note', { id: 'fa_note', maxlength: '200', placeholder: 'e.g., supply chain, UI5, data modeling' }),
+            h('div', { class: 'rowbtn' }, h('button', { type: 'submit', disabled: state.busy.join, id: 'join-go' }, 'Add me to the list')),
+            errLine('join'))]));
+    return out;
+  }
+
+  // ----------------------------------------------------------- view: name
+  function nameCard(what) {
+    return h('div', { class: 'card gold' }, h('h2', null, 'ONE MORE THING'),
+      h('p', { style: 'margin-top:0' }, 'You are in: ', h('strong', null, state.me.name), '. ', what),
+      form(doName,
+        h('label', { for: 'name' }, 'FIRST NAME'), input('name', { id: 'name', maxlength: '40' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.name, id: 'name-go' }, 'Save')),
+        errLine('name')));
+  }
+  function whoCard(title, meta) {
+    return h('div', { class: 'card' }, h('div', { class: 'who' },
+      h('div', null, h('div', { class: 'name' }, title), h('div', { class: 'meta' }, meta)),
+      h('button', { type: 'button', class: 'quiet', id: 'signout', onclick: () => twoTap('out', doLogout) }, state.confirm === 'out' ? 'Tap again to sign out' : 'Sign out')));
+  }
+
+  // ----------------------------------------------------------- view: team
+  function viewTeam() {
+    const me = state.me, t = state.team;
+    if (!me.display_name) return nameCard('What should the Flight Crew call you?');
+    const out = [];
+    out.push(whoCard(me.name,
+      (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name));
+
+    out.push(h('div', { class: 'rowbtn', style: 'margin:0 0 14px' },
+      h('button', { type: 'button', class: state.form === 'session' ? 'on' : 'go', id: 'btn-session', onclick: () => openForm('session') }, 'Request an expert'),
+      h('button', { type: 'button', class: state.form === 'technical' ? 'on' : null, id: 'btn-technical', onclick: () => openForm('technical') }, 'Technical request'),
+      h('button', { type: 'button', class: state.form === 'late' ? 'on' : null, id: 'btn-late', onclick: () => openForm('late') }, 'Stay late tonight')));
+    if (state.note.req) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'sent' }, state.note.req));
+
+    if (state.form === 'session') {
+      const groups = [];
+      for (const tp of (t ? t.topics : [])) { let g = groups.find(x => x.group === tp.grp); if (!g) groups.push(g = { group: tp.grp, items: [] }); g.items.push({ value: tp.name, label: tp.name + (tp.covered_by ? ' (' + tp.covered_by + ')' : '') }); }
+      groups.push({ value: '__own', label: 'Something else (write your own)' });
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'REQUEST AN EXPERT'),
+        form(() => submitRequest('session'),
+          h('label', { for: 's_topic' }, 'TOPIC'), select('s_topic', groups, { id: 's_topic' }),
+          state.drafts.s_topic === '__own' ? [h('label', { for: 's_own' }, 'YOUR TOPIC'), input('s_own', { id: 's_own', maxlength: '160' })] : null,
+          h('label', { for: 's_details' }, 'WHAT DO YOU WANT TO COVER?'), textarea('s_details', { id: 's_details', maxlength: '1000' }),
+          h('label', { for: 's_when' }, 'WHEN'), input('s_when', { id: 's_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-session' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'technical') {
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'TECHNICAL REQUEST'),
+        form(() => submitRequest('technical'),
+          h('label', { for: 't_cat' }, 'TYPE'), select('t_cat', TECH.map(x => ({ value: x, label: x })), { id: 't_cat' }),
+          h('label', { for: 't_details' }, 'WHAT DO YOU NEED?'), textarea('t_details', { id: 't_details', maxlength: '1000' }),
+          h('label', { for: 't_when' }, 'WHEN'), input('t_when', { id: 't_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-technical' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'late') {
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'STAY LATE TONIGHT'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'The space closes at 5 PM unless a team asks. Staff will confirm here.'),
+        form(() => submitRequest('late'),
+          h('label', { for: 'l_until' }, 'UNTIL WHEN?'), input('l_until', { id: 'l_until', maxlength: '80', placeholder: 'e.g., 8 PM' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-late' }, 'Ask staff'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+
+    const reqs = t ? t.requests : [];
+    out.push(h('div', { class: 'card', id: 'my-requests' }, h('h2', null, "YOUR TEAM'S REQUESTS"),
+      reqs.length ? reqs.map(r => reqItem(r, false)) : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing yet. Ask for an expert when you need one.')));
+
+    if (t && t.free_agents.length) out.push(h('div', { class: 'card' }, h('h2', null, 'LOOKING FOR A TEAM'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Want one of them? Tell a cowboy hat.'),
+      t.free_agents.map(f => h('div', { class: 'door' }, h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', f.note ? h('div', { class: 'muted' }, f.note) : null))));
+
+    if (t && t.help) out.push(h('p', { class: 'muted' }, t.help));
+    return out;
+  }
+  function openForm(f) { state.form = state.form === f ? null : f; state.err.req = null; render(); }
+
+  function reqItem(r, crew) {
+    const open = r.status === 'new' || r.status === 'claimed' || r.status === 'on_the_way';
+    const what = r.kind === 'stay_late' ? 'Keep the space open late' : (r.topic || r.category || 'Request');
+    const meta = [];
+    if (r.kind === 'technical' && r.category && r.topic) meta.push(r.category);
+    if (r.preferred_time) meta.push((r.kind === 'stay_late' ? 'Until: ' : 'When: ') + r.preferred_time);
+    if (r.requested_by) meta.push('From ' + r.requested_by);
+    meta.push(ago(r.created_at));
+    let line = null;
+    if (!crew && r.status === 'claimed' && r.claimed_by) line = r.claimed_by + ' has it.';
+    if (!crew && r.status === 'on_the_way' && r.claimed_by) line = r.claimed_by + ' is on the way.';
+    if (crew && r.claimed_by && open) line = 'Owner: ' + r.claimed_by;
+    return h('div', { class: 'req', 'data-req': r.id },
+      h('div', { class: 'head' },
+        h('span', { class: 'kind' }, '#' + r.id + ' · ' + KIND[r.kind]),
+        h('span', { class: 'st ' + r.status }, STATUS[r.status])),
+      crew ? h('div', { class: 'team' }, (r.team || '?') + ' · ' + (r.room ? 'Room ' + r.room : 'room not set')) : null,
+      h('div', { class: 'what' }, what),
+      r.details ? h('div', { class: 'body' }, r.details) : null,
+      h('div', { class: 'meta' }, meta.join(' · ')),
+      line ? h('div', { class: 'meta', style: 'color:var(--paper)' }, line) : null,
+      r.crew_note ? h('div', { class: 'note' }, (crew ? 'Note to team: ' : 'Note from the crew: ') + r.crew_note) : null,
+      crew ? crewButtons(r, open) : (open ? h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'quiet', 'data-cancel': r.id, onclick: () => twoTap('c' + r.id, () => cancelRequest(r.id)) },
+          state.confirm === 'c' + r.id ? 'Tap again to cancel' : 'Cancel request')) : null));
+  }
+
+  // ----------------------------------------------------------- view: crew
+  function crewButtons(r, open) {
+    const b = (label, cls, fn, id) => h('button', { type: 'button', class: cls, 'data-act': id, onclick: fn }, label);
+    const btns = [];
+    if (r.status === 'new') btns.push(b('Claim', 'go', () => crewUpdate(r.id, 'claimed', null), 'claim'));
+    if (r.status === 'claimed') btns.push(b('On my way', 'go', () => crewUpdate(r.id, 'on_the_way', null), 'otw'));
+    if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Done', r.status === 'on_the_way' ? 'go' : null, () => crewUpdate(r.id, 'done', null), 'done'));
+    if (open) btns.push(b(state.noteOpen === r.id ? 'Close note' : 'Note to team', null, () => { state.noteOpen = state.noteOpen === r.id ? null : r.id; if (state.noteOpen) state.drafts['note_' + r.id] = r.crew_note || ''; render(); }, 'note'));
+    if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Release', 'quiet', () => crewUpdate(r.id, 'new', null), 'release'));
+    if (open) btns.push(b(state.confirm === 'x' + r.id ? 'Tap again to cancel' : 'Cancel', 'quiet', () => twoTap('x' + r.id, () => crewUpdate(r.id, 'cancelled', null)), 'cancel'));
+    if (!open) btns.push(b('Reopen', 'quiet', () => crewUpdate(r.id, 'new', null), 'reopen'));
+    const out = [h('div', { class: 'rowbtn' }, btns)];
+    if (state.noteOpen === r.id) out.push(form(() => crewUpdate(r.id, null, state.drafts['note_' + r.id] || ''),
+      h('label', { for: 'note_' + r.id }, 'NOTE THE TEAM WILL SEE'),
+      input('note_' + r.id, { id: 'note_' + r.id, maxlength: '300', placeholder: 'e.g., There at 2:30. Bring your data model.' }),
+      h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-note' }, 'Save note'))));
+    return out;
+  }
+  function viewCrew() {
+    const me = state.me, c = state.crew;
+    if (!me.display_name) return nameCard('What name should teams see when you claim a request?');
+    const out = [];
+    out.push(whoCard('Flight Crew console', 'Signed in as ' + me.display_name + (me.kind === 'staff' ? ' · staff' : '')));
+    if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
+    const waiting = c.free_agents.filter(f => !f.placed).length;
+    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')']];
+    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; render(); } }, t[1]))));
+    if (state.err.crew) out.push(errLine('crew'));
+    if (state.crewTab === 'open') out.push(h('div', { class: 'card', id: 'queue' }, h('h2', null, 'OPEN REQUESTS, OLDEST FIRST'),
+      c.open.length ? c.open.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Queue is clear.')));
+    if (state.crewTab === 'closed') out.push(h('div', { class: 'card' }, h('h2', null, 'RECENTLY CLOSED'),
+      c.closed.length ? c.closed.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing closed yet.')));
+    if (state.crewTab === 'agents') out.push(h('div', { class: 'card' }, h('h2', null, 'PEOPLE WITHOUT A TEAM'),
+      c.free_agents.length ? c.free_agents.map(f => h('div', { class: 'door', 'data-agent': f.id },
+        h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', ' · ', h('span', { class: 'muted' }, ago(f.at)),
+        f.note ? h('div', { class: 'muted' }, f.note) : null,
+        f.placed
+          ? h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Placed' + (f.placed_team ? ' with ' + f.placed_team : '')),
+              h('button', { type: 'button', class: 'quiet', onclick: () => placeAgent(f.id, false) }, 'Undo'))
+          : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team name', maxlength: '60', 'aria-label': 'Team name', style: 'flex:2 1 160px' }),
+              h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'))))
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.')));
+    return out;
+  }
+
+  // ---------------------------------------------------------- view: staff
+  function viewStaff() {
+    const s = state.staff;
+    if (!state.me.display_name) return nameCard('What name should go on announcements?');
+    const out = [];
+    if (state.pinReveal) {
+      const p = state.pinReveal;
+      out.push(h('div', { class: 'card gold', id: 'pin-reveal' }, h('h2', null, 'PIN FOR ' + p.name.toUpperCase()),
+        h('div', { class: 'pinshow' }, p.pin.length === 8 ? p.pin.slice(0, 4) + ' ' + p.pin.slice(4) : p.pin.slice(0, 3) + ' ' + p.pin.slice(3)),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Shown once. Write it down or hand it to the coach now. If it gets lost, reset it below.'),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'pin-ack', onclick: () => { state.pinReveal = null; render(); } }, 'Got it'))));
+    }
+    out.push(h('div', { class: 'card' }, h('h2', null, 'POST AN ANNOUNCEMENT'),
+      form(staffAnnounce,
+        textarea('ann', { id: 'ann', maxlength: '280', placeholder: 'e.g., Lunch is up. Decks are due at 7:30 AM Thursday.', 'aria-label': 'Announcement', style: 'min-height:72px' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.ann, id: 'ann-go' }, 'Post to everyone')),
+        errLine('ann')),
+      s && s.announcements.length ? s.announcements.map(a => h('div', { class: 'door' },
+        h('div', null, a.body), h('div', { class: 'muted' }, ago(a.at) + (a.active ? ' · showing' : ' · taken down')),
+        a.active ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', 'data-annoff': a.id, onclick: () => staffAnnounceOff(a.id) }, 'Take down')) : null)) : null));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, 'ADD A TEAM OR A PIN'),
+      form(staffCreateDoor,
+        h('label', { for: 'd_kind' }, 'TYPE'),
+        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
+        h('label', { for: 'd_name' }, 'NAME'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Falcon' }),
+        state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'd_room' }, 'ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
+          h('div', null, h('label', { for: 'd_coach' }, 'COACH'), input('d_coach', { id: 'd_coach', maxlength: '60' }))) : null,
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.door, id: 'door-go' }, 'Create and show PIN')),
+        errLine('door'))));
+
+    out.push(h('div', { class: 'card', id: 'doors' }, h('h2', null, 'TEAMS AND PINS'), errLine('staff'),
+      s ? s.doors.map(d => {
+        const editing = state.editDoor === d.id;
+        const mine = d.kind === 'staff' && d.name === state.me.name;
+        return h('div', { class: 'door', 'data-door': d.name },
+          h('div', null, h('span', { class: 'n' }, d.name), ' ', h('span', { class: 'st ' + (d.active ? 'claimed' : 'done') }, d.kind.toUpperCase() + (d.active ? '' : ' · OFF'))),
+          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
+          editing ? form(() => staffSaveDoor(d.id),
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'e_room' }, 'ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
+              h('div', null, h('label', { for: 'e_coach' }, 'COACH'), input('e_coach', { id: 'e_coach', maxlength: '60' }))),
+            h('label', { for: 'e_name' }, 'NAME'), input('e_name', { id: 'e_name', maxlength: '60' }),
+            h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-door' }, 'Save'),
+              h('button', { type: 'button', onclick: () => { state.editDoor = null; render(); } }, 'Never mind')))
+          : h('div', { class: 'rowbtn' },
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'edit-door', onclick: () => { state.editDoor = d.id; state.drafts.e_room = d.room || ''; state.drafts.e_coach = d.coach || ''; state.drafts.e_name = d.name; render(); } }, 'Edit'),
+              mine ? h('span', { class: 'muted', style: 'align-self:center' }, 'You are signed in through this one.') : [
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'reset-pin', onclick: () => twoTap('r' + d.id, () => staffResetPin(d)) }, state.confirm === 'r' + d.id ? 'Tap again: signs everyone out' : 'Reset PIN'),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'toggle-door', onclick: () => twoTap('t' + d.id, () => staffToggleDoor(d)) }, state.confirm === 't' + d.id ? 'Tap again to confirm' : (d.active ? 'Turn off' : 'Turn on'))]));
+      }) : h('p', { class: 'muted' }, 'Loading...')));
+    return out;
+  }
+
+  
+
+  // ---------------------------------------------------------------- boot
+  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0;
+  async function tick() {
+    if (document.hidden) return;
+    const now = Date.now();
+    const ae = document.activeElement;
+    if (ae && ae.tagName === 'SELECT') return;
+    if (now - lastPub > 60000) { lastPub = now; loadPublic(false); }
+    if (state.token && state.me) {
+      if (state.me.kind === 'team' && now - lastTeam > 20000) { lastTeam = now; loadTeam(false); }
+      if (state.me.kind !== 'team' && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
+      if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastStaff > 30000) { lastStaff = now; loadStaff(false); }
+    }
+  }
+  async function boot() {
+    if (FALLBACK && !state.pub) {
+      // Show the schedule that shipped with the page at once. Live data replaces it when the server answers.
+      state.pub = { schedule: FALLBACK.schedule, announcements: [], topics: FALLBACK.topics };
+      pickDay();
+      state.loaded = true;
+    }
+    render();
+    lastPub = Date.now();
+    await loadPublic(true);
+    if (state.token) {
+      await loadTeam(true);
+      if (state.me) {
+        state.tab = state.me.kind === 'team' ? 'team' : 'crew';
+        if (state.me.kind === 'staff') await loadStaff(true);
+        render();
+      }
+    }
+    setInterval(tick, 5000);
+    setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPub = lastTeam = lastCrew = lastStaff = 0; tick(); } });
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
