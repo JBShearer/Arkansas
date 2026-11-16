@@ -205,6 +205,7 @@ footer .ebl span{color:var(--evil)}
   const state = {
     pub: null, offset: 0, token: store.get('ev_token'), me: null,
     team: null, crew: null, staff: null, cal: null, calEdit: null, renameOpen: false,
+    alerts: store.get('ev_alerts') === '1', unseen: false, count: 0,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
     editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
@@ -289,14 +290,88 @@ footer .ebl span{color:var(--evil)}
     if (changed('team', r) || force) { state.team = r; render(); }
     if (!was && state.me.kind !== 'team') loadCrew(true);
   }
-  async function loadCrew(force) {
+  async function loadCrew(force, noRender) {
     if (!state.token || !state.me || state.me.kind === 'team') return;
     const r = await call('event_crew_queue', { p_token: state.token });
     if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
-    const n = r.open.filter(q => q.status === 'new').length + r.free_agents.filter(f => !f.placed).length;
-    document.title = (n ? '(' + n + ') ' : '') + 'A&D AI Hackathon 2026';
-    if (changed('crew', r) || force) { state.crew = r; render(); }
+    state.count = r.open.filter(q => q.status === 'new').length + r.free_agents.filter(f => !f.placed).length;
+    // Anything that is new now and was not new at the last check raises an alert.
+    const cur = {};
+    for (const q of r.open) if (q.status === 'new') cur['r' + q.id] = true;
+    for (const f of r.free_agents) if (!f.placed) cur['a' + f.id] = true;
+    if (alertPrev && state.alerts) {
+      const fresh = Object.keys(cur).filter(k => !alertPrev[k]);
+      if (fresh.length) raiseAlert(fresh, r);
+    }
+    alertPrev = cur;
+    setTitle();
+    if (changed('crew', r) || force) { state.crew = r; if (!noRender) render(); }
   }
+
+  // --------------------------------------------------------------- alerts
+  // The crew console alerts on its own: a sound, a desktop pop-up, and the tab title.
+  let alertPrev = null, actx = null;
+  function setTitle() {
+    document.title = (state.unseen ? 'NEW \u00b7 ' : '') + (state.count ? '(' + state.count + ') ' : '') + 'A&D AI Hackathon 2026';
+  }
+  function audioOn() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) {}
+  }
+  function beep() {
+    try {
+      if (!actx || actx.state !== 'running') return;
+      const t = actx.currentTime;
+      [[880, 0], [1175, 0.22]].forEach(pair => {
+        const o = actx.createOscillator(), g = actx.createGain(), at = t + pair[1];
+        o.type = 'sine'; o.frequency.value = pair[0];
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.25, at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+        o.connect(g); g.connect(actx.destination);
+        o.start(at); o.stop(at + 0.2);
+      });
+    } catch (e) {}
+  }
+  const canPop = () => typeof Notification !== 'undefined';
+  function popUp(title, body) {
+    try {
+      if (!canPop() || Notification.permission !== 'granted') return;
+      const n = new Notification(title, { body: body });
+      n.onclick = () => { try { window.focus(); } catch (e) {} try { n.close(); } catch (e) {} };
+    } catch (e) {}
+  }
+  function raiseAlert(keys, r) {
+    let title = keys.length + ' new items in the crew queue', body = 'Open the crew console.';
+    if (keys.length === 1) {
+      const k = keys[0];
+      if (k[0] === 'r') {
+        const q = r.open.find(x => 'r' + x.id === k);
+        title = 'New request: ' + (q.team || 'a team');
+        body = q.kind === 'stay_late' ? 'Stay late tonight' : (q.kind === 'session' ? 'Expert session' : 'Technical request') + (q.topic || q.category ? ': ' + (q.topic || q.category) : '');
+      } else {
+        const f = r.free_agents.find(x => 'a' + x.id === k);
+        title = 'Someone needs a team';
+        body = f.name + (f.company ? ', ' + f.company : '');
+      }
+    }
+    beep();
+    if (document.hidden || !document.hasFocus()) { popUp(title, body); state.unseen = true; }
+  }
+  async function alertsOn() {
+    state.alerts = true; store.set('ev_alerts', '1');
+    audioOn();
+    try { if (canPop() && Notification.permission === 'default') await Notification.requestPermission(); } catch (e) {}
+    beep();
+    render();
+  }
+  function alertsOff() { state.alerts = false; store.del('ev_alerts'); state.unseen = false; setTitle(); render(); }
+  function alertTest() { audioOn(); beep(); popUp('Test alert', 'This is how a new request will look.'); }
+  function seen() { if (state.unseen) { state.unseen = false; setTitle(); } }
   async function loadCal(force) {
     if (!state.token || !state.me) return;
     const r = await quiet('event_calendar', { p_token: state.token });
@@ -319,7 +394,8 @@ footer .ebl span{color:var(--evil)}
     store.del('ev_token');
     state.err.pin = why || null;
     state.tab = 'team';
-    document.title = 'A&D AI Hackathon 2026';
+    alertPrev = null; state.unseen = false; state.count = 0;
+    setTitle();
     render();
   }
   function uniqueDays() {
@@ -938,6 +1014,17 @@ footer .ebl span{color:var(--evil)}
     if (!me.display_name) return nameCard('What name should teams see when you claim a request?');
     const out = [];
     out.push(whoCard('Flight Crew console', 'Signed in as ' + me.display_name + (me.kind === 'staff' ? ' · staff' : '')));
+    const perm = canPop() ? Notification.permission : 'none';
+    const how = !state.alerts ? 'Off. Turn them on to get a pop-up and a sound when a team files a request.'
+      : perm === 'granted' ? 'On: pop-up, sound, and tab title. Keep this tab open, even in the background.'
+      : perm === 'denied' ? 'On: sound and tab title. Pop-ups are blocked for this site in your browser settings.'
+      : perm === 'default' ? 'On: sound and tab title. Allow notifications when the browser asks, to get pop-ups too.'
+      : 'On: sound, while this page is on screen. This browser has no pop-ups.';
+    out.push(h('div', { class: 'card', id: 'alerts' }, h('h2', null, 'ALERTS'),
+      h('p', { class: 'muted', style: 'margin:0', id: 'alerts-how' }, how),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: state.alerts ? 'quiet' : 'go', id: 'alerts-toggle', onclick: state.alerts ? alertsOff : alertsOn }, state.alerts ? 'Turn off' : 'Turn on alerts'),
+        state.alerts ? h('button', { type: 'button', class: 'quiet', id: 'alerts-test', onclick: alertTest }, 'Test alert') : null)));
     if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
     const waiting = c.free_agents.filter(f => !f.placed).length;
     const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar']];
@@ -1103,10 +1190,15 @@ footer .ebl span{color:var(--evil)}
   // ---------------------------------------------------------------- boot
   let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0;
   async function tick() {
-    if (document.hidden) return;
     const now = Date.now();
     const ae = document.activeElement;
-    if (ae && (ae.tagName === 'SELECT' || ae.type === 'time')) return;
+    const crewIn = state.token && state.me && state.me.kind !== 'team';
+    // A hidden tab, or an open picker, stops the usual refresh. With alerts on, the crew queue
+    // is still checked (without redrawing the page) so a new request is never missed.
+    if (document.hidden || (ae && (ae.tagName === 'SELECT' || ae.type === 'time'))) {
+      if (state.alerts && crewIn && now - lastCrew > 10000) { lastCrew = now; loadCrew(false, !document.hidden); }
+      return;
+    }
     if (now - lastPub > 60000) { lastPub = now; loadPublic(false); }
     if (state.token && state.me) {
       if (state.me.kind === 'team' && now - lastTeam > 20000) { lastTeam = now; loadTeam(false); }
@@ -1137,7 +1229,10 @@ footer .ebl span{color:var(--evil)}
     }
     setInterval(tick, 5000);
     setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPub = lastTeam = lastCrew = lastStaff = lastCal = 0; tick(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = 0; tick(); } });
+    window.addEventListener('focus', seen);
+    // Browsers only let sound start after a tap or a key press. After a reload, the first one turns it back on.
+    document.addEventListener('pointerdown', () => { if (state.alerts) audioOn(); seen(); }, { passive: true });
   }
   boot();
 })();
