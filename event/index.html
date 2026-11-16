@@ -133,7 +133,7 @@ footer .ebl span{color:var(--evil)}
 (function () {
   'use strict';
   const CONFIG = {"mode":"live","url":"https://hbnmlfdauuvhpdhodohe.supabase.co","keys":["sb_publishable_7asZnEgU-EkSCXJSD45iYw_WbJT9z-9","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhibm1sZmRhdXV2aHBkaG9kb2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3Njg4NzIsImV4cCI6MjExMDM0NDg3Mn0.jf_BFoZSHNJ_jyeFiIuUK0BbMomDlnUQFv4BN0r9Bng"]};
-  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison"},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium"},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium"},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium"},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms"},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms"},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null},{"id":12,"day":"2026-11-18","start":"19:00","time_label":"Evening","title":"Reception","detail":"Evening reception for all participants. Details to follow.","location":null},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium"},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium"}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori, UI5, SAP Build Apps"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
+  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison"},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium"},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium"},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium"},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms"},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms"},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null},{"id":12,"day":"2026-11-18","start":"19:00","time_label":"Evening","title":"Reception","detail":"Evening reception for all participants. Details to follow.","location":null},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium"},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium"}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori and UI5"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
 
   // ------------------------------------------------------------ helpers
   const mem = {};
@@ -415,6 +415,15 @@ footer .ebl span{color:var(--evil)}
     const n = await quiet('event_staff_renames', { p_token: state.token });
     r.renames = {};
     if (n && n.ok) for (const x of n.renames) r.renames[x.door_id] = x;
+    const p = await quiet('event_staff_people', { p_token: state.token });
+    r.members = {}; r.removed = [];
+    if (p && p.ok) {
+      for (const m of p.members) {
+        const g = r.members[m.door_id] || (r.members[m.door_id] = { names: [], unnamed: 0 });
+        if (m.name) g.names.push({ name: m.name, devices: m.devices }); else g.unnamed += m.devices;
+      }
+      r.removed = p.removed;
+    }
     if (changed('staff', r) || force) { state.staff = r; render(); }
   }
   function signedOut(why) {
@@ -561,6 +570,13 @@ footer .ebl span{color:var(--evil)}
     if (!r.ok && r.error === 'auth') return signedOut(msg('auth'));
     delete state.drafts['fa_' + id];
     await loadCrew(true);
+  }
+  async function removeAgent(id, removed) {
+    state.err.crew = null;
+    const r = await call('event_staff_remove_agent', { p_token: state.token, p_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.crew = msg(r.error); render(); return; }
+    delete state.drafts['fa_' + id];
+    await Promise.all([loadCrew(true), loadStaff(true)]);
   }
   function joinPool() {
     return withBusy('join', async () => {
@@ -1063,7 +1079,7 @@ footer .ebl span{color:var(--evil)}
       (me.coach ? 'Coach: ' + me.coach + ' · ' : '') + 'Signed in as ' + me.display_name,
       h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Pick a team callsign' : 'Change callsign')));
     if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'TEAM CALLSIGN'),
-      h('p', { class: 'muted', style: 'margin-top:0' }, 'Pick a callsign, not a company name. Your teammates, the Flight Crew, and staff see it. Your PIN and room stay the same.'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Pick a callsign. A company name is fine. Your teammates, the Flight Crew, and staff see it. Your PIN and room stay the same.'),
       form(doRename,
         h('label', { for: 'tn' }, 'CALLSIGN'), input('tn', { id: 'tn', maxlength: '40' }),
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.rename, id: 'rename-go' }, 'Save callsign'),
@@ -1215,22 +1231,35 @@ footer .ebl span{color:var(--evil)}
     if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
     const waiting = c.free_agents.filter(f => !f.placed).length;
     const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar'], ['uc', 'Use cases']];
-    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); if (t[0] === 'uc') loadUC(true); render(); } }, t[1]))));
+    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); if (t[0] === 'uc') loadUC(true); if (t[0] === 'agents') loadStaff(true); render(); } }, t[1]))));
     if (state.err.crew) out.push(errLine('crew'));
     if (state.crewTab === 'open') out.push(h('div', { class: 'card', id: 'queue' }, h('h2', null, 'OPEN REQUESTS, OLDEST FIRST'),
       c.open.length ? c.open.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Queue is clear.')));
     if (state.crewTab === 'closed') out.push(h('div', { class: 'card' }, h('h2', null, 'RECENTLY CLOSED'),
       c.closed.length ? c.closed.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing closed yet.')));
-    if (state.crewTab === 'agents') out.push(h('div', { class: 'card' }, h('h2', null, 'PEOPLE WITHOUT A TEAM'),
-      c.free_agents.length ? c.free_agents.map(f => h('div', { class: 'door', 'data-agent': f.id },
-        h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', ' · ', h('span', { class: 'muted' }, ago(f.at)),
-        f.note ? h('div', { class: 'muted' }, f.note) : null,
-        f.placed
-          ? h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Placed' + (f.placed_team ? ' with ' + f.placed_team : '')),
-              h('button', { type: 'button', class: 'quiet', onclick: () => placeAgent(f.id, false) }, 'Undo'))
-          : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team callsign', maxlength: '60', 'aria-label': 'Team callsign', style: 'flex:2 1 160px' }),
-              h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'))))
-        : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.')));
+    if (state.crewTab === 'agents') {
+      // Staff can take a person off the list without placing them. The crew cannot.
+      const isStaff = me.kind === 'staff', gone = isStaff && state.staff && state.staff.removed ? state.staff.removed : [];
+      const rm = f => isStaff ? h('button', { type: 'button', class: 'quiet', 'data-act': 'agent-remove', onclick: () => twoTap('g' + f.id, () => removeAgent(f.id, true)) },
+        state.confirm === 'g' + f.id ? 'Tap again to remove' : 'Remove') : null;
+      out.push(h('div', { class: 'card', id: 'agents' }, h('h2', null, 'PEOPLE WITHOUT A TEAM'),
+        isStaff ? h('p', { class: 'muted', style: 'margin-top:0', id: 'agents-how' }, 'Remove takes a person off this list for the crew and for every team. Staff can put them back.') : null,
+        c.free_agents.length ? c.free_agents.map(f => h('div', { class: 'door', 'data-agent': f.id },
+          h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', ' · ', h('span', { class: 'muted' }, ago(f.at)),
+          f.note ? h('div', { class: 'muted' }, f.note) : null,
+          f.placed
+            ? h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Placed' + (f.placed_team ? ' with ' + f.placed_team : '')),
+                h('button', { type: 'button', class: 'quiet', onclick: () => placeAgent(f.id, false) }, 'Undo'), rm(f))
+            : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team callsign', maxlength: '60', 'aria-label': 'Team callsign', style: 'flex:2 1 160px' }),
+                h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'), rm(f))))
+          : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.'),
+        gone.length ? h('div', { class: 'calday', id: 'agents-removed' }, h('label', null, 'REMOVED FROM THE LIST · ' + gone.length),
+          gone.map(f => h('div', { class: 'door', 'data-removed': f.id },
+            h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '',
+            f.note ? h('div', { class: 'muted' }, f.note) : null,
+            h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Removed' + (f.removed_by ? ' by ' + f.removed_by : '')),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'agent-restore', onclick: () => removeAgent(f.id, false) }, 'Put back'))))) : null));
+    }
     if (state.crewTab === 'cal') out.push(viewCal());
     if (state.crewTab === 'uc') out.push(viewUCAll());
     return out;
@@ -1439,10 +1468,14 @@ footer .ebl span{color:var(--evil)}
         const editing = state.editDoor === d.id;
         const mine = d.kind === 'staff' && d.name === state.me.name;
         const rn = s.renames ? s.renames[d.id] : null;
+        const mem = s.members ? s.members[d.id] : null;
+        const memNames = mem ? mem.names.map(m => m.name + (m.devices > 1 ? ' (' + m.devices + ' devices)' : '')).join(', ') : '';
+        const memRest = mem && mem.unnamed ? (memNames ? ' · ' : '') + mem.unnamed + (mem.unnamed === 1 ? ' device' : ' devices') + ' without a callsign' : '';
         return h('div', { class: 'door', 'data-door': d.name },
           h('div', null, h('span', { class: 'n' }, d.name), ' ', h('span', { class: 'st ' + (d.active ? 'claimed' : 'done') }, d.kind.toUpperCase() + (d.active ? '' : ' · OFF'))),
           rn && rn.original !== d.name ? h('div', { class: 'muted', 'data-was': rn.original }, 'Started as ' + rn.original + (rn.last_by ? ' · renamed by ' + rn.last_by : '')) : null,
-          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.rooms || []).map(x => ' · ' + dayLabel(x.day) + ': Room ' + x.room).join('') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
+          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.rooms || []).map(x => ' · ' + dayLabel(x.day) + ': Room ' + x.room).join('') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + (d.people === 1 ? ' device' : ' devices') + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
+          memNames || memRest ? h('div', { class: 'muted', 'data-members': d.name }, 'Signed in: ', h('span', { style: 'color:var(--paper)' }, memNames), memRest) : null,
           editing ? form(() => staffSaveDoor(d.id),
             h('div', { class: 'grid2' },
               h('div', null, h('label', { for: 'e_room' }, 'MAIN ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
