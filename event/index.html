@@ -45,6 +45,14 @@ button[disabled]{opacity:.5;cursor:default}
 .ann .lab{color:var(--gold);font-size:12px;letter-spacing:.14em;font-weight:700}
 .ann p{margin:4px 0 0}
 .ann .when{color:var(--dim);font-size:12px}
+.ann.team{border-color:var(--cyan);background:#07141a}
+.ann.team .lab{color:var(--cyan)}
+.roomnow{font-size:28px;font-weight:700;color:var(--gold);line-height:1.2;overflow-wrap:anywhere}
+.roomdays{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--dim)}
+.roomdays .on{color:var(--paper);font-weight:700}
+.roomdays .d{display:inline-block;min-width:64px;letter-spacing:.08em}
+.roomstrip{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:14px;color:var(--dim);overflow-wrap:anywhere}
+.roomstrip strong{color:var(--gold)}
 .nn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
 .nn .cell{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
 .nn .lab{font-size:12px;letter-spacing:.14em;color:var(--dim);font-weight:700}
@@ -427,6 +435,21 @@ footer .ebl span{color:var(--evil)}
     for (const e of myEvents()) if (e.active && out.indexOf(e.day) < 0) out.push(e.day);
     return out.sort();
   }
+  // Rooms can differ by day. The server sends each team's room for every event day.
+  function eventDays() {
+    const out = [];
+    for (const it of (state.pub ? state.pub.schedule : [])) if (out.indexOf(it.day) < 0) out.push(it.day);
+    return out.sort();
+  }
+  function teamRooms() { return state.team && state.team.rooms ? state.team.rooms : []; }
+  function myRoomOn(day) { const x = teamRooms().find(r => r.day === day); return x ? x.room : (state.me ? state.me.room : null); }
+  // The room to show first: today's, or the next event day's when today is not an event day.
+  function roomRef() {
+    const rooms = teamRooms(), today = etNow().day;
+    const ref = rooms.find(r => r.day >= today) || rooms[rooms.length - 1] || null;
+    return { rooms, today, ref, now: ref ? ref.room : (state.me ? state.me.room : null) };
+  }
+  const roomFor = (t, day) => { const x = (t.rooms || []).find(r => r.day === day); return x ? x.room : t.room; };
   // A team's own sessions. Empty for crew, staff, and visitors.
   function myEvents() {
     return state.me && state.me.kind === 'team' && state.cal ? state.cal.events : [];
@@ -552,9 +575,13 @@ footer .ebl span{color:var(--evil)}
   function staffAnnounce() {
     return withBusy('ann', async () => {
       state.err.ann = null;
-      const r = await call('event_staff_announce', { p_token: state.token, p_body: state.drafts.ann || '' });
+      const to = state.drafts.ann_to || '', team = to && state.staff ? state.staff.doors.find(x => x.id === to) : null;
+      const r = to ? await call('event_staff_announce_to', { p_token: state.token, p_door_id: to, p_body: state.drafts.ann || '' })
+        : await call('event_staff_announce', { p_token: state.token, p_body: state.drafts.ann || '' });
       if (!r.ok) { state.err.ann = msg(r.error); return; }
-      state.drafts.ann = '';
+      state.drafts.ann = ''; state.drafts.ann_to = '';
+      state.note.ann = 'Posted to ' + (team ? team.name : 'everyone') + '.';
+      setTimeout(() => { state.note.ann = null; render(); }, 6000);
       await Promise.all([loadStaff(true), loadPublic(true)]);
     });
   }
@@ -574,9 +601,19 @@ footer .ebl span{color:var(--evil)}
     });
   }
   async function staffSaveDoor(id) {
-    const d = state.drafts;
+    const d = state.drafts, door = state.staff ? state.staff.doors.find(x => x.id === id) : null;
     const r = await call('event_staff_update_door', { p_token: state.token, p_door_id: id, p_name: d.e_name || null, p_room: d.e_room || '', p_coach: d.e_coach || '', p_active: null });
     if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    // A day's room is saved only when it changed. A blank field puts the team back in its main room that day.
+    if (door && door.kind === 'team') {
+      for (const day of eventDays()) {
+        const cur = ((door.rooms || []).find(x => x.day === day) || {}).room || '', want = (d['e_rd_' + day] || '').trim();
+        if (want === cur) continue;
+        const q = await call('event_staff_set_room', { p_token: state.token, p_door_id: id, p_day: day, p_room: want || null });
+        if (!q.ok) { state.err.staff = msg(q.error); await loadStaff(true); return; }
+      }
+    }
+    eventDays().forEach(day => delete d['e_rd_' + day]);
     state.editDoor = null; state.err.staff = null;
     await loadStaff(true);
   }
@@ -790,7 +827,7 @@ footer .ebl span{color:var(--evil)}
     const stamp = f(new Date());
     for (const e of list) {
       const start = etToUtc(e.day, e.start), end = new Date(start.getTime() + e.minutes * 60000);
-      const room = withTeam ? e.room : (state.me ? state.me.room : null);
+      const room = e.room || (withTeam ? null : myRoomOn(e.day));
       const where = e.location || (room ? 'Room ' + room : '');
       const desc = [e.host ? 'With ' + e.host : '', e.note || '', 'A&D AI Hackathon 2026, IBM One Madison'].filter(Boolean).join('\n');
       L.push('BEGIN:VEVENT', 'UID:session-' + e.id + '@easyassap.com', 'DTSTAMP:' + stamp, 'DTSTART:' + f(start), 'DTEND:' + f(end),
@@ -868,8 +905,12 @@ footer .ebl span{color:var(--evil)}
     kids.push(h('nav', { class: 'tabs', 'aria-label': 'Sections' }, tabs.map(t =>
       h('button', { type: 'button', class: state.tab === t[0] ? 'on' : null, 'data-tab': t[0], onclick: () => go(t[0]) }, t[1]))));
 
+    const teamAnns = kind === 'team' && state.team && state.team.announcements ? state.team.announcements : [];
+    if (teamAnns.length) kids.push(teamAnns.map(a =>
+      h('div', { class: 'ann team', 'data-teamann': a.id }, h('div', { class: 'lab' }, 'FOR YOUR TEAM'), h('p', null, a.body), h('div', { class: 'when' }, ago(a.at)))));
     if (state.pub && state.pub.announcements.length) kids.push(state.pub.announcements.map(a =>
       h('div', { class: 'ann' }, h('div', { class: 'lab' }, 'ANNOUNCEMENT'), h('p', null, a.body), h('div', { class: 'when' }, ago(a.at)))));
+    if (kind === 'team' && state.tab !== 'team' && state.me.display_name) kids.push(roomStrip());
 
     if (!state.loaded) kids.push(h('p', { class: 'muted' }, 'Loading...'));
     else if (state.tab === 'schedule') kids.push(viewSchedule());
@@ -911,7 +952,7 @@ footer .ebl span{color:var(--evil)}
     const mine = myEvents().filter(e => e.active).map(e => ({
       id: 'e' + e.id, day: e.day, start: e.start, end: endOf(e), time_label: null, title: e.title, mine: true,
       detail: span(e) + (e.host ? ' · With ' + e.host : ''), note: e.note,
-      location: e.location || (state.me.room ? 'Room ' + state.me.room : null)
+      location: e.location || ((e.room || myRoomOn(e.day)) ? 'Room ' + (e.room || myRoomOn(e.day)) : null)
     }));
     const items = state.pub.schedule.concat(mine).sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
     let cur = null, next = null;
@@ -990,6 +1031,21 @@ footer .ebl span{color:var(--evil)}
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.name, id: 'name-go' }, 'Save')),
         errLine('name')));
   }
+  // The team's room, in large type. Rooms can change by day, so every event day is listed when they differ.
+  function roomCard() {
+    const x = roomRef(), differ = x.rooms.some(r => r.room !== x.rooms[0].room);
+    const label = !x.ref ? 'YOUR ROOM' : x.ref.day === x.today ? 'YOUR ROOM TODAY' : 'YOUR ROOM ' + dayLabel(x.ref.day);
+    return h('div', { class: 'card', id: 'room' }, h('h2', null, label),
+      h('div', { class: 'roomnow', id: 'room-now' }, x.now ? 'Room ' + x.now : 'Not assigned yet'),
+      differ ? h('div', { class: 'roomdays', id: 'room-days' }, x.rooms.map(r => h('div', { class: r === x.ref ? 'on' : null, 'data-roomday': r.day },
+          h('span', { class: 'd' }, dayLabel(r.day)), ' ', r.room ? 'Room ' + r.room : 'Not assigned yet')))
+        : h('p', { class: 'muted', style: 'margin:6px 0 0', id: 'room-hint' }, x.now ? 'Rooms can change by day. Check here each morning.' : 'Staff will post it here.'));
+  }
+  function roomStrip() {
+    const x = roomRef();
+    if (!x.now) return null;
+    return h('div', { class: 'roomstrip', id: 'roomstrip' }, state.me.name + ' · ' + (x.ref && x.ref.day !== x.today ? dayLabel(x.ref.day) : 'TODAY') + ' · ', h('strong', null, 'Room ' + x.now));
+  }
   function whoCard(title, meta, extra) {
     return h('div', { class: 'card' }, h('div', { class: 'who' },
       h('div', null, h('div', { class: 'name' }, title), h('div', { class: 'meta' }, meta)),
@@ -1004,7 +1060,7 @@ footer .ebl span{color:var(--evil)}
     const out = [];
     const preset = DEFAULT_TEAM.test(me.name);
     out.push(whoCard(me.name,
-      (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name,
+      (me.coach ? 'Coach: ' + me.coach + ' · ' : '') + 'Signed in as ' + me.display_name,
       h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Pick a team callsign' : 'Change callsign')));
     if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'TEAM CALLSIGN'),
       h('p', { class: 'muted', style: 'margin-top:0' }, 'Pick a callsign, not a company name. Your teammates, the Flight Crew, and staff see it. Your PIN and room stay the same.'),
@@ -1014,6 +1070,7 @@ footer .ebl span{color:var(--evil)}
           h('button', { type: 'button', onclick: openRename }, 'Never mind')),
         errLine('rename'))));
     if (state.note.rename) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'renamed' }, state.note.rename));
+    out.push(roomCard());
 
     const today = etNow().day, evs = myEvents().filter(e => e.day >= today);
     out.push(h('div', { class: 'card', id: 'my-cal' }, h('h2', null, "YOUR TEAM'S CALENDAR"),
@@ -1229,7 +1286,7 @@ footer .ebl span{color:var(--evil)}
 
   // ------------------------------------------------------- view: calendar
   function calItem(e, crew) {
-    const room = crew ? e.room : state.me.room;
+    const room = e.room || (crew ? null : myRoomOn(e.day));
     const where = e.location || (room ? 'Room ' + room : null);
     return h('div', { class: 'cal' + (e.active ? '' : ' off'), 'data-cal': e.id },
       h('div', { class: 'head' },
@@ -1306,7 +1363,7 @@ footer .ebl span{color:var(--evil)}
             editing
               ? h('p', { style: 'margin:0', id: 'cal-editing' }, h('strong', null, editing.team), editing.room ? ' · Room ' + editing.room : '')
               : [h('label', { for: 'c_team' }, 'TEAM'),
-                 select('c_team', teams.map(t => ({ value: t.id, label: t.name + (t.room ? ' · Room ' + t.room : '') })), { id: 'c_team' })],
+                 select('c_team', teams.map(t => { const rm = roomFor(t, d.c_day); return { value: t.id, label: t.name + (rm ? ' · Room ' + rm : '') }; }), { id: 'c_team' })],
             h('label', { for: 'c_what' }, 'WHAT'),
             select('c_what', WHAT.map(w => ({ value: w, label: w })).concat([{ value: '__own', label: 'Something else (write your own)' }]), { id: 'c_what' }),
             d.c_what === '__own' ? [h('label', { for: 'c_own' }, 'TITLE'), input('c_own', { id: 'c_own', maxlength: '80' })] : null,
@@ -1350,13 +1407,20 @@ footer .ebl span{color:var(--evil)}
         h('p', { class: 'muted', style: 'margin-top:0' }, 'Shown once. Write it down or hand it to the coach now. If it gets lost, reset it below.'),
         h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'pin-ack', onclick: () => { state.pinReveal = null; render(); } }, 'Got it'))));
     }
-    out.push(h('div', { class: 'card' }, h('h2', null, 'POST AN ANNOUNCEMENT'),
+    const annTeams = s ? s.doors.filter(d => d.kind === 'team' && d.active) : [];
+    const annTo = annTeams.find(d => d.id === state.drafts.ann_to) || null;
+    out.push(h('div', { class: 'card', id: 'ann-card' }, h('h2', null, 'POST AN ANNOUNCEMENT'),
       form(staffAnnounce,
-        textarea('ann', { id: 'ann', maxlength: '280', placeholder: 'e.g., Lunch is up. Decks are due at 7:30 AM Thursday.', 'aria-label': 'Announcement', style: 'min-height:72px' }),
-        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.ann, id: 'ann-go' }, 'Post to everyone')),
-        errLine('ann')),
-      s && s.announcements.length ? s.announcements.map(a => h('div', { class: 'door' },
-        h('div', null, a.body), h('div', { class: 'muted' }, ago(a.at) + (a.active ? ' · showing' : ' · taken down')),
+        h('label', { for: 'ann_to' }, 'TO'),
+        select('ann_to', [{ value: '', label: 'Everyone' }].concat(annTeams.map(d => ({ value: d.id, label: d.name }))), { id: 'ann_to' }),
+        h('label', { for: 'ann' }, 'MESSAGE'),
+        textarea('ann', { id: 'ann', maxlength: '280', placeholder: annTo ? 'e.g., You are in Room 12B tomorrow.' : 'e.g., Lunch is up. Decks are due at 7:30 AM Thursday.', style: 'min-height:72px' }),
+        h('p', { class: 'muted', style: 'margin:8px 0 0', id: 'ann-who' }, annTo ? 'Only ' + annTo.name + ' and staff will see this.' : 'Everyone will see this, signed in or not.'),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.ann, id: 'ann-go' }, annTo ? 'Post to ' + annTo.name : 'Post to everyone')),
+        errLine('ann'),
+        state.note.ann ? h('div', { class: 'ok', id: 'ann-ok' }, state.note.ann) : null),
+      s && s.announcements.length ? s.announcements.map(a => h('div', { class: 'door', 'data-ann': a.id },
+        h('div', null, a.body), h('div', { class: 'muted' }, 'To ' + (a.door_id ? (a.team || 'one team') : 'everyone') + ' · ' + ago(a.at) + (a.active ? ' · showing' : ' · taken down')),
         a.active ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', 'data-annoff': a.id, onclick: () => staffAnnounceOff(a.id) }, 'Take down')) : null)) : null));
 
     out.push(h('div', { class: 'card' }, h('h2', null, 'ADD A TEAM OR A PIN'),
@@ -1365,7 +1429,7 @@ footer .ebl span{color:var(--evil)}
         select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
         h('label', { for: 'd_name' }, 'CALLSIGN'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Uniform' }),
         state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
-          h('div', null, h('label', { for: 'd_room' }, 'ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
+          h('div', null, h('label', { for: 'd_room' }, 'MAIN ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
           h('div', null, h('label', { for: 'd_coach' }, 'COACH CALLSIGN'), input('d_coach', { id: 'd_coach', maxlength: '60' }))) : null,
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.door, id: 'door-go' }, 'Create and show PIN')),
         errLine('door'))));
@@ -1378,16 +1442,20 @@ footer .ebl span{color:var(--evil)}
         return h('div', { class: 'door', 'data-door': d.name },
           h('div', null, h('span', { class: 'n' }, d.name), ' ', h('span', { class: 'st ' + (d.active ? 'claimed' : 'done') }, d.kind.toUpperCase() + (d.active ? '' : ' · OFF'))),
           rn && rn.original !== d.name ? h('div', { class: 'muted', 'data-was': rn.original }, 'Started as ' + rn.original + (rn.last_by ? ' · renamed by ' + rn.last_by : '')) : null,
-          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
+          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.rooms || []).map(x => ' · ' + dayLabel(x.day) + ': Room ' + x.room).join('') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
           editing ? form(() => staffSaveDoor(d.id),
             h('div', { class: 'grid2' },
-              h('div', null, h('label', { for: 'e_room' }, 'ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
+              h('div', null, h('label', { for: 'e_room' }, 'MAIN ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
               h('div', null, h('label', { for: 'e_coach' }, 'COACH CALLSIGN'), input('e_coach', { id: 'e_coach', maxlength: '60' }))),
+            d.kind === 'team' ? [h('label', null, 'A DIFFERENT ROOM ON ONE DAY. BLANK MEANS THE MAIN ROOM.'),
+              h('div', { class: 'grid2', id: 'e_days' }, eventDays().map(day => h('div', null, h('label', { for: 'e_rd_' + day }, dayLabel(day)),
+                input('e_rd_' + day, { id: 'e_rd_' + day, maxlength: '60', placeholder: state.drafts.e_room || 'Main room' }))))] : null,
             h('label', { for: 'e_name' }, 'CALLSIGN'), input('e_name', { id: 'e_name', maxlength: '60' }),
             h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-door' }, 'Save'),
               h('button', { type: 'button', onclick: () => { state.editDoor = null; render(); } }, 'Never mind')))
           : h('div', { class: 'rowbtn' },
-              h('button', { type: 'button', class: 'quiet', 'data-act': 'edit-door', onclick: () => { state.editDoor = d.id; state.drafts.e_room = d.room || ''; state.drafts.e_coach = d.coach || ''; state.drafts.e_name = d.name; render(); } }, 'Edit'),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'edit-door', onclick: () => { state.editDoor = d.id; state.drafts.e_room = d.room || ''; state.drafts.e_coach = d.coach || ''; state.drafts.e_name = d.name;
+                eventDays().forEach(day => { state.drafts['e_rd_' + day] = ((d.rooms || []).find(x => x.day === day) || {}).room || ''; }); render(); } }, 'Edit'),
               mine ? h('span', { class: 'muted', style: 'align-self:center' }, 'You are signed in through this one.') : [
               h('button', { type: 'button', class: 'quiet', 'data-act': 'reset-pin', onclick: () => twoTap('r' + d.id, () => staffResetPin(d)) }, state.confirm === 'r' + d.id ? 'Tap again: signs everyone out' : 'Reset PIN'),
               h('button', { type: 'button', class: 'quiet', 'data-act': 'toggle-door', onclick: () => twoTap('t' + d.id, () => staffToggleDoor(d)) }, state.confirm === 't' + d.id ? 'Tap again to confirm' : (d.active ? 'Turn off' : 'Turn on'))]));
