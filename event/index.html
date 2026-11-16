@@ -173,6 +173,8 @@ footer .ebl span{color:var(--evil)}
   }
   const KIND = { session: 'EXPERT SESSION', technical: 'TECHNICAL REQUEST', stay_late: 'STAY LATE' };
   const STATUS = { new: 'NEW', claimed: 'CLAIMED', on_the_way: 'ON THE WAY', done: 'DONE', cancelled: 'CANCELLED' };
+  // Teams start with a preset name. Until they change it, the button says "Name your team".
+  const DEFAULT_TEAM = /^Team (Alpha|Bravo|Charlie|Delta|Echo|Foxtrot|Golf|Hotel|India|Juliet|Kilo|Lima|Mike|November|Oscar|Papa|Quebec|Romeo|Sierra|Tango|Uniform|Victor|Whiskey|X-ray|Yankee|Zulu)$/;
   const WHAT = ['Prototype workshop with the design team', 'Expert session', 'Coach check-in'];
   const LENS = [15, 20, 30, 45, 60, 90, 120];
   const TECH = ['Synthetic data', 'Front end', 'Back end', 'Business AI Platform', 'Environment access', "Something's broken", 'Other'];
@@ -191,6 +193,8 @@ footer .ebl span{color:var(--evil)}
     crew_only: 'Only the Flight Crew can do that.',
     bad_time: 'Check the day, the start time, and the length.',
     cal_full: 'That team already has 60 sessions. Cancel one first.',
+    bad_name: 'Use 2 to 40 characters.',
+    rename_limit: 'Your team has changed its name 20 times. Find a cowboy hat.',
     cannot_disable_self: 'You cannot turn off the door you came in through.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
@@ -200,7 +204,7 @@ footer .ebl span{color:var(--evil)}
   // -------------------------------------------------------------- state
   const state = {
     pub: null, offset: 0, token: store.get('ev_token'), me: null,
-    team: null, crew: null, staff: null, cal: null, calEdit: null,
+    team: null, crew: null, staff: null, cal: null, calEdit: null, renameOpen: false,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
     editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
@@ -303,11 +307,14 @@ footer .ebl span{color:var(--evil)}
     if (!state.token || !state.me || state.me.kind !== 'staff') return;
     const r = await call('event_staff_state', { p_token: state.token });
     if (!r.ok) return;
+    const n = await quiet('event_staff_renames', { p_token: state.token });
+    r.renames = {};
+    if (n && n.ok) for (const x of n.renames) r.renames[x.door_id] = x;
     if (changed('staff', r) || force) { state.staff = r; render(); }
   }
   function signedOut(why) {
     state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
-    state.cal = null; state.calEdit = null;
+    state.cal = null; state.calEdit = null; state.renameOpen = false;
     state.last = { pub: state.last.pub };
     store.del('ev_token');
     state.err.pin = why || null;
@@ -360,6 +367,23 @@ footer .ebl span{color:var(--evil)}
       if (!r.ok) { state.err.name = msg(r.error); return; }
       state.me = r.me; state.drafts.name = '';
       if (state.team) state.team.me = r.me;
+    });
+  }
+  function openRename() {
+    state.renameOpen = !state.renameOpen; state.err.rename = null;
+    if (state.renameOpen) state.drafts.tn = state.me.name;
+    render();
+  }
+  function doRename() {
+    return withBusy('rename', async () => {
+      state.err.rename = null;
+      const r = await call('event_team_rename', { p_token: state.token, p_name: state.drafts.tn || '' });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.rename = msg(r.error); return; }
+      state.me = r.me;
+      if (state.team) state.team.me = r.me;
+      state.renameOpen = false; delete state.drafts.tn;
+      state.note.rename = 'Your team is now ' + r.me.name + '.';
+      setTimeout(() => { state.note.rename = null; render(); }, 6000);
     });
   }
   async function doLogout() {
@@ -539,16 +563,18 @@ footer .ebl span{color:var(--evil)}
   }
   // From a request in the crew queue: open the calendar form for that team, linked to the request.
   async function calFromRequest(r) {
-    if (!state.cal) await loadCal(true);
+    state.err.crew = null;
+    await loadCal(true);
     const c = state.cal;
     if (!c) return;
-    state.crewTab = 'cal';
     const ev = linked(r);
-    if (ev) return editCal(ev);
+    if (ev) { state.crewTab = 'cal'; return editCal(ev); }
     const d = state.drafts, team = (c.teams || []).find(t => t.name === r.team);
+    if (!team) { state.err.crew = 'That team just changed its name or was turned off. Wait a few seconds and try again.'; render(); return; }
+    state.crewTab = 'cal';
     CAL_KEYS.forEach(k => delete d[k]);
     state.calEdit = null; state.err.cal = null; state.note.cal = null;
-    if (team) d.c_team = team.id;
+    d.c_team = team.id;
     d.c_what = '__own';
     d.c_own = ((r.kind === 'session' ? 'Expert session: ' : 'Technical help: ') + (r.topic || r.category || '')).slice(0, 80);
     d.c_req = String(r.id);
@@ -775,10 +801,11 @@ footer .ebl span{color:var(--evil)}
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.name, id: 'name-go' }, 'Save')),
         errLine('name')));
   }
-  function whoCard(title, meta) {
+  function whoCard(title, meta, extra) {
     return h('div', { class: 'card' }, h('div', { class: 'who' },
       h('div', null, h('div', { class: 'name' }, title), h('div', { class: 'meta' }, meta)),
-      h('button', { type: 'button', class: 'quiet', id: 'signout', onclick: () => twoTap('out', doLogout) }, state.confirm === 'out' ? 'Tap again to sign out' : 'Sign out')));
+      h('div', { class: 'rowbtn', style: 'margin-top:0' }, extra || null,
+        h('button', { type: 'button', class: 'quiet', id: 'signout', onclick: () => twoTap('out', doLogout) }, state.confirm === 'out' ? 'Tap again to sign out' : 'Sign out'))));
   }
 
   // ----------------------------------------------------------- view: team
@@ -786,8 +813,18 @@ footer .ebl span{color:var(--evil)}
     const me = state.me, t = state.team;
     if (!me.display_name) return nameCard('What should the Flight Crew call you?');
     const out = [];
+    const preset = DEFAULT_TEAM.test(me.name);
     out.push(whoCard(me.name,
-      (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name));
+      (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name,
+      h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Name your team' : 'Rename team')));
+    if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'NAME YOUR TEAM'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Your teammates, the Flight Crew, and staff see this name. Your PIN and room stay the same.'),
+      form(doRename,
+        h('label', { for: 'tn' }, 'TEAM NAME'), input('tn', { id: 'tn', maxlength: '40' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.rename, id: 'rename-go' }, 'Save name'),
+          h('button', { type: 'button', onclick: openRename }, 'Never mind')),
+        errLine('rename'))));
+    if (state.note.rename) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'renamed' }, state.note.rename));
 
     const today = etNow().day, evs = myEvents().filter(e => e.day >= today);
     out.push(h('div', { class: 'card', id: 'my-cal' }, h('h2', null, "YOUR TEAM'S CALENDAR"),
@@ -1040,8 +1077,10 @@ footer .ebl span{color:var(--evil)}
       s ? s.doors.map(d => {
         const editing = state.editDoor === d.id;
         const mine = d.kind === 'staff' && d.name === state.me.name;
+        const rn = s.renames ? s.renames[d.id] : null;
         return h('div', { class: 'door', 'data-door': d.name },
           h('div', null, h('span', { class: 'n' }, d.name), ' ', h('span', { class: 'st ' + (d.active ? 'claimed' : 'done') }, d.kind.toUpperCase() + (d.active ? '' : ' · OFF'))),
+          rn && rn.original !== d.name ? h('div', { class: 'muted', 'data-was': rn.original }, 'Started as ' + rn.original + (rn.last_by ? ' · renamed by ' + rn.last_by : '')) : null,
           h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
           editing ? form(() => staffSaveDoor(d.id),
             h('div', { class: 'grid2' },
