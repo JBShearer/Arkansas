@@ -97,6 +97,12 @@ input.pin{font-size:24px;letter-spacing:.3em;text-align:center;-webkit-text-secu
 .cal .meta{color:var(--dim);font-size:14px;margin-top:2px;overflow-wrap:anywhere}
 .cal.off .when,.cal.off .what{color:var(--dim);text-decoration:line-through}
 .calday{margin-top:6px}
+.uc{border-top:1px solid var(--line);padding:12px 0}
+.uc:first-of-type{border-top:0}
+.uc .what{font-weight:700;overflow-wrap:anywhere}
+.uc .body{margin-top:2px;overflow-wrap:anywhere}
+.uc .meta{color:var(--dim);font-size:13px;margin-top:4px}
+.uc-team{color:var(--gold);font-weight:700;margin:16px 0 0;overflow-wrap:anywhere}
 .row.mine .time{color:var(--cyan)}
 .badge.mine{color:var(--cyan)}
 .pinshow{font-size:clamp(28px,9vw,44px);letter-spacing:.24em;font-weight:700;color:var(--gold);margin:8px 0;overflow-wrap:anywhere}
@@ -172,8 +178,12 @@ footer .ebl span{color:var(--evil)}
     return Math.round(hr / 24) + ' d ago';
   }
   const KIND = { session: 'EXPERT SESSION', technical: 'TECHNICAL REQUEST', stay_late: 'STAY LATE' };
+  // A Joule consultation is an expert request with its own marker: someone comes with Joule and a laptop.
+  const JOULE = 'joule', JOULE_TOPIC = 'Joule consultation';
+  const isJoule = r => r.kind === 'session' && r.category === JOULE;
+  const kindLabel = r => isJoule(r) ? 'JOULE CONSULTATION' : KIND[r.kind];
   const STATUS = { new: 'NEW', claimed: 'CLAIMED', on_the_way: 'ON THE WAY', done: 'DONE', cancelled: 'CANCELLED' };
-  // Teams start with a preset name. Until they change it, the button says "Name your team".
+  // Teams start with a preset callsign. Until they change it, the button says "Pick a team callsign".
   const DEFAULT_TEAM = /^Team (Alpha|Bravo|Charlie|Delta|Echo|Foxtrot|Golf|Hotel|India|Juliet|Kilo|Lima|Mike|November|Oscar|Papa|Quebec|Romeo|Sierra|Tango|Uniform|Victor|Whiskey|X-ray|Yankee|Zulu)$/;
   const WHAT = ['Prototype workshop with the design team', 'Expert session', 'Coach check-in'];
   const LENS = [15, 20, 30, 45, 60, 90, 120];
@@ -182,19 +192,21 @@ footer .ebl span{color:var(--evil)}
     invalid: 'That PIN did not work. Check it and try again.',
     locked: 'Too many wrong tries from this network. Wait 15 minutes, or find a cowboy hat.',
     auth: 'Your session ended. Enter the PIN again.',
-    name_required: 'Add your first name first.',
+    name_required: 'Pick your callsign first.',
     slow_down: 'One at a time. Try again in a few seconds.',
     too_many_open: 'Your team has 15 open requests. Cancel one or wait for the crew.',
     already_asked: 'Your team already asked to stay late tonight.',
     empty: 'Say what you need.',
-    name_taken: 'That name is already in use.',
+    name_taken: 'That callsign is already in use.',
     full: 'The list is full. Find a cowboy hat.',
     not_found: 'That item is gone. Refresh and try again.',
     crew_only: 'Only the Flight Crew can do that.',
     bad_time: 'Check the day, the start time, and the length.',
-    cal_full: 'That team already has 60 sessions. Cancel one first.',
+    cal_full: 'This calendar already has 60 sessions. Cancel one first.',
+    uc_full: 'Your list has 20 use cases. Remove one first.',
+    limit: 'That is the limit. Find a cowboy hat.',
     bad_name: 'Use 2 to 40 characters.',
-    rename_limit: 'Your team has changed its name 20 times. Find a cowboy hat.',
+    rename_limit: 'Your team has changed its callsign 20 times. Find a cowboy hat.',
     cannot_disable_self: 'You cannot turn off the door you came in through.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
@@ -205,7 +217,8 @@ footer .ebl span{color:var(--evil)}
   const state = {
     pub: null, offset: 0, token: store.get('ev_token'), me: null,
     team: null, crew: null, staff: null, cal: null, calEdit: null, renameOpen: false,
-    alerts: store.get('ev_alerts') === '1', unseen: false, count: 0,
+    alerts: store.get('ev_alerts') === '1', unseen: false, count: 0, sessOpen: false, sessEdit: null,
+    uc: null, ucFail: false, ucOpen: false, ucEdit: null,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
     editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
@@ -352,7 +365,8 @@ footer .ebl span{color:var(--evil)}
       if (k[0] === 'r') {
         const q = r.open.find(x => 'r' + x.id === k);
         title = 'New request: ' + (q.team || 'a team');
-        body = q.kind === 'stay_late' ? 'Stay late tonight' : (q.kind === 'session' ? 'Expert session' : 'Technical request') + (q.topic || q.category ? ': ' + (q.topic || q.category) : '');
+        body = q.kind === 'stay_late' ? 'Stay late tonight' : isJoule(q) ? 'Joule consultation: bring Joule and a laptop'
+          : (q.kind === 'session' ? 'Expert session' : 'Technical request') + (q.topic || q.category ? ': ' + (q.topic || q.category) : '');
       } else {
         const f = r.free_agents.find(x => 'a' + x.id === k);
         title = 'Someone needs a team';
@@ -378,6 +392,14 @@ footer .ebl span{color:var(--evil)}
     if (!r || !r.ok) return;
     if (changed('cal', r) || force) { state.cal = r; render(); }
   }
+  // Use case lists are an add-on, like the calendar. A failed read never raises the offline notice.
+  async function loadUC(force) {
+    if (!state.token || !state.me) return;
+    const r = await quiet('event_use_cases', { p_token: state.token });
+    if (!r || !r.ok) { if (!state.uc && !state.ucFail) { state.ucFail = true; render(); } return; }
+    state.ucFail = false;
+    if (changed('uc', r) || force) { state.uc = r; render(); }
+  }
   async function loadStaff(force) {
     if (!state.token || !state.me || state.me.kind !== 'staff') return;
     const r = await call('event_staff_state', { p_token: state.token });
@@ -389,7 +411,8 @@ footer .ebl span{color:var(--evil)}
   }
   function signedOut(why) {
     state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
-    state.cal = null; state.calEdit = null; state.renameOpen = false;
+    state.cal = null; state.calEdit = null; state.renameOpen = false; state.sessOpen = false; state.sessEdit = null;
+    state.uc = null; state.ucFail = false; state.ucOpen = false; state.ucEdit = null;
     state.last = { pub: state.last.pub };
     store.del('ev_token');
     state.err.pin = why || null;
@@ -475,6 +498,8 @@ footer .ebl span{color:var(--evil)}
       if (kind === 'session') {
         const topic = d.s_topic === '__own' ? (d.s_own || '') : (d.s_topic || '');
         args = { p_kind: 'session', p_category: null, p_topic: topic, p_details: d.s_details || '', p_preferred_time: d.s_when || '' };
+      } else if (kind === 'joule') {
+        args = { p_kind: 'session', p_category: JOULE, p_topic: JOULE_TOPIC, p_details: d.j_details || '', p_preferred_time: d.j_when || '' };
       } else if (kind === 'technical') {
         args = { p_kind: 'technical', p_category: d.t_cat || TECH[0], p_topic: null, p_details: d.t_details || '', p_preferred_time: d.t_when || '' };
         if (!(d.t_details || '').trim()) { state.err.req = msg('empty'); return; }
@@ -484,7 +509,7 @@ footer .ebl span{color:var(--evil)}
       args.p_token = state.token;
       const r = await call('event_create_request', args);
       if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.req = msg(r.error); return; }
-      ['s_topic', 's_own', 's_details', 's_when', 't_cat', 't_details', 't_when', 'l_until'].forEach(k => delete d[k]);
+      ['s_topic', 's_own', 's_details', 's_when', 'j_details', 'j_when', 't_cat', 't_details', 't_when', 'l_until'].forEach(k => delete d[k]);
       state.form = null;
       state.note.req = 'Sent. The Flight Crew has it.';
       setTimeout(() => { state.note.req = null; render(); }, 6000);
@@ -637,6 +662,92 @@ footer .ebl span{color:var(--evil)}
     state.note.cal = null;
     await loadCal(true);
   }
+  // A team's use case list. The team, the crew, and staff read it. Other teams never do.
+  function openUC(x) {
+    const d = state.drafts;
+    delete d.u_title; delete d.u_details;
+    state.err.uc = null; state.note.uc = null;
+    if (x && x.id) { state.ucOpen = true; state.ucEdit = x.id; d.u_title = x.title; d.u_details = x.details || ''; }
+    else { const wasAdding = state.ucOpen && state.ucEdit == null; state.ucOpen = !wasAdding; state.ucEdit = null; }
+    render();
+  }
+  function closeUC() {
+    delete state.drafts.u_title; delete state.drafts.u_details;
+    state.ucOpen = false; state.ucEdit = null; state.err.uc = null;
+    render();
+  }
+  function saveUC() {
+    return withBusy('uc', async () => {
+      state.err.uc = null; state.note.uc = null;
+      const d = state.drafts, title = (d.u_title || '').trim(), editing = state.ucEdit != null;
+      if (!title) { state.err.uc = 'Give the use case a one-line title.'; return; }
+      const r = await call('event_use_case_save', { p_token: state.token, p_id: state.ucEdit, p_title: title, p_details: d.u_details || null });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.uc = msg(r.error); return; }
+      delete d.u_title; delete d.u_details;
+      state.ucOpen = false; state.ucEdit = null;
+      state.note.uc = editing ? 'Saved.' : 'Added to your list.';
+      setTimeout(() => { state.note.uc = null; render(); }, 6000);
+      await loadUC(true);
+    });
+  }
+  async function removeUC(id) {
+    state.err.uc = null;
+    const r = await call('event_use_case_remove', { p_token: state.token, p_id: id });
+    if (!r.ok) {
+      if (r.error === 'auth') return signedOut(msg('auth'));
+      state.err.uc = msg(r.error);
+      if (r.error !== 'not_found') { render(); return; }
+    }
+    if (state.ucEdit === id) { state.ucOpen = false; state.ucEdit = null; }
+    await loadUC(true);
+  }
+  // A team's own sessions: free-form entries on its own calendar. They ask the Flight Crew for nothing.
+  const SESS_KEYS = ['m_title', 'm_day', 'm_start', 'm_len', 'm_where', 'm_note'];
+  function openSess(e) {
+    const d = state.drafts;
+    SESS_KEYS.forEach(k => delete d[k]);
+    state.err.sess = null; state.note.sess = null;
+    if (e && e.id) {
+      state.sessOpen = true; state.sessEdit = e.id;
+      d.m_title = e.title; d.m_day = e.day; d.m_start = e.start; d.m_len = String(e.minutes);
+      d.m_where = e.location || ''; d.m_note = e.note || '';
+    } else {
+      const wasAdding = state.sessOpen && state.sessEdit == null;
+      state.sessOpen = !wasAdding; state.sessEdit = null;
+    }
+    render();
+  }
+  function closeSess() {
+    SESS_KEYS.forEach(k => delete state.drafts[k]);
+    state.sessOpen = false; state.sessEdit = null; state.err.sess = null;
+    render();
+  }
+  function saveSess() {
+    return withBusy('sess', async () => {
+      state.err.sess = null; state.note.sess = null;
+      const d = state.drafts, title = (d.m_title || '').trim();
+      if (!title) { state.err.sess = 'Say what the session is.'; return; }
+      if (!d.m_start || d.m_start.length !== 5) { state.err.sess = 'Pick a start time.'; return; }
+      const r = await call('event_team_session_save', {
+        p_token: state.token, p_id: state.sessEdit, p_title: title, p_day: d.m_day, p_start: d.m_start,
+        p_minutes: +d.m_len || 30, p_location: d.m_where || null, p_note: d.m_note || null
+      });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.sess = msg(r.error); return; }
+      const e = r.event;
+      state.note.sess = 'On your calendar: ' + dayLabel(e.day) + ' ' + fmtTime(e.start) + ' ET.' + (r.overlap ? ' Heads up: your team has another session at that time.' : '');
+      SESS_KEYS.forEach(k => delete d[k]);
+      state.sessOpen = false; state.sessEdit = null;
+      setTimeout(() => { state.note.sess = null; render(); }, 8000);
+      await loadCal(true);
+    });
+  }
+  async function setSessActive(id, active) {
+    state.err.sess = null;
+    const r = await call('event_team_session_set_active', { p_token: state.token, p_id: id, p_active: active });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.sess = msg(r.error); render(); return; }
+    if (state.sessEdit === id) { state.sessOpen = false; state.sessEdit = null; }
+    await loadCal(true);
+  }
   // From a request in the crew queue: open the calendar form for that team, linked to the request.
   async function calFromRequest(r) {
     state.err.crew = null;
@@ -646,13 +757,13 @@ footer .ebl span{color:var(--evil)}
     const ev = linked(r);
     if (ev) { state.crewTab = 'cal'; return editCal(ev); }
     const d = state.drafts, team = (c.teams || []).find(t => t.name === r.team);
-    if (!team) { state.err.crew = 'That team just changed its name or was turned off. Wait a few seconds and try again.'; render(); return; }
+    if (!team) { state.err.crew = 'That team just changed its callsign or was turned off. Wait a few seconds and try again.'; render(); return; }
     state.crewTab = 'cal';
     CAL_KEYS.forEach(k => delete d[k]);
     state.calEdit = null; state.err.cal = null; state.note.cal = null;
     d.c_team = team.id;
     d.c_what = '__own';
-    d.c_own = ((r.kind === 'session' ? 'Expert session: ' : 'Technical help: ') + (r.topic || r.category || '')).slice(0, 80);
+    d.c_own = isJoule(r) ? JOULE_TOPIC : ((r.kind === 'session' ? 'Expert session: ' : 'Technical help: ') + (r.topic || r.category || '')).slice(0, 80);
     d.c_req = String(r.id);
     render();
     window.scrollTo(0, 0);
@@ -750,7 +861,7 @@ footer .ebl span{color:var(--evil)}
     const kind = state.me ? state.me.kind : null;
     const tabs = [['schedule', 'Schedule']];
     if (!kind) tabs.push(['team', 'Enter PIN']);
-    if (kind === 'team') tabs.push(['team', 'My team']);
+    if (kind === 'team') { tabs.push(['team', 'My team']); tabs.push(['uc', 'Use cases']); }
     if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
     if (kind === 'staff') tabs.push(['staff', 'Staff']);
     if (!tabs.some(t => t[0] === state.tab)) state.tab = 'schedule';
@@ -763,6 +874,7 @@ footer .ebl span{color:var(--evil)}
     if (!state.loaded) kids.push(h('p', { class: 'muted' }, 'Loading...'));
     else if (state.tab === 'schedule') kids.push(viewSchedule());
     else if (state.tab === 'team') kids.push(kind === 'team' ? viewTeam() : viewDoor());
+    else if (state.tab === 'uc') kids.push(viewUC());
     else if (state.tab === 'crew') kids.push(viewCrew());
     else if (state.tab === 'staff') kids.push(viewStaff());
 
@@ -785,6 +897,7 @@ footer .ebl span{color:var(--evil)}
     state.tab = tab; state.err = {}; state.confirm = null;
     if (tab === 'crew') loadCrew(true);
     if (tab === 'staff') loadStaff(true);
+    if (tab === 'uc') loadUC(true);
     if (state.me) loadCal(false);
     render();
     window.scrollTo(0, 0);
@@ -858,9 +971,9 @@ footer .ebl span{color:var(--evil)}
     out.push(h('div', { class: 'card' }, h('h2', null, 'NO TEAM YET?'),
       state.joined
         ? h('p', { class: 'ok', id: 'joined' }, 'You are on the list. Come to the 4 PM orientation on Monday. Staff will place you with a team and give you its PIN.')
-        : [h('p', { class: 'muted', style: 'margin-top:0' }, 'Add yourself to the matchmaking list. Teams and staff will see what you enter here.'),
+        : [h('p', { class: 'muted', style: 'margin-top:0' }, 'Add yourself to the matchmaking list. Use a callsign, not your real name. Teams and staff will see what you enter here.'),
           form(joinPool,
-            h('label', { for: 'fa_name' }, 'FIRST NAME'), input('fa_name', { id: 'fa_name', maxlength: '40' }),
+            h('label', { for: 'fa_name' }, 'CALLSIGN'), input('fa_name', { id: 'fa_name', maxlength: '40', placeholder: 'e.g., Sparky' }),
             h('label', { for: 'fa_company' }, 'COMPANY'), input('fa_company', { id: 'fa_company', maxlength: '60' }),
             h('label', { for: 'fa_note' }, 'WHAT YOU BRING'), input('fa_note', { id: 'fa_note', maxlength: '200', placeholder: 'e.g., supply chain, UI5, data modeling' }),
             h('div', { class: 'rowbtn' }, h('button', { type: 'submit', disabled: state.busy.join, id: 'join-go' }, 'Add me to the list')),
@@ -873,7 +986,7 @@ footer .ebl span{color:var(--evil)}
     return h('div', { class: 'card gold' }, h('h2', null, 'ONE MORE THING'),
       h('p', { style: 'margin-top:0' }, 'You are in: ', h('strong', null, state.me.name), '. ', what),
       form(doName,
-        h('label', { for: 'name' }, 'FIRST NAME'), input('name', { id: 'name', maxlength: '40' }),
+        h('label', { for: 'name' }, 'CALLSIGN'), input('name', { id: 'name', maxlength: '40', placeholder: 'e.g., Sparky' }),
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.name, id: 'name-go' }, 'Save')),
         errLine('name')));
   }
@@ -887,17 +1000,17 @@ footer .ebl span{color:var(--evil)}
   // ----------------------------------------------------------- view: team
   function viewTeam() {
     const me = state.me, t = state.team;
-    if (!me.display_name) return nameCard('What should the Flight Crew call you?');
+    if (!me.display_name) return nameCard('Pick a callsign. The Flight Crew will call you by it. No real names.');
     const out = [];
     const preset = DEFAULT_TEAM.test(me.name);
     out.push(whoCard(me.name,
       (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name,
-      h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Name your team' : 'Rename team')));
-    if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'NAME YOUR TEAM'),
-      h('p', { class: 'muted', style: 'margin-top:0' }, 'Your teammates, the Flight Crew, and staff see this name. Your PIN and room stay the same.'),
+      h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Pick a team callsign' : 'Change callsign')));
+    if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'TEAM CALLSIGN'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Pick a callsign, not a company name. Your teammates, the Flight Crew, and staff see it. Your PIN and room stay the same.'),
       form(doRename,
-        h('label', { for: 'tn' }, 'TEAM NAME'), input('tn', { id: 'tn', maxlength: '40' }),
-        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.rename, id: 'rename-go' }, 'Save name'),
+        h('label', { for: 'tn' }, 'CALLSIGN'), input('tn', { id: 'tn', maxlength: '40' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.rename, id: 'rename-go' }, 'Save callsign'),
           h('button', { type: 'button', onclick: openRename }, 'Never mind')),
         errLine('rename'))));
     if (state.note.rename) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'renamed' }, state.note.rename));
@@ -905,10 +1018,15 @@ footer .ebl span{color:var(--evil)}
     const today = etNow().day, evs = myEvents().filter(e => e.day >= today);
     out.push(h('div', { class: 'card', id: 'my-cal' }, h('h2', null, "YOUR TEAM'S CALENDAR"),
       evs.length ? evs.map(e => calItem(e, false))
-        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled for your team yet. Workshops and expert visits show up here.')));
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled for your team yet. Workshops and expert visits show up here.'),
+      state.sessOpen ? null : errLine('sess'),
+      h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: state.sessOpen && state.sessEdit == null ? 'on' : null, id: 'sess-open', onclick: () => openSess(null) }, 'Add your own session'))));
+    if (state.note.sess) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'sess-ok' }, state.note.sess));
+    if (state.sessOpen) out.push(sessForm());
 
     out.push(h('div', { class: 'rowbtn', style: 'margin:0 0 14px' },
       h('button', { type: 'button', class: state.form === 'session' ? 'on' : 'go', id: 'btn-session', onclick: () => openForm('session') }, 'Request an expert'),
+      h('button', { type: 'button', class: state.form === 'joule' ? 'on' : null, id: 'btn-joule', onclick: () => openForm('joule') }, 'Joule consultation'),
       h('button', { type: 'button', class: state.form === 'technical' ? 'on' : null, id: 'btn-technical', onclick: () => openForm('technical') }, 'Technical request'),
       h('button', { type: 'button', class: state.form === 'late' ? 'on' : null, id: 'btn-late', onclick: () => openForm('late') }, 'Stay late tonight')));
     if (state.note.req) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'sent' }, state.note.req));
@@ -924,6 +1042,16 @@ footer .ebl span{color:var(--evil)}
           h('label', { for: 's_details' }, 'WHAT DO YOU WANT TO COVER?'), textarea('s_details', { id: 's_details', maxlength: '1000' }),
           h('label', { for: 's_when' }, 'WHEN'), input('s_when', { id: 's_when', maxlength: '80', placeholder: 'As soon as possible' }),
           h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-session' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'joule') {
+      out.push(h('div', { class: 'card gold', id: 'joule-form' }, h('h2', null, 'JOULE CONSULTATION'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Someone comes to your room with Joule and a laptop. Say what you want to do and when.'),
+        form(() => submitRequest('joule'),
+          h('label', { for: 'j_details' }, 'WHAT DO YOU WANT TO DO WITH JOULE?'), textarea('j_details', { id: 'j_details', maxlength: '1000' }),
+          h('label', { for: 'j_when' }, 'WHEN'), input('j_when', { id: 'j_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-joule' }, 'Send to the Flight Crew'),
             h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
           errLine('req'))));
     }
@@ -962,7 +1090,9 @@ footer .ebl span{color:var(--evil)}
 
   function reqItem(r, crew) {
     const open = r.status === 'new' || r.status === 'claimed' || r.status === 'on_the_way';
-    const what = r.kind === 'stay_late' ? 'Keep the space open late' : (r.topic || r.category || 'Request');
+    const what = r.kind === 'stay_late' ? 'Keep the space open late'
+      : isJoule(r) ? (crew ? 'Bring Joule and a laptop to the room' : 'Someone comes to your room with Joule and a laptop')
+      : (r.topic || r.category || 'Request');
     const meta = [];
     if (r.kind === 'technical' && r.category && r.topic) meta.push(r.category);
     if (r.preferred_time) meta.push((r.kind === 'stay_late' ? 'Until: ' : 'When: ') + r.preferred_time);
@@ -975,7 +1105,7 @@ footer .ebl span{color:var(--evil)}
     const ce = linked(r);
     return h('div', { class: 'req', 'data-req': r.id },
       h('div', { class: 'head' },
-        h('span', { class: 'kind' }, '#' + r.id + ' · ' + KIND[r.kind]),
+        h('span', { class: 'kind' }, '#' + r.id + ' · ' + kindLabel(r)),
         h('span', { class: 'st ' + r.status }, STATUS[r.status])),
       crew ? h('div', { class: 'team' }, (r.team || '?') + ' · ' + (r.room ? 'Room ' + r.room : 'room not set')) : null,
       h('div', { class: 'what' }, what),
@@ -1011,7 +1141,7 @@ footer .ebl span{color:var(--evil)}
   }
   function viewCrew() {
     const me = state.me, c = state.crew;
-    if (!me.display_name) return nameCard('What name should teams see when you claim a request?');
+    if (!me.display_name) return nameCard('Pick a callsign. Teams see it when you claim a request. No real names.');
     const out = [];
     out.push(whoCard('Flight Crew console', 'Signed in as ' + me.display_name + (me.kind === 'staff' ? ' · staff' : '')));
     const perm = canPop() ? Notification.permission : 'none';
@@ -1027,8 +1157,8 @@ footer .ebl span{color:var(--evil)}
         state.alerts ? h('button', { type: 'button', class: 'quiet', id: 'alerts-test', onclick: alertTest }, 'Test alert') : null)));
     if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
     const waiting = c.free_agents.filter(f => !f.placed).length;
-    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar']];
-    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); render(); } }, t[1]))));
+    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar'], ['uc', 'Use cases']];
+    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); if (t[0] === 'uc') loadUC(true); render(); } }, t[1]))));
     if (state.err.crew) out.push(errLine('crew'));
     if (state.crewTab === 'open') out.push(h('div', { class: 'card', id: 'queue' }, h('h2', null, 'OPEN REQUESTS, OLDEST FIRST'),
       c.open.length ? c.open.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Queue is clear.')));
@@ -1041,11 +1171,60 @@ footer .ebl span{color:var(--evil)}
         f.placed
           ? h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Placed' + (f.placed_team ? ' with ' + f.placed_team : '')),
               h('button', { type: 'button', class: 'quiet', onclick: () => placeAgent(f.id, false) }, 'Undo'))
-          : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team name', maxlength: '60', 'aria-label': 'Team name', style: 'flex:2 1 160px' }),
+          : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team callsign', maxlength: '60', 'aria-label': 'Team callsign', style: 'flex:2 1 160px' }),
               h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'))))
         : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.')));
     if (state.crewTab === 'cal') out.push(viewCal());
+    if (state.crewTab === 'uc') out.push(viewUCAll());
     return out;
+  }
+
+  // ------------------------------------------------------ view: use cases
+  function ucItem(x, n, crew) {
+    return h('div', { class: 'uc', 'data-uc': x.id },
+      h('div', { class: 'what' }, n + '. ' + x.title),
+      x.details ? h('div', { class: 'body' }, x.details) : null,
+      h('div', { class: 'meta' }, (x.by ? 'From ' + x.by + ' · ' : '') + ago(x.updated_at)),
+      crew ? null : h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'quiet', 'data-act': 'uc-edit', onclick: () => openUC(x) }, 'Change'),
+        h('button', { type: 'button', class: 'quiet', 'data-act': 'uc-remove', onclick: () => twoTap('u' + x.id, () => removeUC(x.id)) }, state.confirm === 'u' + x.id ? 'Tap again to remove it' : 'Remove')));
+  }
+  function viewUC() {
+    const me = state.me, u = state.uc;
+    if (!me.display_name) return nameCard('Pick a callsign. The Flight Crew will call you by it. No real names.');
+    const out = [], list = u ? u.use_cases : null;
+    out.push(h('div', { class: 'card', id: 'uc-list' }, h('h2', null, "YOUR TEAM'S USE CASES"),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'List what your team is working on. Your team, the Flight Crew, and staff can read it. Other teams cannot.'),
+      !list ? h('p', { class: 'muted', style: 'margin:0' }, state.ucFail ? 'The list is not available right now. Try again in a minute.' : 'Loading the list...')
+        : list.length ? list.map((x, i) => ucItem(x, i + 1, false))
+        : h('p', { class: 'muted', style: 'margin:0', id: 'uc-none' }, 'Nothing on the list yet.'),
+      state.ucOpen ? null : errLine('uc'),
+      list ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: state.ucOpen && state.ucEdit == null ? 'on' : 'go', id: 'uc-open', onclick: () => openUC(null) }, 'Add a use case')) : null));
+    if (state.note.uc) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'uc-ok' }, state.note.uc));
+    if (state.ucOpen) out.push(h('div', { class: 'card gold', id: 'uc-form' }, h('h2', null, state.ucEdit != null ? 'CHANGE A USE CASE' : 'ADD A USE CASE'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Do not enter proprietary, export-controlled, or classified information.'),
+      form(saveUC,
+        h('label', { for: 'u_title' }, 'USE CASE, IN ONE LINE'), input('u_title', { id: 'u_title', maxlength: '100' }),
+        h('label', { for: 'u_details' }, 'WHAT IT DOES AND WHO IT HELPS'), textarea('u_details', { id: 'u_details', maxlength: '600' }),
+        h('div', { class: 'rowbtn' },
+          h('button', { type: 'submit', class: 'go', disabled: state.busy.uc, id: 'uc-save' }, state.ucEdit != null ? 'Save changes' : 'Add to the list'),
+          h('button', { type: 'button', id: 'uc-close', onclick: closeUC }, 'Never mind')),
+        errLine('uc'))));
+    return out;
+  }
+  // Crew and staff: every team's list, read only.
+  function viewUCAll() {
+    const u = state.uc;
+    if (!u) return h('p', { class: 'muted' }, state.ucFail ? 'The use cases are not available right now. Try again in a minute.' : 'Loading the use cases...');
+    const teams = u.teams || [], all = u.use_cases || [];
+    const withAny = teams.filter(t => all.some(x => x.team_id === t.id)).length;
+    return h('div', { class: 'card', id: 'uc-all' }, h('h2', null, 'USE CASES, ALL TEAMS'),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'uc-count' }, all.length + (all.length === 1 ? ' use case from ' : ' use cases from ') + withAny + ' of ' + teams.length + (teams.length === 1 ? ' team.' : ' teams.') + ' Teams enter these on their Use cases tab.'),
+      teams.length ? teams.map(t => {
+        const mine = all.filter(x => x.team_id === t.id);
+        return h('div', { 'data-ucteam': t.name }, h('p', { class: 'uc-team' }, t.name + (t.room ? ' · Room ' + t.room : '') + ' · ' + mine.length),
+          mine.length ? mine.map((x, i) => ucItem(x, i + 1, true)) : h('p', { class: 'muted', style: 'margin:4px 0 0' }, 'Nothing entered yet.'));
+      }) : h('p', { class: 'muted', style: 'margin:0' }, 'No teams yet. Add teams on the Staff tab first.'));
   }
 
   // ------------------------------------------------------- view: calendar
@@ -1060,15 +1239,46 @@ footer .ebl span{color:var(--evil)}
       h('div', { class: 'what' }, e.title),
       e.host || where ? h('div', { class: 'meta' }, [e.host ? 'With ' + e.host : null, where].filter(Boolean).join(' · ')) : null,
       e.note ? h('div', { class: 'meta' }, e.note) : null,
-      crew ? h('div', { class: 'meta' }, 'Set by ' + (e.by || 'staff') + (e.request_id ? ' · from request #' + e.request_id : '')) : null,
+      crew ? h('div', { class: 'meta' }, e.by_team ? 'Added by the team' + (e.by ? ' (' + e.by + ')' : '') : 'Set by ' + (e.by || 'staff') + (e.request_id ? ' · from request #' + e.request_id : ''))
+        : (e.by_team ? h('div', { class: 'meta', 'data-own': e.id }, 'Added by your team' + (e.by ? ' (' + e.by + ')' : '')) : null),
       crew ? h('div', { class: 'rowbtn' },
         e.active ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-edit', onclick: () => editCal(e) }, 'Change') : null,
         e.active
           ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-cancel', onclick: () => twoTap('k' + e.id, () => setCalActive(e.id, false)) }, state.confirm === 'k' + e.id ? 'Tap again to cancel it' : 'Cancel session')
           : h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-restore', onclick: () => setCalActive(e.id, true) }, 'Put it back'),
         e.active ? h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], true, 'hackathon-session-' + e.id + '.ics') }, 'Add to my calendar') : null)
-        : (e.active ? h('div', { class: 'rowbtn' },
-            h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], false, 'hackathon-session-' + e.id + '.ics') }, 'Add to calendar')) : null));
+        : (e.active || e.by_team ? h('div', { class: 'rowbtn' },
+            e.active && e.by_team ? h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-edit', onclick: () => openSess(e) }, 'Change') : null,
+            e.by_team ? (e.active
+              ? h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-cancel', onclick: () => twoTap('m' + e.id, () => setSessActive(e.id, false)) }, state.confirm === 'm' + e.id ? 'Tap again to cancel it' : 'Cancel session')
+              : h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-restore', onclick: () => setSessActive(e.id, true) }, 'Put it back')) : null,
+            e.active ? h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], false, 'hackathon-session-' + e.id + '.ics') }, 'Add to calendar') : null) : null));
+  }
+  function sessForm() {
+    const d = state.drafts, days = [], today = etNow().day;
+    for (const it of state.pub.schedule) if (days.indexOf(it.day) < 0) days.push(it.day);
+    if (d.m_day && days.indexOf(d.m_day) < 0) days.push(d.m_day);
+    days.sort();
+    if (!d.m_day) d.m_day = days.find(x => x >= today) || days[0];
+    if (!d.m_start) d.m_start = '09:00';
+    if (!d.m_len) d.m_len = '30';
+    const lens = LENS.slice();
+    if (lens.indexOf(+d.m_len) < 0) { lens.push(+d.m_len); lens.sort((a, b) => a - b); }
+    return h('div', { class: 'card gold', id: 'sess-form' }, h('h2', null, state.sessEdit != null ? 'CHANGE YOUR SESSION' : 'ADD YOUR OWN SESSION'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'This goes on your team calendar for your teammates. It does not ask the Flight Crew for anything. To get an expert, use Request an expert.'),
+      form(saveSess,
+        h('label', { for: 'm_title' }, 'WHAT'), input('m_title', { id: 'm_title', maxlength: '80', placeholder: 'e.g., Team standup' }),
+        h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'm_day' }, 'DAY'), select('m_day', days.map(x => ({ value: x, label: dayLabel(x) })), { id: 'm_day' })),
+          h('div', null, h('label', { for: 'm_start' }, 'START (EASTERN)'), input('m_start', { id: 'm_start', type: 'time', step: '300' }))),
+        h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'm_len' }, 'LENGTH'), select('m_len', lens.map(m => ({ value: String(m), label: m + ' minutes' })), { id: 'm_len' })),
+          h('div', null, h('label', { for: 'm_where' }, 'WHERE'), input('m_where', { id: 'm_where', maxlength: '60', placeholder: 'Blank means your room' }))),
+        h('label', { for: 'm_note' }, 'NOTE'), input('m_note', { id: 'm_note', maxlength: '200' }),
+        h('div', { class: 'rowbtn' },
+          h('button', { type: 'submit', class: 'go', disabled: state.busy.sess, id: 'sess-save' }, state.sessEdit != null ? 'Save changes' : 'Put it on our calendar'),
+          h('button', { type: 'button', id: 'sess-close', onclick: closeSess }, 'Never mind')),
+        errLine('sess')));
   }
   function viewCal() {
     const c = state.cal, d = state.drafts;
@@ -1105,7 +1315,7 @@ footer .ebl span{color:var(--evil)}
               h('div', null, h('label', { for: 'c_start' }, 'START (EASTERN)'), input('c_start', { id: 'c_start', type: 'time', step: '300' }))),
             h('div', { class: 'grid2' },
               h('div', null, h('label', { for: 'c_len' }, 'LENGTH'), select('c_len', lens.map(m => ({ value: String(m), label: m + ' minutes' })), { id: 'c_len' })),
-              h('div', null, h('label', { for: 'c_with' }, 'WITH'), input('c_with', { id: 'c_with', maxlength: '60', placeholder: 'e.g., Design team' }))),
+              h('div', null, h('label', { for: 'c_with' }, 'WITH'), input('c_with', { id: 'c_with', maxlength: '60', placeholder: 'A team or a callsign' }))),
             h('label', { for: 'c_where' }, 'WHERE'), input('c_where', { id: 'c_where', maxlength: '60', placeholder: "Leave blank for the team's room" }),
             h('label', { for: 'c_note' }, 'NOTE THE TEAM WILL SEE'), input('c_note', { id: 'c_note', maxlength: '200', placeholder: 'e.g., Bring your use case sheet.' }),
             h('div', { class: 'rowbtn' },
@@ -1131,7 +1341,7 @@ footer .ebl span{color:var(--evil)}
   // ---------------------------------------------------------- view: staff
   function viewStaff() {
     const s = state.staff;
-    if (!state.me.display_name) return nameCard('What name should go on announcements?');
+    if (!state.me.display_name) return nameCard('Pick a callsign. It is recorded with what you post and schedule. No real names.');
     const out = [];
     if (state.pinReveal) {
       const p = state.pinReveal;
@@ -1153,10 +1363,10 @@ footer .ebl span{color:var(--evil)}
       form(staffCreateDoor,
         h('label', { for: 'd_kind' }, 'TYPE'),
         select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
-        h('label', { for: 'd_name' }, 'NAME'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Falcon' }),
+        h('label', { for: 'd_name' }, 'CALLSIGN'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Uniform' }),
         state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
           h('div', null, h('label', { for: 'd_room' }, 'ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
-          h('div', null, h('label', { for: 'd_coach' }, 'COACH'), input('d_coach', { id: 'd_coach', maxlength: '60' }))) : null,
+          h('div', null, h('label', { for: 'd_coach' }, 'COACH CALLSIGN'), input('d_coach', { id: 'd_coach', maxlength: '60' }))) : null,
         h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.door, id: 'door-go' }, 'Create and show PIN')),
         errLine('door'))));
 
@@ -1172,8 +1382,8 @@ footer .ebl span{color:var(--evil)}
           editing ? form(() => staffSaveDoor(d.id),
             h('div', { class: 'grid2' },
               h('div', null, h('label', { for: 'e_room' }, 'ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
-              h('div', null, h('label', { for: 'e_coach' }, 'COACH'), input('e_coach', { id: 'e_coach', maxlength: '60' }))),
-            h('label', { for: 'e_name' }, 'NAME'), input('e_name', { id: 'e_name', maxlength: '60' }),
+              h('div', null, h('label', { for: 'e_coach' }, 'COACH CALLSIGN'), input('e_coach', { id: 'e_coach', maxlength: '60' }))),
+            h('label', { for: 'e_name' }, 'CALLSIGN'), input('e_name', { id: 'e_name', maxlength: '60' }),
             h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-door' }, 'Save'),
               h('button', { type: 'button', onclick: () => { state.editDoor = null; render(); } }, 'Never mind')))
           : h('div', { class: 'rowbtn' },
@@ -1188,7 +1398,7 @@ footer .ebl span{color:var(--evil)}
   
 
   // ---------------------------------------------------------------- boot
-  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0;
+  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0, lastUC = 0;
   async function tick() {
     const now = Date.now();
     const ae = document.activeElement;
@@ -1205,6 +1415,7 @@ footer .ebl span{color:var(--evil)}
       if (state.me.kind !== 'team' && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
       if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastStaff > 30000) { lastStaff = now; loadStaff(false); }
       if (now - lastCal > 60000) { lastCal = now; loadCal(false); }
+      if (now - lastUC > 60000 && (state.tab === 'uc' || (state.tab === 'crew' && state.crewTab === 'uc'))) { lastUC = now; loadUC(false); }
     }
   }
   async function boot() {
@@ -1229,7 +1440,7 @@ footer .ebl span{color:var(--evil)}
     }
     setInterval(tick, 5000);
     setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = 0; tick(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = lastUC = 0; tick(); } });
     window.addEventListener('focus', seen);
     // Browsers only let sound start after a tap or a key press. After a reload, the first one turns it back on.
     document.addEventListener('pointerdown', () => { if (state.alerts) audioOn(); seen(); }, { passive: true });
