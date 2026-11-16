@@ -88,6 +88,17 @@ input.pin{font-size:24px;letter-spacing:.3em;text-align:center;-webkit-text-secu
 .st{font-size:11px;letter-spacing:.1em;font-weight:700;border-radius:4px;padding:2px 8px;border:1px solid currentColor;white-space:nowrap}
 .st.new{color:var(--gold)} .st.claimed{color:var(--cyan)} .st.on_the_way{color:var(--green)}
 .st.done,.st.cancelled{color:var(--dim)}
+.cal{border-top:1px solid var(--line);padding:12px 0}
+.cal:first-of-type{border-top:0}
+.cal .head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.cal .when{color:var(--gold);font-weight:700;font-size:14px}
+.cal .team{color:var(--cyan);font-weight:700;margin-top:4px}
+.cal .what{font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+.cal .meta{color:var(--dim);font-size:14px;margin-top:2px;overflow-wrap:anywhere}
+.cal.off .when,.cal.off .what{color:var(--dim);text-decoration:line-through}
+.calday{margin-top:6px}
+.row.mine .time{color:var(--cyan)}
+.badge.mine{color:var(--cyan)}
 .pinshow{font-size:clamp(28px,9vw,44px);letter-spacing:.24em;font-weight:700;color:var(--gold);margin:8px 0;overflow-wrap:anywhere}
 .door{border-top:1px solid var(--line);padding:12px 0}
 .door:first-of-type{border-top:0}
@@ -162,6 +173,8 @@ footer .ebl span{color:var(--evil)}
   }
   const KIND = { session: 'EXPERT SESSION', technical: 'TECHNICAL REQUEST', stay_late: 'STAY LATE' };
   const STATUS = { new: 'NEW', claimed: 'CLAIMED', on_the_way: 'ON THE WAY', done: 'DONE', cancelled: 'CANCELLED' };
+  const WHAT = ['Prototype workshop with the design team', 'Expert session', 'Coach check-in'];
+  const LENS = [15, 20, 30, 45, 60, 90, 120];
   const TECH = ['Synthetic data', 'Front end', 'Back end', 'Business AI Platform', 'Environment access', "Something's broken", 'Other'];
   const ERR = {
     invalid: 'That PIN did not work. Check it and try again.',
@@ -175,6 +188,9 @@ footer .ebl span{color:var(--evil)}
     name_taken: 'That name is already in use.',
     full: 'The list is full. Find a cowboy hat.',
     not_found: 'That item is gone. Refresh and try again.',
+    crew_only: 'Only the Flight Crew can do that.',
+    bad_time: 'Check the day, the start time, and the length.',
+    cal_full: 'That team already has 60 sessions. Cancel one first.',
     cannot_disable_self: 'You cannot turn off the door you came in through.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
@@ -184,7 +200,7 @@ footer .ebl span{color:var(--evil)}
   // -------------------------------------------------------------- state
   const state = {
     pub: null, offset: 0, token: store.get('ev_token'), me: null,
-    team: null, crew: null, staff: null,
+    team: null, crew: null, staff: null, cal: null, calEdit: null,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
     editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
@@ -222,6 +238,10 @@ footer .ebl span{color:var(--evil)}
       state.offline = true;
       return { ok: false, error: 'network' };
     }
+  }
+  // The calendar is an add-on. A failed calendar read never raises the offline notice.
+  async function quiet(fn, args) {
+    try { return await api(fn, args); } catch (e) { return { ok: false, error: 'network' }; }
   }
 
   // ------------------------------------------------------------ loaders
@@ -273,6 +293,12 @@ footer .ebl span{color:var(--evil)}
     document.title = (n ? '(' + n + ') ' : '') + 'A&D AI Hackathon 2026';
     if (changed('crew', r) || force) { state.crew = r; render(); }
   }
+  async function loadCal(force) {
+    if (!state.token || !state.me) return;
+    const r = await quiet('event_calendar', { p_token: state.token });
+    if (!r || !r.ok) return;
+    if (changed('cal', r) || force) { state.cal = r; render(); }
+  }
   async function loadStaff(force) {
     if (!state.token || !state.me || state.me.kind !== 'staff') return;
     const r = await call('event_staff_state', { p_token: state.token });
@@ -281,6 +307,7 @@ footer .ebl span{color:var(--evil)}
   }
   function signedOut(why) {
     state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
+    state.cal = null; state.calEdit = null;
     state.last = { pub: state.last.pub };
     store.del('ev_token');
     state.err.pin = why || null;
@@ -291,8 +318,18 @@ footer .ebl span{color:var(--evil)}
   function uniqueDays() {
     const out = [];
     for (const it of state.pub.schedule) if (out.indexOf(it.day) < 0) out.push(it.day);
-    return out;
+    for (const e of myEvents()) if (e.active && out.indexOf(e.day) < 0) out.push(e.day);
+    return out.sort();
   }
+  // A team's own sessions. Empty for crew, staff, and visitors.
+  function myEvents() {
+    return state.me && state.me.kind === 'team' && state.cal ? state.cal.events : [];
+  }
+  const minsOf = hm => { const p = hm.split(':'); return +p[0] * 60 + +p[1]; };
+  const hmOf = m => { m = Math.max(0, Math.min(1439, m)); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const endOf = e => hmOf(minsOf(e.start) + e.minutes);
+  const span = e => fmtTime(e.start) + ' to ' + fmtTime(endOf(e)) + ' ET';
+  const linked = r => state.cal ? state.cal.events.find(x => x.request_id === r.id && x.active) : null;
 
   // ------------------------------------------------------------- actions
   async function withBusy(key, fn) {
@@ -313,6 +350,7 @@ footer .ebl span{color:var(--evil)}
       await loadTeam(true);
       if (r.me.kind !== 'team') await loadCrew(true);
       if (r.me.kind === 'staff') await loadStaff(true);
+      loadCal(true);
     });
   }
   function doName() {
@@ -432,6 +470,135 @@ footer .ebl span{color:var(--evil)}
     await loadStaff(true);
   }
 
+  // ------------------------------------------------------------ calendar
+  const CAL_KEYS = ['c_team', 'c_what', 'c_own', 'c_day', 'c_start', 'c_len', 'c_where', 'c_with', 'c_note', 'c_req'];
+  function resetCalForm(keepNote) {
+    CAL_KEYS.forEach(k => delete state.drafts[k]);
+    state.calEdit = null; state.err.cal = null;
+    if (keepNote !== true) state.note.cal = null;
+    render();
+  }
+  function saveCal() {
+    return withBusy('cal', async () => {
+      state.err.cal = null; state.note.cal = null;
+      const d = state.drafts, editing = state.calEdit;
+      const title = (d.c_what === '__own' ? (d.c_own || '') : (d.c_what || '')).trim();
+      if (!title) { state.err.cal = 'Say what the session is.'; return; }
+      if (!/^\d\d:\d\d$/.test(d.c_start || '')) { state.err.cal = 'Pick a start time.'; return; }
+      const len = +d.c_len || 30;
+      const r = await call('event_calendar_save', {
+        p_token: state.token, p_id: editing, p_door_id: editing ? null : (d.c_team || null), p_title: title,
+        p_day: d.c_day, p_start: d.c_start, p_minutes: len, p_location: d.c_where || null, p_host: d.c_with || null,
+        p_note: d.c_note || null, p_request_id: editing ? null : (d.c_req ? +d.c_req : null)
+      });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.cal = msg(r.error); return; }
+      const e = r.event;
+      let note = (editing ? 'Saved: ' : 'On the calendar: ') + e.team + ', ' + dayLabel(e.day) + ' ' + fmtTime(e.start) + ' ET.';
+      if (r.overlap) note += ' Heads up: this team has another session at that time.';
+      if (editing || d.c_req) {
+        CAL_KEYS.forEach(k => delete d[k]);
+        state.calEdit = null;
+      } else {
+        // Load the next slot: same session, the next team that does not have it yet, start moved by the length.
+        const teams = (state.cal && state.cal.teams) || [], evs = (state.cal && state.cal.events) || [];
+        const has = t => t.id === d.c_team || evs.some(x => x.active && x.team_id === t.id && x.day === d.c_day && x.title === title);
+        const i = teams.findIndex(t => t.id === d.c_team);
+        let next = null;
+        for (let k = 1; k <= teams.length && !next; k++) { const t = teams[(i + k) % teams.length]; if (!has(t)) next = t; }
+        if (next) {
+          d.c_team = next.id;
+          d.c_start = hmOf(minsOf(d.c_start) + len);
+          note += ' Next slot is loaded: ' + next.name + ', ' + fmtTime(d.c_start) + '.';
+        } else if (teams.length > 1) {
+          note += ' Every team now has this session on ' + dayLabel(d.c_day) + '.';
+        }
+        delete d.c_where; delete d.c_note;
+      }
+      state.note.cal = note;
+      await loadCal(true);
+    });
+  }
+  function editCal(e) {
+    const d = state.drafts, preset = WHAT.indexOf(e.title) >= 0;
+    CAL_KEYS.forEach(k => delete d[k]);
+    state.calEdit = e.id;
+    d.c_what = preset ? e.title : '__own'; d.c_own = preset ? '' : e.title;
+    d.c_day = e.day; d.c_start = e.start; d.c_len = String(e.minutes);
+    d.c_where = e.location || ''; d.c_with = e.host || ''; d.c_note = e.note || '';
+    state.err.cal = null; state.note.cal = null;
+    render();
+    window.scrollTo(0, 0);
+  }
+  async function setCalActive(id, active) {
+    state.err.cal = null;
+    const r = await call('event_calendar_set_active', { p_token: state.token, p_id: id, p_active: active });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.cal = msg(r.error); render(); return; }
+    if (state.calEdit === id) { CAL_KEYS.forEach(k => delete state.drafts[k]); state.calEdit = null; }
+    state.note.cal = null;
+    await loadCal(true);
+  }
+  // From a request in the crew queue: open the calendar form for that team, linked to the request.
+  async function calFromRequest(r) {
+    if (!state.cal) await loadCal(true);
+    const c = state.cal;
+    if (!c) return;
+    state.crewTab = 'cal';
+    const ev = linked(r);
+    if (ev) return editCal(ev);
+    const d = state.drafts, team = (c.teams || []).find(t => t.name === r.team);
+    CAL_KEYS.forEach(k => delete d[k]);
+    state.calEdit = null; state.err.cal = null; state.note.cal = null;
+    if (team) d.c_team = team.id;
+    d.c_what = '__own';
+    d.c_own = ((r.kind === 'session' ? 'Expert session: ' : 'Technical help: ') + (r.topic || r.category || '')).slice(0, 80);
+    d.c_req = String(r.id);
+    render();
+    window.scrollTo(0, 0);
+  }
+  // The instant in time for an Eastern wall-clock day and time.
+  function etToUtc(day, hm) {
+    const a = day.split('-').map(Number), b = hm.split(':').map(Number);
+    const wall = Date.UTC(a[0], a[1] - 1, a[2], b[0], b[1]);
+    let t = wall;
+    for (let i = 0; i < 2; i++) {
+      const p = {};
+      for (const x of etFmt.formatToParts(new Date(t))) p[x.type] = x.value;
+      t += wall - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+    }
+    return new Date(t);
+  }
+  // A calendar file (.ics) that Outlook, Apple Calendar, and Google Calendar can open.
+  function icsText(list, withTeam) {
+    const pad = n => String(n).padStart(2, '0');
+    const f = d => d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z';
+    const esc = v => String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+    const fold = v => { const out = []; while (v.length > 73) { out.push(v.slice(0, 73)); v = ' ' + v.slice(73); } out.push(v); return out.join('\r\n'); };
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Evil Brain Labs//A&D AI Hackathon 2026//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+    const stamp = f(new Date());
+    for (const e of list) {
+      const start = etToUtc(e.day, e.start), end = new Date(start.getTime() + e.minutes * 60000);
+      const room = withTeam ? e.room : (state.me ? state.me.room : null);
+      const where = e.location || (room ? 'Room ' + room : '');
+      const desc = [e.host ? 'With ' + e.host : '', e.note || '', 'A&D AI Hackathon 2026, IBM One Madison'].filter(Boolean).join('\n');
+      L.push('BEGIN:VEVENT', 'UID:session-' + e.id + '@easyassap.com', 'DTSTAMP:' + stamp, 'DTSTART:' + f(start), 'DTEND:' + f(end),
+        fold('SUMMARY:' + esc(e.title + (withTeam && e.team ? ' (' + e.team + ')' : ''))));
+      if (where) L.push(fold('LOCATION:' + esc(where)));
+      L.push(fold('DESCRIPTION:' + esc(desc)), 'END:VEVENT');
+    }
+    L.push('END:VCALENDAR');
+    return L.join('\r\n') + '\r\n';
+  }
+  function saveIcs(list, withTeam, name) {
+    try {
+      const url = URL.createObjectURL(new Blob([icsText(list, withTeam)], { type: 'text/calendar;charset=utf-8' }));
+      const a = h('a', { href: url, download: name, style: 'display:none' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) {}
+  }
+
   // -------------------------------------------------------------- fields
   function input(key, attrs) {
     const el = h('input', Object.assign({ 'data-key': key, autocomplete: 'off' }, attrs));
@@ -516,6 +683,7 @@ footer .ebl span{color:var(--evil)}
     state.tab = tab; state.err = {}; state.confirm = null;
     if (tab === 'crew') loadCrew(true);
     if (tab === 'staff') loadStaff(true);
+    if (state.me) loadCal(false);
     render();
     window.scrollTo(0, 0);
   }
@@ -523,9 +691,20 @@ footer .ebl span{color:var(--evil)}
   // ------------------------------------------------------- view: schedule
   function viewSchedule() {
     if (!state.pub) return h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The schedule is not available right now. Try again in a minute.'));
-    const items = state.pub.schedule, n = etNow(), nowKey = n.day + ' ' + n.hm;
+    const n = etNow(), nowKey = n.day + ' ' + n.hm, key = it => it.day + ' ' + it.start;
+    // A signed-in team sees its own sessions in line with the event schedule.
+    const mine = myEvents().filter(e => e.active).map(e => ({
+      id: 'e' + e.id, day: e.day, start: e.start, end: endOf(e), time_label: null, title: e.title, mine: true,
+      detail: span(e) + (e.host ? ' · With ' + e.host : ''), note: e.note,
+      location: e.location || (state.me.room ? 'Room ' + state.me.room : null)
+    }));
+    const items = state.pub.schedule.concat(mine).sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
     let cur = null, next = null;
-    for (const it of items) { if (it.day + ' ' + it.start <= nowKey) cur = it; else { next = it; break; } }
+    for (const it of items) {
+      // A team session stops being "now" when it ends. A schedule block runs until the next one starts.
+      if (key(it) <= nowKey) { if (!it.mine || nowKey < it.day + ' ' + it.end) cur = it; }
+      else { next = it; break; }
+    }
     if (cur && cur.day !== n.day) cur = null;
     const when = it => (it.day === n.day ? '' : dayLabel(it.day) + ' · ') + (it.time_label || fmtTime(it.start)) + ' ET';
 
@@ -543,11 +722,14 @@ footer .ebl span{color:var(--evil)}
 
     out.push(h('div', { class: 'card' }, h('h2', null, dayLabel(state.day) + ' · ALL TIMES EASTERN'),
       items.filter(it => it.day === state.day).map(it =>
-        h('div', { class: 'row' },
+        h('div', { class: 'row' + (it.mine ? ' mine' : '') },
           h('div', { class: 'time' }, it.time_label || fmtTime(it.start)),
           h('div', null,
-            h('div', { class: 'title' }, it.title, cur && cur.id === it.id ? h('span', { class: 'badge now' }, 'NOW') : null),
+            h('div', { class: 'title' }, it.title,
+              it.mine ? h('span', { class: 'badge mine' }, 'YOUR TEAM') : null,
+              cur && cur.id === it.id ? h('span', { class: 'badge now' }, 'NOW') : null),
             it.detail ? h('div', { class: 'detail' }, it.detail) : null,
+            it.note ? h('div', { class: 'detail' }, it.note) : null,
             it.location ? h('div', { class: 'loc' }, it.location) : null)))));
 
     if (state.pub.topics.length) {
@@ -606,6 +788,11 @@ footer .ebl span{color:var(--evil)}
     const out = [];
     out.push(whoCard(me.name,
       (me.room ? 'Room ' + me.room : 'Room not assigned yet') + (me.coach ? ' · Coach: ' + me.coach : '') + ' · Signed in as ' + me.display_name));
+
+    const today = etNow().day, evs = myEvents().filter(e => e.day >= today);
+    out.push(h('div', { class: 'card', id: 'my-cal' }, h('h2', null, "YOUR TEAM'S CALENDAR"),
+      evs.length ? evs.map(e => calItem(e, false))
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled for your team yet. Workshops and expert visits show up here.')));
 
     out.push(h('div', { class: 'rowbtn', style: 'margin:0 0 14px' },
       h('button', { type: 'button', class: state.form === 'session' ? 'on' : 'go', id: 'btn-session', onclick: () => openForm('session') }, 'Request an expert'),
@@ -672,6 +859,7 @@ footer .ebl span{color:var(--evil)}
     if (!crew && r.status === 'claimed' && r.claimed_by) line = r.claimed_by + ' has it.';
     if (!crew && r.status === 'on_the_way' && r.claimed_by) line = r.claimed_by + ' is on the way.';
     if (crew && r.claimed_by && open) line = 'Owner: ' + r.claimed_by;
+    const ce = linked(r);
     return h('div', { class: 'req', 'data-req': r.id },
       h('div', { class: 'head' },
         h('span', { class: 'kind' }, '#' + r.id + ' · ' + KIND[r.kind]),
@@ -681,6 +869,8 @@ footer .ebl span{color:var(--evil)}
       r.details ? h('div', { class: 'body' }, r.details) : null,
       h('div', { class: 'meta' }, meta.join(' · ')),
       line ? h('div', { class: 'meta', style: 'color:var(--paper)' }, line) : null,
+      ce ? h('div', { class: 'meta', style: 'color:var(--cyan)', 'data-linked': ce.id },
+        (crew ? 'On their calendar: ' : 'On your calendar: ') + dayLabel(ce.day) + ' · ' + fmtTime(ce.start) + ' ET' + (ce.host ? ' with ' + ce.host : '')) : null,
       r.crew_note ? h('div', { class: 'note' }, (crew ? 'Note to team: ' : 'Note from the crew: ') + r.crew_note) : null,
       crew ? crewButtons(r, open) : (open ? h('div', { class: 'rowbtn' },
         h('button', { type: 'button', class: 'quiet', 'data-cancel': r.id, onclick: () => twoTap('c' + r.id, () => cancelRequest(r.id)) },
@@ -695,6 +885,7 @@ footer .ebl span{color:var(--evil)}
     if (r.status === 'claimed') btns.push(b('On my way', 'go', () => crewUpdate(r.id, 'on_the_way', null), 'otw'));
     if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Done', r.status === 'on_the_way' ? 'go' : null, () => crewUpdate(r.id, 'done', null), 'done'));
     if (open) btns.push(b(state.noteOpen === r.id ? 'Close note' : 'Note to team', null, () => { state.noteOpen = state.noteOpen === r.id ? null : r.id; if (state.noteOpen) state.drafts['note_' + r.id] = r.crew_note || ''; render(); }, 'note'));
+    if (open && r.kind !== 'stay_late') btns.push(b(linked(r) ? 'Change time' : 'Set a time', null, () => calFromRequest(r), 'settime'));
     if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Release', 'quiet', () => crewUpdate(r.id, 'new', null), 'release'));
     if (open) btns.push(b(state.confirm === 'x' + r.id ? 'Tap again to cancel' : 'Cancel', 'quiet', () => twoTap('x' + r.id, () => crewUpdate(r.id, 'cancelled', null)), 'cancel'));
     if (!open) btns.push(b('Reopen', 'quiet', () => crewUpdate(r.id, 'new', null), 'reopen'));
@@ -712,8 +903,8 @@ footer .ebl span{color:var(--evil)}
     out.push(whoCard('Flight Crew console', 'Signed in as ' + me.display_name + (me.kind === 'staff' ? ' · staff' : '')));
     if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
     const waiting = c.free_agents.filter(f => !f.placed).length;
-    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')']];
-    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; render(); } }, t[1]))));
+    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar']];
+    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); render(); } }, t[1]))));
     if (state.err.crew) out.push(errLine('crew'));
     if (state.crewTab === 'open') out.push(h('div', { class: 'card', id: 'queue' }, h('h2', null, 'OPEN REQUESTS, OLDEST FIRST'),
       c.open.length ? c.open.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Queue is clear.')));
@@ -729,6 +920,87 @@ footer .ebl span{color:var(--evil)}
           : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team name', maxlength: '60', 'aria-label': 'Team name', style: 'flex:2 1 160px' }),
               h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'))))
         : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.')));
+    if (state.crewTab === 'cal') out.push(viewCal());
+    return out;
+  }
+
+  // ------------------------------------------------------- view: calendar
+  function calItem(e, crew) {
+    const room = crew ? e.room : state.me.room;
+    const where = e.location || (room ? 'Room ' + room : null);
+    return h('div', { class: 'cal' + (e.active ? '' : ' off'), 'data-cal': e.id },
+      h('div', { class: 'head' },
+        h('span', { class: 'when' }, dayLabel(e.day) + ' · ' + span(e)),
+        e.active ? null : h('span', { class: 'st cancelled' }, 'CANCELLED')),
+      crew ? h('div', { class: 'team' }, e.team + (e.room ? ' · Room ' + e.room : '')) : null,
+      h('div', { class: 'what' }, e.title),
+      e.host || where ? h('div', { class: 'meta' }, [e.host ? 'With ' + e.host : null, where].filter(Boolean).join(' · ')) : null,
+      e.note ? h('div', { class: 'meta' }, e.note) : null,
+      crew ? h('div', { class: 'meta' }, 'Set by ' + (e.by || 'staff') + (e.request_id ? ' · from request #' + e.request_id : '')) : null,
+      crew ? h('div', { class: 'rowbtn' },
+        e.active ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-edit', onclick: () => editCal(e) }, 'Change') : null,
+        e.active
+          ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-cancel', onclick: () => twoTap('k' + e.id, () => setCalActive(e.id, false)) }, state.confirm === 'k' + e.id ? 'Tap again to cancel it' : 'Cancel session')
+          : h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-restore', onclick: () => setCalActive(e.id, true) }, 'Put it back'),
+        e.active ? h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], true, 'hackathon-session-' + e.id + '.ics') }, 'Add to my calendar') : null)
+        : (e.active ? h('div', { class: 'rowbtn' },
+            h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], false, 'hackathon-session-' + e.id + '.ics') }, 'Add to calendar')) : null));
+  }
+  function viewCal() {
+    const c = state.cal, d = state.drafts;
+    if (!c) return h('p', { class: 'muted' }, 'Loading the calendar...');
+    const out = [], teams = c.teams || [];
+    const editing = state.calEdit != null ? c.events.find(e => e.id === state.calEdit) : null;
+    if (state.calEdit != null && !editing) state.calEdit = null;
+
+    const days = [];
+    for (const it of state.pub.schedule) if (days.indexOf(it.day) < 0) days.push(it.day);
+    if (editing && days.indexOf(editing.day) < 0) days.push(editing.day);
+    days.sort();
+    const today = etNow().day;
+    if (!d.c_day) d.c_day = days.find(x => x >= today) || days[0];
+    if (!d.c_start) d.c_start = '09:00';
+    if (!d.c_len) d.c_len = '30';
+    const lens = LENS.slice();
+    if (lens.indexOf(+d.c_len) < 0) { lens.push(+d.c_len); lens.sort((a, b) => a - b); }
+
+    out.push(h('div', { class: 'card gold', id: 'cal-form' },
+      h('h2', null, editing ? 'CHANGE A SESSION' : "PUT A SESSION ON A TEAM'S CALENDAR"),
+      !teams.length && !editing
+        ? h('p', { class: 'muted', style: 'margin:0' }, 'No teams yet. Add teams on the Staff tab first.')
+        : form(saveCal,
+            editing
+              ? h('p', { style: 'margin:0', id: 'cal-editing' }, h('strong', null, editing.team), editing.room ? ' · Room ' + editing.room : '')
+              : [h('label', { for: 'c_team' }, 'TEAM'),
+                 select('c_team', teams.map(t => ({ value: t.id, label: t.name + (t.room ? ' · Room ' + t.room : '') })), { id: 'c_team' })],
+            h('label', { for: 'c_what' }, 'WHAT'),
+            select('c_what', WHAT.map(w => ({ value: w, label: w })).concat([{ value: '__own', label: 'Something else (write your own)' }]), { id: 'c_what' }),
+            d.c_what === '__own' ? [h('label', { for: 'c_own' }, 'TITLE'), input('c_own', { id: 'c_own', maxlength: '80' })] : null,
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'c_day' }, 'DAY'), select('c_day', days.map(x => ({ value: x, label: dayLabel(x) })), { id: 'c_day' })),
+              h('div', null, h('label', { for: 'c_start' }, 'START (EASTERN)'), input('c_start', { id: 'c_start', type: 'time', step: '300' }))),
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'c_len' }, 'LENGTH'), select('c_len', lens.map(m => ({ value: String(m), label: m + ' minutes' })), { id: 'c_len' })),
+              h('div', null, h('label', { for: 'c_with' }, 'WITH'), input('c_with', { id: 'c_with', maxlength: '60', placeholder: 'e.g., Design team' }))),
+            h('label', { for: 'c_where' }, 'WHERE'), input('c_where', { id: 'c_where', maxlength: '60', placeholder: "Leave blank for the team's room" }),
+            h('label', { for: 'c_note' }, 'NOTE THE TEAM WILL SEE'), input('c_note', { id: 'c_note', maxlength: '200', placeholder: 'e.g., Bring your use case sheet.' }),
+            h('div', { class: 'rowbtn' },
+              h('button', { type: 'submit', class: 'go', disabled: state.busy.cal, id: 'cal-save' }, editing ? 'Save changes' : 'Put it on their calendar'),
+              editing || d.c_req ? h('button', { type: 'button', id: 'cal-reset', onclick: resetCalForm }, 'Never mind') : null),
+            d.c_req && !editing ? h('p', { class: 'muted', id: 'cal-linked' }, 'Linked to request #' + d.c_req + '. The team sees the time on that request.') : null),
+      errLine('cal'),
+      state.note.cal ? h('div', { class: 'ok', id: 'cal-ok' }, state.note.cal) : null));
+
+    const act = c.events.filter(e => e.active), off = c.events.filter(e => !e.active);
+    const byDay = [];
+    for (const e of act) { let g = byDay.find(x => x.day === e.day); if (!g) byDay.push(g = { day: e.day, items: [] }); g.items.push(e); }
+    out.push(h('div', { class: 'card', id: 'cal-list' }, h('h2', null, 'ON THE CALENDAR, ALL TEAMS'),
+      act.length
+        ? [byDay.map(g => h('div', { class: 'calday' }, h('label', null, dayLabel(g.day) + ' · ' + g.items.length), g.items.map(e => calItem(e, true)))),
+           h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'cal-all', onclick: () => saveIcs(act, true, 'hackathon-sessions.ics') },
+             'Add all ' + act.length + ' to my calendar'))]
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled yet.'),
+      off.length ? h('div', { class: 'calday' }, h('label', null, 'CANCELLED'), off.map(e => calItem(e, true))) : null));
     return out;
   }
 
@@ -790,17 +1062,18 @@ footer .ebl span{color:var(--evil)}
   
 
   // ---------------------------------------------------------------- boot
-  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0;
+  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0;
   async function tick() {
     if (document.hidden) return;
     const now = Date.now();
     const ae = document.activeElement;
-    if (ae && ae.tagName === 'SELECT') return;
+    if (ae && (ae.tagName === 'SELECT' || ae.type === 'time')) return;
     if (now - lastPub > 60000) { lastPub = now; loadPublic(false); }
     if (state.token && state.me) {
       if (state.me.kind === 'team' && now - lastTeam > 20000) { lastTeam = now; loadTeam(false); }
       if (state.me.kind !== 'team' && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
       if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastStaff > 30000) { lastStaff = now; loadStaff(false); }
+      if (now - lastCal > 60000) { lastCal = now; loadCal(false); }
     }
   }
   async function boot() {
@@ -819,11 +1092,13 @@ footer .ebl span{color:var(--evil)}
         state.tab = state.me.kind === 'team' ? 'team' : 'crew';
         if (state.me.kind === 'staff') await loadStaff(true);
         render();
+        lastCal = Date.now();
+        loadCal(true);
       }
     }
     setInterval(tick, 5000);
     setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPub = lastTeam = lastCrew = lastStaff = 0; tick(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { lastPub = lastTeam = lastCrew = lastStaff = lastCal = 0; tick(); } });
   }
   boot();
 })();
