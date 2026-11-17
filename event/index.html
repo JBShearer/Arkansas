@@ -216,6 +216,7 @@ footer .ebl span{color:var(--evil)}
     bad_name: 'Use 2 to 40 characters.',
     rename_limit: 'Your team has changed its callsign 20 times. Find a cowboy hat.',
     cannot_disable_self: 'You cannot turn off the door you came in through.',
+    teams_only: 'Only teams can be deleted.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
   };
@@ -229,7 +230,7 @@ footer .ebl span{color:var(--evil)}
     uc: null, ucFail: false, ucOpen: false, ucEdit: null,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
-    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}
+    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}, showDeleted: false
   };
 
   // ---------------------------------------------------------------- api
@@ -610,7 +611,12 @@ footer .ebl span{color:var(--evil)}
       state.err.door = null;
       const d = state.drafts;
       const r = await call('event_staff_create_door', { p_token: state.token, p_kind: d.d_kind || 'team', p_name: d.d_name || '', p_room: d.d_room || null, p_coach: d.d_coach || null });
-      if (!r.ok) { state.err.door = msg(r.error); return; }
+      if (!r.ok) {
+        const want = (d.d_name || '').trim().toLowerCase();
+        state.err.door = r.error === 'name_taken' && deletedDoors().some(x => x.name.toLowerCase() === want)
+          ? 'A deleted team has that callsign. Put it back from the deleted teams below.' : msg(r.error);
+        return;
+      }
       state.pinReveal = { name: r.name, kind: r.kind, pin: r.pin };
       ['d_name', 'd_room', 'd_coach'].forEach(k => delete d[k]);
       await loadStaff(true);
@@ -639,6 +645,18 @@ footer .ebl span{color:var(--evil)}
     state.err.staff = null;
     await loadStaff(true);
   }
+  // Delete takes a team off the Staff tab and turns off its PIN. The row is kept, so staff can put it back.
+  async function staffRemoveDoor(id, removed) {
+    const r = await call('event_staff_remove_door', { p_token: state.token, p_door_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    if (state.editDoor === id) state.editDoor = null;
+    await Promise.all([loadStaff(true), loadCrew(true)]);
+  }
+  const deletedDoors = () => (state.staff && state.staff.deleted) || [];
+  const delWarn = d => (d.people || d.open
+    ? d.people + (d.people === 1 ? ' device is' : ' devices are') + ' signed in and ' + d.open + (d.open === 1 ? ' request is' : ' requests are') + ' open. ' : '')
+    + 'Deleting turns off the PIN and takes the team off this list. You can put it back.';
   async function staffResetPin(door) {
     const r = await call('event_staff_reset_pin', { p_token: state.token, p_door_id: door.id });
     if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
@@ -1491,8 +1509,20 @@ footer .ebl span{color:var(--evil)}
                 eventDays().forEach(day => { state.drafts['e_rd_' + day] = ((d.rooms || []).find(x => x.day === day) || {}).room || ''; }); render(); } }, 'Edit'),
               mine ? h('span', { class: 'muted', style: 'align-self:center' }, 'You are signed in through this one.') : [
               h('button', { type: 'button', class: 'quiet', 'data-act': 'reset-pin', onclick: () => twoTap('r' + d.id, () => staffResetPin(d)) }, state.confirm === 'r' + d.id ? 'Tap again: signs everyone out' : 'Reset PIN'),
-              h('button', { type: 'button', class: 'quiet', 'data-act': 'toggle-door', onclick: () => twoTap('t' + d.id, () => staffToggleDoor(d)) }, state.confirm === 't' + d.id ? 'Tap again to confirm' : (d.active ? 'Turn off' : 'Turn on'))]));
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'toggle-door', onclick: () => twoTap('t' + d.id, () => staffToggleDoor(d)) }, state.confirm === 't' + d.id ? 'Tap again to confirm' : (d.active ? 'Turn off' : 'Turn on')),
+              d.kind === 'team' ? h('button', { type: 'button', class: 'quiet', 'data-act': 'remove-door', onclick: () => twoTap('z' + d.id, () => staffRemoveDoor(d.id, true)) }, state.confirm === 'z' + d.id ? 'Tap again to delete' : 'Delete') : null]),
+          !editing && state.confirm === 'z' + d.id ? h('div', { 'data-warn': d.name, style: 'font-size:14px;margin-top:10px;color:var(' + (d.people || d.open ? '--gold' : '--dim') + ')' }, delWarn(d)) : null);
       }) : h('p', { class: 'muted' }, 'Loading...')));
+    const del = deletedDoors();
+    if (del.length) out.push(h('div', { class: 'card', id: 'deleted-doors' }, h('h2', null, 'DELETED TEAMS (' + del.length + ')'),
+      state.showDeleted
+        ? [del.map(d => h('div', { class: 'door', 'data-deleted': d.name },
+            h('div', null, h('span', { class: 'n' }, d.name)),
+            h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Deleted' + (d.by ? ' by ' + d.by : '')),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'restore-door', onclick: () => staffRemoveDoor(d.id, false) }, 'Put back')))),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', id: 'deleted-hide', onclick: () => { state.showDeleted = false; render(); } }, 'Hide'))]
+        : [h('p', { class: 'muted', style: 'margin-top:0', id: 'deleted-how' }, 'Their PINs are off. Put a team back and its PIN works again.'),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', id: 'deleted-show', onclick: () => { state.showDeleted = true; render(); } }, 'Show'))]));
     return out;
   }
 
