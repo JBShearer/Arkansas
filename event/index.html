@@ -73,6 +73,14 @@ button[disabled]{opacity:.5;cursor:default}
 .more .ms{font-weight:700;margin-top:12px}
 .more .mp{margin-top:6px}
 .more .mi{margin-top:6px;padding-left:14px;text-indent:-14px}
+.crit{border-top:1px solid var(--line);padding:12px 0}
+.crit .cn{font-weight:700}
+.crit .cw{color:var(--dim);font-weight:400;font-size:13px}
+.pick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.pick.two{grid-template-columns:repeat(2,1fr)}
+.pick button{padding:12px 0}
+.jtotal{margin-top:14px;font-weight:700;color:var(--gold)}
+.jc{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
 .badge{display:inline-block;font-size:11px;letter-spacing:.1em;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:1px}
 .badge.now{color:var(--green)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -139,7 +147,7 @@ footer .ebl span{color:var(--evil)}
 (function () {
   'use strict';
   const CONFIG = {"mode":"live","url":"https://hbnmlfdauuvhpdhodohe.supabase.co","keys":["sb_publishable_7asZnEgU-EkSCXJSD45iYw_WbJT9z-9","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhibm1sZmRhdXV2aHBkaG9kb2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3Njg4NzIsImV4cCI6MjExMDM0NDg3Mn0.jf_BFoZSHNJ_jyeFiIuUK0BbMomDlnUQFv4BN0r9Bng"]};
-  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison","more":null},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium","more":null},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium","more":null},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium","more":null},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms","more":null},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms","more":null},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null,"more":null},{"id":12,"day":"2026-11-18","start":"18:00","time_label":null,"title":"Celebration Night","detail":"6:00 to 9:00 PM, for all participants. Sponsored by Resolve Tech Solutions (RTS). Open bar, sushi, passed hors d'oeuvres, a carving board, dessert, and a DJ. Bring a government ID: the venue is 21 and over. Coat, hat, and bag check on the ground floor.","location":"Dear Irving on Hudson rooftop, 41st floor, Aliz Hotel, 310 West 40th Street","more":"# Getting in\nThe venue is 21 and over. Show a valid government ID at the lobby host stand. A photo or a printout of an ID is not accepted.\nCoat, hat, and bag check: ground floor, behind the lobby elevators. Laptop bags and backpacks can be checked.\n# Tonight\n- 6:00 PM: doors open. Welcome glass of Champagne and the sushi platter. Open bar and DJ until 9:00 PM.\n- 6:30 to 8:00 PM: passed hors d'oeuvres\n- 7:30 to 8:30 PM: carving board\n- 8:30 to 9:00 PM: dessert\n# Menu and allergies\nFrom the venue's menu and allergy chart. The chart covers tree nuts and seeds, gluten, dairy, shellfish, mushroom, and onion or garlic. For anything else, ask the venue staff before you eat.\n## Sushi platter\n- Classic and vegetable rolls. Not on the allergy chart.\n## Passed hors d'oeuvres\n- Avocado toast, cilantro, Aleppo pepper. Vegetarian, gluten free. Contains tree nut or seed.\n- Crispy chicken sliders, avocado aioli, coleslaw, brioche. Contains gluten, dairy, onion or garlic.\n- Feta and pickled red onion caviar, English peas, vegan feta, orange. Vegan. Contains onion or garlic.\n- Pigs in a blanket, pork sausage, stone ground mustard. Contains gluten, dairy.\n- Vegetable spring rolls, toasted sesame sauce. Vegetarian. Contains tree nut or seed, gluten, mushroom, onion or garlic.\n- Crispy goat cheese, chimichurri, fermented honey-garlic. Vegetarian. Contains gluten, dairy.\n## Carving board\n- Filet mignon, French onion baby potatoes, peppercorn sauce. Gluten free. Contains dairy, onion or garlic.\n- Salmon filet, Dijon beurre blanc. Gluten free. Contains dairy, onion or garlic.\n- Sides: roasted seasonal vegetables and arugula salad. Not on the allergy chart.\n## Dessert\n- Cheesecake lollipops: strawberry, chocolate, lemon, Oreo. Vegetarian. Contains tree nut or seed, gluten, dairy.\n- Fruit skewers. Gluten free. Not on the allergy chart.\n# Bar\n- Open bar: cocktails, wine, beer, Champagne, mocktails, soft drinks. No shots.\n- Golden Rae: yuzu vodka, lemon and basil cordial, club soda\n- Panorama Daiquiri: white rum, pineapple gomme, toasted coconut, lime\n- Vice Versa: gin, grapefruit, bitter and pamplemousse liqueurs, rosé cava\n- Xantolo: reposado tequila, mezcal, Aleppo spiced pineapple, lime\n- Phony Negroni (no alcohol): bitter orange, juniper, bubbles"},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null,"more":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium","more":null},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium","more":null}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori and UI5"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
+  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison","more":null},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium","more":null},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium","more":null},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium","more":null},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms","more":null},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms","more":null},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null,"more":null},{"id":12,"day":"2026-11-18","start":"18:00","time_label":null,"title":"Celebration Night","detail":"6:00 to 9:00 PM, for all participants. Sponsored by Resolve Tech Solutions (RTS). Open bar, sushi, passed hors d'oeuvres, a carving board, dessert, and a DJ. Bring a government ID: the venue is 21 and over. Coat, hat, and bag check on the ground floor.","location":"Dear Irving on Hudson rooftop, 41st floor, Aliz Hotel, 310 West 40th Street","more":"# Getting in\nThe venue is 21 and over. Show a valid government ID at the lobby host stand. A photo or a printout of an ID is not accepted.\nCoat, hat, and bag check: ground floor, behind the lobby elevators. Laptop bags and backpacks can be checked.\n# Tonight\n- 6:00 to 9:00 PM: open bar. Welcome glass of Champagne on arrival.\n- 6:30 to 8:00 PM: passed hors d'oeuvres\n- 7:30 to 8:30 PM: carving board\n- 8:30 to 9:00 PM: dessert\n- Also on the night: a sushi platter and a DJ.\n# Menu and allergies\nFrom the venue's menu and allergy chart. The chart covers tree nuts and seeds, gluten, dairy, shellfish, mushroom, and onion or garlic. For anything else, ask the venue staff before you eat.\n## Sushi platter\n- Classic and vegetable rolls. Not on the allergy chart.\n## Passed hors d'oeuvres\n- Avocado toast, cilantro, Aleppo pepper. Vegetarian, gluten free. Contains tree nut or seed.\n- Crispy chicken sliders, avocado aioli, coleslaw, brioche. Contains gluten, dairy, onion or garlic.\n- Feta and pickled red onion caviar, English peas, vegan feta, orange. Vegan. Contains onion or garlic.\n- Pigs in a blanket, pork sausage, stone ground mustard. Contains gluten, dairy.\n- Vegetable spring rolls, toasted sesame sauce. Vegetarian. Contains tree nut or seed, gluten, mushroom, onion or garlic.\n- Crispy goat cheese, chimichurri, fermented honey-garlic. Vegetarian. Contains gluten, dairy.\n## Carving board\n- Filet mignon, French onion baby potatoes, peppercorn sauce. Gluten free. Contains dairy, onion or garlic.\n- Salmon filet, Dijon beurre blanc. Gluten free. Contains dairy, onion or garlic.\n- Sides: roasted seasonal vegetables and arugula salad. Not on the allergy chart.\n## Dessert\n- Cheesecake lollipops: strawberry, chocolate, lemon, Oreo. Vegetarian. Contains tree nut or seed, gluten, dairy.\n- Fruit skewers. Gluten free. Not on the allergy chart.\n# Bar\n- Open bar: cocktails, wine, beer, Champagne, mocktails, soft drinks. No shots.\n- Golden Rae: yuzu vodka, lemon and basil cordial, club soda\n- Panorama Daiquiri: white rum, pineapple gomme, toasted coconut, lime\n- Vice Versa: gin, grapefruit, bitter and pamplemousse liqueurs, rosé cava\n- Xantolo: reposado tequila, mezcal, Aleppo spiced pineapple, lime\n- Phony Negroni (no alcohol): bitter orange, juniper, bubbles"},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null,"more":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium","more":null},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium","more":null}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori and UI5"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
 
   // ------------------------------------------------------------ helpers
   const mem = {};
@@ -223,6 +231,10 @@ footer .ebl span{color:var(--evil)}
     rename_limit: 'Your team has changed its callsign 20 times. Find a cowboy hat.',
     cannot_disable_self: 'You cannot turn off the door you came in through.',
     teams_only: 'Only teams can be deleted.',
+    judge_only: 'Only a judge can do that.',
+    judging_closed: 'Judging is closed. Cards can no longer change.',
+    bad_score: 'Each score is 1 to 5.',
+    incomplete: 'Score all seven criteria before you submit.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
   };
@@ -236,7 +248,8 @@ footer .ebl span{color:var(--evil)}
     uc: null, ucFail: false, ucOpen: false, ucEdit: null,
     tab: 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
-    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}, showDeleted: false, openMore: null
+    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}, showDeleted: false, openMore: null,
+    judge: null, jTeam: null, judging: null
   };
 
   // ---------------------------------------------------------------- api
@@ -316,10 +329,10 @@ footer .ebl span{color:var(--evil)}
     const was = state.me ? state.me.kind : null;
     state.me = r.me;
     if (changed('team', r) || force) { state.team = r; render(); }
-    if (!was && state.me.kind !== 'team') loadCrew(true);
+    if (!was && isCrewKind(state.me.kind)) loadCrew(true);
   }
   async function loadCrew(force, noRender) {
-    if (!state.token || !state.me || state.me.kind === 'team') return;
+    if (!state.token || !state.me || !isCrewKind(state.me.kind)) return;
     const r = await call('event_crew_queue', { p_token: state.token });
     if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
     state.count = r.open.filter(q => q.status === 'new').length + r.free_agents.filter(f => !f.placed).length;
@@ -401,8 +414,34 @@ footer .ebl span{color:var(--evil)}
   function alertsOff() { state.alerts = false; store.del('ev_alerts'); state.unseen = false; setTitle(); render(); }
   function alertTest() { audioOn(); beep(); popUp('Test alert', 'This is how a new request will look.'); }
   function seen() { if (state.unseen) { state.unseen = false; setTitle(); } }
+  const isCrewKind = k => k === 'crew' || k === 'staff';
+  // Judging. The rubric is section 8 of the use case form: criterion, weight, what judges look for.
+  const RUBRIC = [
+    ['Business value', 20, "Minutes returned are the common unit; cost, quality, and risk count through the function's own KPIs. Specific and believable beats big."],
+    ['Working prototype', 20, 'It runs on the landscape; judges see the system work, not slides about the system.'],
+    ['Architecture fit', 15, 'Honest delivery pattern, clean core, aligned to the reference architecture.'],
+    ['Interoperability', 15, 'Reaches across company or system boundaries through the Business Network; the Schwerpunkt.'],
+    ['Originality / novelty', 10, 'An approach no other team in the room would have taken; creative use of the stack, the data, or the team itself.'],
+    ['New capability', 10, 'Does something that does not exist today, not just faster.'],
+    ['Presentation', 10, 'Clear story from persona in trouble to minutes returned, inside the time box.']
+  ];
+  const MYTH = "The demo disproves something the industry believes: that it can't be done across companies, that it takes weeks, that AI can't be trusted with it.";
+  const fmtScore = x => String(Math.round(Number(x) * 100) / 100);
+  async function loadJudge(force) {
+    if (!state.token || !state.me || state.me.kind !== 'judge') return;
+    const r = await call('event_judge_state', { p_token: state.token });
+    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    if (r.open && state.judge && !state.judge.open) state.err.judge = null;
+    if (changed('judge', r) || force) { state.judge = r; render(); }
+  }
+  async function loadJudging(force) {
+    if (!state.token || !state.me || state.me.kind !== 'staff') return;
+    const r = await quiet('event_staff_judging', { p_token: state.token });
+    if (!r || !r.ok) return;
+    if (changed('judging', r) || force) { state.judging = r; render(); }
+  }
   async function loadCal(force) {
-    if (!state.token || !state.me) return;
+    if (!state.token || !state.me || state.me.kind === 'judge') return;
     const r = await quiet('event_calendar', { p_token: state.token });
     if (!r || !r.ok) return;
     if (changed('cal', r) || force) { state.cal = r; render(); }
@@ -437,6 +476,7 @@ footer .ebl span{color:var(--evil)}
     state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
     state.cal = null; state.calEdit = null; state.renameOpen = false; state.sessOpen = false; state.sessEdit = null;
     state.uc = null; state.ucFail = false; state.ucOpen = false; state.ucEdit = null;
+    state.judge = null; state.jTeam = null; state.judging = null;
     state.last = { pub: state.last.pub };
     store.del('ev_token');
     state.err.pin = why || null;
@@ -491,10 +531,11 @@ footer .ebl span{color:var(--evil)}
       if (!r.ok) { state.err.pin = msg(r.error); return; }
       state.token = r.token; state.me = r.me; state.drafts.pin = '';
       store.set('ev_token', r.token);
-      state.tab = r.me.kind === 'team' ? 'team' : 'crew';
+      state.tab = r.me.kind === 'team' ? 'team' : r.me.kind === 'judge' ? 'judge' : 'crew';
       await loadTeam(true);
-      if (r.me.kind !== 'team') await loadCrew(true);
-      if (r.me.kind === 'staff') await loadStaff(true);
+      if (isCrewKind(r.me.kind)) await loadCrew(true);
+      if (r.me.kind === 'staff') { await loadStaff(true); loadJudging(true); }
+      if (r.me.kind === 'judge') await loadJudge(true);
       loadCal(true);
     });
   }
@@ -505,6 +546,7 @@ footer .ebl span{color:var(--evil)}
       if (!r.ok) { state.err.name = msg(r.error); return; }
       state.me = r.me; state.drafts.name = '';
       if (state.team) state.team.me = r.me;
+      if (r.me.kind === 'judge') await loadJudge(true);
     });
   }
   function openRename() {
@@ -941,6 +983,7 @@ footer .ebl span{color:var(--evil)}
     if (kind === 'team') { tabs.push(['team', 'My team']); tabs.push(['uc', 'Use cases']); }
     if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
     if (kind === 'staff') tabs.push(['staff', 'Staff']);
+    if (kind === 'judge') tabs.push(['judge', 'Judging']);
     if (!tabs.some(t => t[0] === state.tab)) state.tab = 'schedule';
     kids.push(h('nav', { class: 'tabs', 'aria-label': 'Sections' }, tabs.map(t =>
       h('button', { type: 'button', class: state.tab === t[0] ? 'on' : null, 'data-tab': t[0], onclick: () => go(t[0]) }, t[1]))));
@@ -958,6 +1001,7 @@ footer .ebl span{color:var(--evil)}
     else if (state.tab === 'uc') kids.push(viewUC());
     else if (state.tab === 'crew') kids.push(viewCrew());
     else if (state.tab === 'staff') kids.push(viewStaff());
+    else if (state.tab === 'judge') kids.push(viewJudge());
 
     kids.push(h('footer', null,
       h('div', null, 'Unofficial companion site for the SAP Aerospace & Defense AI Hackathon 2026: Partner Edition. Not an SAP system. Do not enter proprietary, export-controlled, or classified information.'),
@@ -977,7 +1021,8 @@ footer .ebl span{color:var(--evil)}
   function go(tab) {
     state.tab = tab; state.err = {}; state.confirm = null;
     if (tab === 'crew') loadCrew(true);
-    if (tab === 'staff') loadStaff(true);
+    if (tab === 'staff') { loadStaff(true); loadJudging(true); }
+    if (tab === 'judge') loadJudge(true);
     if (tab === 'uc') loadUC(true);
     if (state.me) loadCal(false);
     render();
@@ -1460,6 +1505,131 @@ footer .ebl span{color:var(--evil)}
   }
 
   // ---------------------------------------------------------- view: staff
+  // ------------------------------------------------------------- judging
+  const jCard = id => state.judge ? state.judge.cards.find(c => c.team_id === id) : null;
+  function openCard(id) {
+    const c = jCard(id), d = state.drafts;
+    for (let i = 0; i < 7; i++) d['j_s' + i] = c && c.scores[i] != null ? c.scores[i] : null;
+    d.j_myth = !!(c && c.myth); d.j_conflict = !!(c && c.conflict); d.j_note = c && c.note ? c.note : '';
+    state.jTeam = id; state.err.judge = null; state.note.judge = null;
+    render(); window.scrollTo(0, 0);
+  }
+  function closeCard() { state.jTeam = null; state.err.judge = null; render(); }
+  function saveCard(submit) {
+    return withBusy('judge', async () => {
+      state.err.judge = null;
+      const d = state.drafts, scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
+      if (submit && scores.some(x => x == null)) { state.err.judge = msg('incomplete'); return; }
+      const r = await call('event_judge_save', { p_token: state.token, p_team_id: state.jTeam, p_scores: scores, p_myth: !!d.j_myth, p_conflict: !!d.j_conflict, p_note: d.j_note || null, p_submit: submit });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judge = msg(r.error); if (r.error === 'judging_closed') loadJudge(true); return; }
+      const team = state.judge.teams.find(t => t.id === state.jTeam);
+      state.note.judge = (submit ? 'Submitted: ' : 'Draft saved: ') + (team ? team.name : 'the card') + '.';
+      state.jTeam = null;
+      await loadJudge(true);
+      window.scrollTo(0, 0);
+      const shown = state.note.judge;
+      setTimeout(() => { if (state.note.judge === shown) { state.note.judge = null; render(); } }, 8000);
+    });
+  }
+  function cardForm() {
+    const t = state.judge.teams.find(x => x.id === state.jTeam), d = state.drafts;
+    if (!t) { state.jTeam = null; return null; }
+    const scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
+    const total = scores.every(x => x != null) ? RUBRIC.reduce((n, r, i) => n + r[1] * scores[i], 0) / 5 : null;
+    const yesNo = (key, attr) => h('div', { class: 'pick two' },
+      h('button', { type: 'button', class: d[key] ? 'on' : null, ['data-' + attr]: 'yes', 'aria-pressed': d[key] ? 'true' : 'false', onclick: () => { d[key] = true; state.err.judge = null; render(); } }, 'Yes'),
+      h('button', { type: 'button', class: d[key] ? null : 'on', ['data-' + attr]: 'no', 'aria-pressed': d[key] ? 'false' : 'true', onclick: () => { d[key] = false; state.err.judge = null; render(); } }, 'No'));
+    return h('div', { class: 'card gold', id: 'judge-card' }, h('h2', null, 'SCORECARD · ' + t.name.toUpperCase()),
+      h('p', { class: 'muted', style: 'margin:0' }, '1 is the lowest score. 5 is the highest.'),
+      RUBRIC.map((r, i) => h('div', { class: 'crit', 'data-crit': String(i) },
+        h('div', { class: 'cn' }, r[0], h('span', { class: 'cw' }, ' · weight ' + r[1])),
+        h('div', { class: 'muted' }, r[2]),
+        h('div', { class: 'pick' }, [1, 2, 3, 4, 5].map(n => h('button', { type: 'button', class: scores[i] === n ? 'on' : null, 'data-score': String(n),
+          'aria-pressed': scores[i] === n ? 'true' : 'false', 'aria-label': r[0] + ': ' + n, onclick: () => { d['j_s' + i] = n; state.err.judge = null; render(); } }, String(n)))))),
+      h('div', { class: 'crit', 'data-crit': 'myth' },
+        h('div', { class: 'cn' }, 'Myth busted', h('span', { class: 'cw' }, ' · 5 bonus points')),
+        h('div', { class: 'muted' }, MYTH), yesNo('j_myth', 'myth')),
+      h('div', { class: 'crit', 'data-crit': 'conflict' },
+        h('div', { class: 'cn' }, 'Does your company have people on this team?'),
+        h('div', { class: 'muted' }, 'If yes, your card is kept and not tallied.'), yesNo('j_conflict', 'conflict')),
+      h('label', { for: 'j_note' }, 'NOTES FOR STAFF (OPTIONAL)'), textarea('j_note', { id: 'j_note', maxlength: '500', style: 'min-height:60px' }),
+      h('div', { class: 'jtotal', id: 'judge-total' }, total == null ? 'Score all seven criteria to see the total.' : 'Weighted total: ' + fmtScore(total) + ' of 100' + (d.j_myth ? ' + 5 bonus' : '')),
+      errLine('judge'),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'go', id: 'judge-submit', disabled: state.busy.judge, onclick: () => saveCard(true) }, 'Submit scorecard'),
+        h('button', { type: 'button', id: 'judge-draft', disabled: state.busy.judge, onclick: () => saveCard(false) }, 'Save as draft'),
+        h('button', { type: 'button', class: 'quiet', id: 'judge-back', onclick: closeCard }, 'Never mind')));
+  }
+  function viewJudge() {
+    const j = state.judge, me = state.me;
+    if (!me.display_name) return nameCard('Pick a callsign. It goes on your scorecards, and staff see it with your scores. No real names.');
+    const out = [whoCard('Judging', 'Signed in as ' + me.display_name + ' · ' + me.name)];
+    if (!j) { out.push(h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'))); return out; }
+    if (state.note.judge) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'judge-ok' }, state.note.judge));
+    if (state.jTeam && j.open) { out.push(cardForm()); return out; }
+    const done = j.cards.filter(c => c.submitted && j.teams.some(t => t.id === c.team_id)).length;
+    out.push(h('div', { class: 'card', id: 'judge-teams' }, h('h2', null, 'SCORECARDS · ' + done + ' OF ' + j.teams.length + ' SUBMITTED'),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'judge-how' }, j.open
+        ? 'One card per team. Seven criteria, 1 to 5 each. You can change a card until staff close judging.'
+        : 'Judging is closed. Your cards are final.'),
+      j.teams.length ? j.teams.map(t => {
+        const c = jCard(t.id);
+        const st = !c ? ['new', 'NOT SCORED'] : !c.submitted ? ['claimed', 'DRAFT'] : c.conflict ? ['done', 'SUBMITTED · NOT TALLIED'] : ['on_the_way', 'SUBMITTED'];
+        return h('div', { class: 'door', 'data-jteam': t.name },
+          h('div', null, h('span', { class: 'n' }, t.name), ' ', h('span', { class: 'st ' + st[0] }, st[1])),
+          c && c.total != null ? h('div', { class: 'muted' }, 'Your score: ' + fmtScore(c.total) + ' of 100' + (c.myth ? ' + 5 bonus' : '') + (c.conflict ? ' · your company is on this team' : '')) : null,
+          j.open ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: c ? 'quiet' : 'go', 'data-act': 'score', onclick: () => openCard(t.id) }, c ? 'Change' : 'Score')) : null);
+      }) : h('p', { class: 'muted', style: 'margin:0' }, 'No teams to score yet.')));
+    return out;
+  }
+  async function staffJudgingOpen(open) {
+    const r = await call('event_staff_judging_open', { p_token: state.token, p_open: open });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  async function staffCardCount(id, counted) {
+    const r = await call('event_staff_card_count', { p_token: state.token, p_id: id, p_counted: counted });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  // Staff tab: who has voted, the ranking, and every card. Nobody else sees this.
+  function judgingCard() {
+    const g = state.judging;
+    if (!g) return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING'), h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'));
+    const judges = [];
+    for (const c of g.cards) {
+      const k = (c.pin || '') + '|' + c.judge.toLowerCase();
+      let j = judges.find(x => x.k === k);
+      if (!j) judges.push(j = { k, name: c.judge, pin: c.pin, done: 0, draft: 0 });
+      if (!g.teams.some(t => t.id === c.team_id)) continue;
+      if (c.submitted) j.done++; else j.draft++;
+    }
+    const status = c => !c.submitted ? 'draft' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
+    const cardLine = c => h('div', { class: 'jc', 'data-jcard': String(c.id) },
+      h('span', { class: 'muted' }, c.judge + ' (' + c.pin + '): ' + (c.total != null ? fmtScore(c.total) + (c.myth ? ' + 5' : '') : 'no total yet') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
+      c.submitted && !c.conflict ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
+    return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING · ' + (g.open ? 'OPEN' : 'CLOSED')),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'judging-how' }, g.open
+        ? 'Judges can save and change cards. Close judging before the judges confer. After that no card can change.'
+        : 'Closed. No card can change. Open it again to let a judge fix a card.'),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: g.open ? 'go' : null, id: 'judging-toggle', onclick: () => twoTap('jo', () => staffJudgingOpen(!g.open)) }, state.confirm === 'jo' ? 'Tap again to confirm' : (g.open ? 'Close judging' : 'Open judging again')),
+        h('button', { type: 'button', class: 'quiet', id: 'judging-refresh', onclick: () => loadJudging(true) }, 'Refresh')),
+      errLine('judging'),
+      h('label', null, 'JUDGES'),
+      judges.length ? h('div', { class: 'muted', id: 'judging-judges' }, judges.map(j => j.name + ' (' + j.pin + '): ' + j.done + ' of ' + g.teams.length + ' submitted' + (j.draft ? ', ' + j.draft + ' in draft' : '')).join(' · '))
+        : h('p', { class: 'muted', style: 'margin:0', id: 'judging-none' }, 'No cards yet. Judges sign in with a judge PIN. Create one below: Add a team or a PIN, type Judge.'),
+      h('label', null, 'RANKING · AVERAGE OF THE TALLIED CARDS'),
+      g.results.map(r => h('div', { class: 'door', 'data-result': r.team },
+        h('div', null, h('span', { class: 'n' }, (r.rank != null ? r.rank + '. ' : '') + r.team), ' ',
+          r.score != null ? h('span', { class: 'st on_the_way' }, fmtScore(r.score)) : h('span', { class: 'st done' }, 'NO CARDS TALLIED')),
+        r.score != null ? h('div', { class: 'muted' }, r.cards + (r.cards === 1 ? ' card' : ' cards') + ' · weighted ' + fmtScore(r.weighted) + ' + bonus ' + fmtScore(r.bonus)) : null,
+        r.score != null ? h('div', { class: 'muted' }, RUBRIC.map((c, i) => c[0] + ' ' + fmtScore(r.crit[i])).join(' · ')) : null,
+        g.cards.filter(c => c.team_id === r.team_id).map(cardLine))));
+  }
+
   function viewStaff() {
     const s = state.staff;
     if (!state.me.display_name) return nameCard('Pick a callsign. It is recorded with what you post and schedule. No real names.');
@@ -1471,6 +1641,7 @@ footer .ebl span{color:var(--evil)}
         h('p', { class: 'muted', style: 'margin-top:0' }, 'Shown once. Write it down or hand it to the coach now. If it gets lost, reset it below.'),
         h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'pin-ack', onclick: () => { state.pinReveal = null; render(); } }, 'Got it'))));
     }
+    out.push(judgingCard());
     const annTeams = s ? s.doors.filter(d => d.kind === 'team' && d.active) : [];
     const annTo = annTeams.find(d => d.id === state.drafts.ann_to) || null;
     out.push(h('div', { class: 'card', id: 'ann-card' }, h('h2', null, 'POST AN ANNOUNCEMENT'),
@@ -1490,7 +1661,7 @@ footer .ebl span{color:var(--evil)}
     out.push(h('div', { class: 'card' }, h('h2', null, 'ADD A TEAM OR A PIN'),
       form(staffCreateDoor,
         h('label', { for: 'd_kind' }, 'TYPE'),
-        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
+        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }, { value: 'judge', label: 'Judge (8-digit PIN)' }], { id: 'd_kind' }),
         h('label', { for: 'd_name' }, 'CALLSIGN'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Uniform' }),
         state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
           h('div', null, h('label', { for: 'd_room' }, 'MAIN ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
@@ -1546,11 +1717,11 @@ footer .ebl span{color:var(--evil)}
   
 
   // ---------------------------------------------------------------- boot
-  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0, lastUC = 0;
+  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0, lastUC = 0, lastJudge = 0, lastJudging = 0;
   async function tick() {
     const now = Date.now();
     const ae = document.activeElement;
-    const crewIn = state.token && state.me && state.me.kind !== 'team';
+    const crewIn = state.token && state.me && isCrewKind(state.me.kind);
     // A hidden tab, or an open picker, stops the usual refresh. With alerts on, the crew queue
     // is still checked (without redrawing the page) so a new request is never missed.
     if (document.hidden || (ae && (ae.tagName === 'SELECT' || ae.type === 'time'))) {
@@ -1560,8 +1731,11 @@ footer .ebl span{color:var(--evil)}
     if (now - lastPub > 60000) { lastPub = now; loadPublic(false); }
     if (state.token && state.me) {
       if (state.me.kind === 'team' && now - lastTeam > 20000) { lastTeam = now; loadTeam(false); }
-      if (state.me.kind !== 'team' && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
+      if (isCrewKind(state.me.kind) && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
       if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastStaff > 30000) { lastStaff = now; loadStaff(false); }
+      if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastJudging > 15000) { lastJudging = now; loadJudging(false); }
+      // A scorecard that is open is left alone. The list, and a closed judging, are kept current.
+      if (state.me.kind === 'judge' && (!state.jTeam || !state.judge || !state.judge.open) && now - lastJudge > 20000) { lastJudge = now; loadJudge(false); }
       if (now - lastCal > 60000) { lastCal = now; loadCal(false); }
       if (now - lastUC > 60000 && (state.tab === 'uc' || (state.tab === 'crew' && state.crewTab === 'uc'))) { lastUC = now; loadUC(false); }
     }
@@ -1579,8 +1753,9 @@ footer .ebl span{color:var(--evil)}
     if (state.token) {
       await loadTeam(true);
       if (state.me) {
-        state.tab = state.me.kind === 'team' ? 'team' : 'crew';
-        if (state.me.kind === 'staff') await loadStaff(true);
+        state.tab = state.me.kind === 'team' ? 'team' : state.me.kind === 'judge' ? 'judge' : 'crew';
+        if (state.me.kind === 'staff') { await loadStaff(true); loadJudging(true); }
+        if (state.me.kind === 'judge') await loadJudge(true);
         render();
         lastCal = Date.now();
         loadCal(true);
@@ -1588,7 +1763,7 @@ footer .ebl span{color:var(--evil)}
     }
     setInterval(tick, 5000);
     setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = lastUC = 0; tick(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = lastUC = lastJudge = lastJudging = 0; tick(); } });
     window.addEventListener('focus', seen);
     // Browsers only let sound start after a tap or a key press. After a reload, the first one turns it back on.
     document.addEventListener('pointerdown', () => { if (state.alerts) audioOn(); seen(); }, { passive: true });
