@@ -1,0 +1,1826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://hbnmlfdauuvhpdhodohe.supabase.co; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07070b">
+<title>A&amp;D AI Hackathon 2026</title>
+<style>
+:root{
+  --bg:#07070b; --panel:#0e0e16; --panel2:#151521; --paper:#f5f0e6; --evil:#ff0044;
+  --gold:#ffd700; --green:#00ff88; --cyan:#00ffff; --dim:#8b8ba0; --line:#22222f;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--paper);font-family:var(--mono);font-size:16px;line-height:1.5}
+#app{max-width:780px;margin:0 auto;padding:0 16px 48px}
+#app.wide{max-width:1000px}
+a{color:var(--cyan)}
+header.top{padding:28px 0 14px}
+.eyebrow{color:var(--dim);font-size:12px;letter-spacing:.14em}
+h1{margin:6px 0 4px;font-size:clamp(26px,7vw,44px);line-height:1.05;letter-spacing:.01em}
+h1 .cursor{display:inline-block;width:.5em;height:.82em;background:var(--evil);margin-left:.18em;vertical-align:-.04em}
+.sub{color:var(--evil);font-size:13px;letter-spacing:.14em;font-weight:700}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:16px}
+nav.tabs button{flex:1}
+button{font:inherit;font-weight:700;letter-spacing:.06em;color:var(--paper);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-height:46px;cursor:pointer;text-transform:uppercase;font-size:13px}
+button:hover{border-color:var(--dim)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button.on{background:var(--paper);color:var(--bg);border-color:var(--paper)}
+button.go{background:var(--evil);border-color:var(--evil);color:#fff}
+button.go:hover{filter:brightness(1.1)}
+button.quiet{background:transparent;color:var(--dim);min-height:38px;padding:8px 10px;font-size:12px}
+button.warn{border-color:var(--evil);color:var(--evil);background:transparent}
+button[disabled]{opacity:.5;cursor:default}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:0 0 14px}
+.card h2{margin:0 0 10px;font-size:13px;letter-spacing:.14em;color:var(--dim);font-weight:700}
+.card.gold{border-color:var(--gold)}
+.card.gold h2{color:var(--gold)}
+.demo{border:1px dashed var(--cyan);color:var(--cyan);font-size:13px;padding:10px 12px;border-radius:6px;margin:0 0 14px}
+.ann{border:1px solid var(--gold);border-radius:8px;padding:12px 14px;margin:0 0 14px;background:#141207}
+.ann .lab{color:var(--gold);font-size:12px;letter-spacing:.14em;font-weight:700}
+.ann p{margin:4px 0 0}
+.ann .when{color:var(--dim);font-size:12px}
+.ann.team{border-color:var(--cyan);background:#07141a}
+.ann.team .lab{color:var(--cyan)}
+.roomnow{font-size:28px;font-weight:700;color:var(--gold);line-height:1.2;overflow-wrap:anywhere}
+.roomdays{margin-top:10px;display:grid;gap:4px;font-size:14px;color:var(--dim)}
+.roomdays .on{color:var(--paper);font-weight:700}
+.roomdays .d{display:inline-block;min-width:64px;letter-spacing:.08em}
+.roomstrip{border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 14px;font-size:14px;color:var(--dim);overflow-wrap:anywhere}
+.roomstrip strong{color:var(--gold)}
+.nn{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px}
+.nn .cell{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.nn .lab{font-size:12px;letter-spacing:.14em;color:var(--dim);font-weight:700}
+.nn .cell.now .lab{color:var(--green)}
+.nn .t{font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+.nn .w{color:var(--dim);font-size:13px}
+.days{display:flex;gap:8px;margin:0 0 12px}
+.days button{flex:1;padding:10px 4px}
+.row{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .time{color:var(--gold);font-weight:700;font-size:14px;padding-top:1px}
+.row .title{font-weight:700}
+.row .detail{color:var(--dim);font-size:14px;margin-top:2px}
+.row .loc{color:var(--cyan);font-size:13px;margin-top:2px}
+.row .morebtn{margin-top:8px}
+.more{margin-top:10px;padding-top:4px;border-top:1px solid var(--line);font-size:14px;line-height:1.45}
+.more .mh{color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:14px}
+.more .ms{font-weight:700;margin-top:12px}
+.more .mp{margin-top:6px}
+.more .mi{margin-top:6px;padding-left:14px;text-indent:-14px}
+.crit{border-top:1px solid var(--line);padding:12px 0}
+.crit .cn{font-weight:700}
+.crit .cw{color:var(--dim);font-weight:400;font-size:13px}
+.pick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.pick.two{grid-template-columns:repeat(2,1fr)}
+.pick button{padding:12px 0}
+.jtotal{margin-top:14px;font-weight:700;color:var(--gold)}
+.jc{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.jrow{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.jrow .n{font-weight:700}
+.badge{display:inline-block;font-size:11px;letter-spacing:.1em;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:1px}
+.badge.now{color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;color:var(--paper)}
+label{display:block;font-size:12px;letter-spacing:.12em;color:var(--dim);font-weight:700;margin:12px 0 4px}
+input,select,textarea{width:100%;font:inherit;color:var(--paper);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;min-height:46px}
+textarea{min-height:96px;resize:vertical}
+input.pin{font-size:24px;letter-spacing:.3em;text-align:center;-webkit-text-security:disc}
+.rowbtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rowbtn button{flex:1 1 140px}
+.rowbtn button.quiet{flex:0 1 auto}
+.err{color:var(--evil);font-size:14px;margin-top:10px;min-height:1px}
+.ok{color:var(--green);font-size:14px;margin-top:10px}
+.muted{color:var(--dim);font-size:14px}
+.who{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.who .name{font-size:20px;font-weight:700;line-height:1.2}
+.who .meta{color:var(--dim);font-size:14px}
+.req{border-top:1px solid var(--line);padding:12px 0}
+.req:first-of-type{border-top:0}
+.req .head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.req .kind{font-size:12px;letter-spacing:.12em;color:var(--dim);font-weight:700}
+.req .what{font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.req .body{margin-top:2px;overflow-wrap:anywhere;white-space:pre-wrap}
+.req .meta{color:var(--dim);font-size:13px;margin-top:4px}
+.req .note{margin-top:6px;border-left:0;background:var(--panel2);border-radius:6px;padding:8px 10px;font-size:14px}
+.req .team{color:var(--gold);font-weight:700;margin-top:4px}
+.st{font-size:11px;letter-spacing:.1em;font-weight:700;border-radius:4px;padding:2px 8px;border:1px solid currentColor;white-space:nowrap}
+.st.new{color:var(--gold)} .st.claimed{color:var(--cyan)} .st.on_the_way{color:var(--green)}
+.st.done,.st.cancelled{color:var(--dim)}
+.cal{border-top:1px solid var(--line);padding:12px 0}
+.cal:first-of-type{border-top:0}
+.cal .head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.cal .when{color:var(--gold);font-weight:700;font-size:14px}
+.cal .team{color:var(--cyan);font-weight:700;margin-top:4px}
+.cal .what{font-weight:700;margin-top:2px;overflow-wrap:anywhere}
+.cal .meta{color:var(--dim);font-size:14px;margin-top:2px;overflow-wrap:anywhere}
+.cal.off .when,.cal.off .what{color:var(--dim);text-decoration:line-through}
+.calday{margin-top:6px}
+.uc{border-top:1px solid var(--line);padding:12px 0}
+.uc:first-of-type{border-top:0}
+.uc .what{font-weight:700;overflow-wrap:anywhere}
+.uc .body{margin-top:2px;overflow-wrap:anywhere}
+.uc .meta{color:var(--dim);font-size:13px;margin-top:4px}
+.uc-team{color:var(--gold);font-weight:700;margin:16px 0 0;overflow-wrap:anywhere}
+.row.mine .time{color:var(--cyan)}
+.badge.mine{color:var(--cyan)}
+.pinshow{font-size:clamp(28px,9vw,44px);letter-spacing:.24em;font-weight:700;color:var(--gold);margin:8px 0;overflow-wrap:anywhere}
+.door{border-top:1px solid var(--line);padding:12px 0}
+.door:first-of-type{border-top:0}
+.door .n{font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);color:var(--dim);font-size:12px}
+footer .ebl{color:var(--paper);font-weight:700;letter-spacing:.08em;margin-top:8px}
+footer .ebl span{color:var(--evil)}
+@media (max-width:420px){.row{grid-template-columns:74px 1fr}.grid2{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:no-preference){h1 .cursor{animation:blink 1.2s steps(1) infinite}}
+@keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>This site needs JavaScript turned on.</noscript>
+<script>
+(function () {
+  'use strict';
+  const CONFIG = {"mode":"live","url":"https://hbnmlfdauuvhpdhodohe.supabase.co","keys":["sb_publishable_7asZnEgU-EkSCXJSD45iYw_WbJT9z-9","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhibm1sZmRhdXV2aHBkaG9kb2hlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ3Njg4NzIsImV4cCI6MjExMDM0NDg3Mn0.jf_BFoZSHNJ_jyeFiIuUK0BbMomDlnUQFv4BN0r9Bng"],"entry":"judge"};
+  const FALLBACK = {"schedule":[{"id":1,"day":"2026-11-16","start":"12:00","time_label":null,"title":"Badge pickup opens","detail":"Pick up your badge at check-in.","location":"Check-in, IBM One Madison","more":null},{"id":2,"day":"2026-11-16","start":"13:00","time_label":null,"title":"Welcome and level-setting kickoff","detail":null,"location":"One Madison auditorium","more":null},{"id":3,"day":"2026-11-16","start":"14:30","time_label":null,"title":"Partner sessions","detail":"The partners supporting the week present in the auditorium.","location":"One Madison auditorium","more":null},{"id":4,"day":"2026-11-16","start":"16:00","time_label":null,"title":"Logistics and orientation","detail":"How the week runs: rooms, the Flight Crew, and how to request help. Team matchmaking for anyone still without a team.","location":"One Madison auditorium","more":null},{"id":5,"day":"2026-11-16","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":6,"day":"2026-11-17","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":7,"day":"2026-11-17","start":"09:00","time_label":null,"title":"Team build","detail":"Teams build in assigned rooms. More than one use case is fair game: agents, but also integration and analytics. Request Flight Crew experts from this site. Meals and snacks provided.","location":"Team rooms","more":null},{"id":8,"day":"2026-11-17","start":"17:00","time_label":null,"title":"Formal day ends","detail":"The space stays open late by request.","location":null,"more":null},{"id":9,"day":"2026-11-18","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":10,"day":"2026-11-18","start":"09:00","time_label":null,"title":"Build and demo prep","detail":"A prototype workshop with our design team is scheduled for each team. Meals and snacks provided.","location":"Team rooms","more":null},{"id":11,"day":"2026-11-18","start":"17:00","time_label":null,"title":"Formal day ends","detail":null,"location":null,"more":null},{"id":12,"day":"2026-11-18","start":"18:00","time_label":null,"title":"Celebration Night","detail":"6:00 to 9:00 PM, for all participants. Sponsored by Resolve Tech Solutions (RTS). Open bar, sushi, passed hors d'oeuvres, a carving board, dessert, and a DJ. Bring a government ID: the venue is 21 and over. Coat, hat, and bag check on the ground floor.","location":"Dear Irving on Hudson rooftop, 41st floor, Aliz Hotel, 310 West 40th Street","more":"# Getting in\nThe venue is 21 and over. Show a valid government ID at the lobby host stand. A photo or a printout of an ID is not accepted.\nCoat, hat, and bag check: ground floor, behind the lobby elevators. Laptop bags and backpacks can be checked.\n# Tonight\n- 6:00 to 9:00 PM: open bar. Welcome glass of Champagne on arrival.\n- 6:30 to 8:00 PM: passed hors d'oeuvres\n- 7:30 to 8:30 PM: carving board\n- 8:30 to 9:00 PM: dessert\n- Also on the night: a sushi platter and a DJ.\n# Menu and allergies\nFrom the venue's menu and allergy chart. The chart covers tree nuts and seeds, gluten, dairy, shellfish, mushroom, and onion or garlic. For anything else, ask the venue staff before you eat.\n## Sushi platter\n- Classic and vegetable rolls. Not on the allergy chart.\n## Passed hors d'oeuvres\n- Avocado toast, cilantro, Aleppo pepper. Vegetarian, gluten free. Contains tree nut or seed.\n- Crispy chicken sliders, avocado aioli, coleslaw, brioche. Contains gluten, dairy, onion or garlic.\n- Feta and pickled red onion caviar, English peas, vegan feta, orange. Vegan. Contains onion or garlic.\n- Pigs in a blanket, pork sausage, stone ground mustard. Contains gluten, dairy.\n- Vegetable spring rolls, toasted sesame sauce. Vegetarian. Contains tree nut or seed, gluten, mushroom, onion or garlic.\n- Crispy goat cheese, chimichurri, fermented honey-garlic. Vegetarian. Contains gluten, dairy.\n## Carving board\n- Filet mignon, French onion baby potatoes, peppercorn sauce. Gluten free. Contains dairy, onion or garlic.\n- Salmon filet, Dijon beurre blanc. Gluten free. Contains dairy, onion or garlic.\n- Sides: roasted seasonal vegetables and arugula salad. Not on the allergy chart.\n## Dessert\n- Cheesecake lollipops: strawberry, chocolate, lemon, Oreo. Vegetarian. Contains tree nut or seed, gluten, dairy.\n- Fruit skewers. Gluten free. Not on the allergy chart.\n# Bar\n- Open bar: cocktails, wine, beer, Champagne, mocktails, soft drinks. No shots.\n- Golden Rae: yuzu vodka, lemon and basil cordial, club soda\n- Panorama Daiquiri: white rum, pineapple gomme, toasted coconut, lime\n- Vice Versa: gin, grapefruit, bitter and pamplemousse liqueurs, rosé cava\n- Xantolo: reposado tequila, mezcal, Aleppo spiced pineapple, lime\n- Phony Negroni (no alcohol): bitter orange, juniper, bubbles"},{"id":13,"day":"2026-11-18","start":"23:59","time_label":"Midnight","title":"Use case document due","detail":"Your coach collects the final use case document.","location":null,"more":null},{"id":14,"day":"2026-11-19","start":"08:00","time_label":null,"title":"Light breakfast","detail":null,"location":null,"more":null},{"id":15,"day":"2026-11-19","start":"09:00","time_label":null,"title":"Final presentations and judging","detail":"Ten minutes per team, plus up to five minutes of questions.","location":"One Madison auditorium","more":null},{"id":16,"day":"2026-11-19","start":"12:00","time_label":"Noon","title":"Awards and close","detail":null,"location":"One Madison auditorium","more":null}],"topics":[{"id":1,"grp":"Platform","name":"Agents on Business AI Platform"},{"id":2,"grp":"Platform","name":"Generative AI Hub and AI Core"},{"id":3,"grp":"Platform","name":"Back end: SAP Build Code and CAP"},{"id":4,"grp":"Platform","name":"Front end: Fiori and UI5"},{"id":5,"grp":"Platform","name":"Work Zone and Task Center"},{"id":6,"grp":"Platform","name":"HANA Cloud"},{"id":7,"grp":"Platform","name":"Integration Suite and Advanced Event Mesh"},{"id":8,"grp":"Platform","name":"Analytics: Business Data Cloud and SAP Analytics Cloud"},{"id":9,"grp":"Platform","name":"Signavio and process design"},{"id":10,"grp":"Platform","name":"S/4HANA aerospace and defense processes"},{"id":11,"grp":"Platform","name":"Synthetic and mock data"},{"id":12,"grp":"Partners","name":"Hyperscience"},{"id":13,"grp":"Partners","name":"Nova Intelligence"},{"id":14,"grp":"Partners","name":"Basis Technologies"},{"id":15,"grp":"Partners","name":"Red Hat"},{"id":16,"grp":"Partners","name":"IBM"},{"id":17,"grp":"Partners","name":"Resolve Tech Solutions"},{"id":18,"grp":"Coaching","name":"Use case framing and value"},{"id":19,"grp":"Coaching","name":"Architecture review"},{"id":20,"grp":"Coaching","name":"Prototype and design"},{"id":21,"grp":"Coaching","name":"Presentation and demo coaching"}]};
+
+  // ------------------------------------------------------------ helpers
+  const mem = {};
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); return v === null ? (mem[k] || null) : v; } catch (e) { return mem[k] || null; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  // The same source builds two pages. The judging page (easyassap.com/judge) opens on judge sign-in and keeps
+  // its own session, so a browser can hold a staff or team session on the event page and a judge session here.
+  const JUDGE_PAGE = CONFIG.entry === 'judge';
+  const TOKEN_KEY = JUDGE_PAGE ? 'ev_judge_token' : 'ev_token';
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    if (attrs) for (const k in attrs) {
+      const v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') el.className = v;
+      else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else if (v === true) el.setAttribute(k, '');
+      else el.setAttribute(k, v);
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid == null || kid === false || kid === '') continue;
+      el.appendChild(typeof kid === 'string' || typeof kid === 'number' ? document.createTextNode(String(kid)) : kid);
+    }
+    return el;
+  }
+
+  const TZ = 'America/New_York';
+  const DOW = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const etFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  function etNow() {
+    const p = {};
+    for (const x of etFmt.formatToParts(new Date(Date.now() + state.offset))) p[x.type] = x.value;
+    return { day: p.year + '-' + p.month + '-' + p.day, hm: p.hour + ':' + p.minute };
+  }
+  function fmtTime(hm) {
+    const parts = hm.split(':'), H = +parts[0], M = parts[1];
+    return (H % 12 || 12) + ':' + M + ' ' + (H >= 12 ? 'PM' : 'AM');
+  }
+  function dayLabel(iso) {
+    const d = new Date(iso + 'T12:00:00Z');
+    return DOW[d.getUTCDay()] + ' ' + d.getUTCDate();
+  }
+  function ago(iso) {
+    const s = Math.max(0, Math.round((Date.now() + state.offset - new Date(iso).getTime()) / 1000));
+    if (s < 60) return 'just now';
+    const m = Math.round(s / 60);
+    if (m < 60) return m + ' min ago';
+    const hr = Math.round(m / 60);
+    if (hr < 24) return hr + ' hr ago';
+    return Math.round(hr / 24) + ' d ago';
+  }
+  const KIND = { session: 'EXPERT SESSION', technical: 'TECHNICAL REQUEST', stay_late: 'STAY LATE' };
+  // A Joule consultation is an expert request with its own marker: someone comes with Joule and a laptop.
+  const JOULE = 'joule', JOULE_TOPIC = 'Joule consultation';
+  const isJoule = r => r.kind === 'session' && r.category === JOULE;
+  const kindLabel = r => isJoule(r) ? 'JOULE CONSULTATION' : KIND[r.kind];
+  const STATUS = { new: 'NEW', claimed: 'CLAIMED', on_the_way: 'ON THE WAY', done: 'DONE', cancelled: 'CANCELLED' };
+  // Teams start with a preset callsign. Until they change it, the button says "Pick a team callsign".
+  const DEFAULT_TEAM = /^Team (Alpha|Bravo|Charlie|Delta|Echo|Foxtrot|Golf|Hotel|India|Juliet|Kilo|Lima|Mike|November|Oscar|Papa|Quebec|Romeo|Sierra|Tango|Uniform|Victor|Whiskey|X-ray|Yankee|Zulu)$/;
+  const WHAT = ['Prototype workshop with the design team', 'Expert session', 'Coach check-in'];
+  const LENS = [15, 20, 30, 45, 60, 90, 120];
+  const TECH = ['Synthetic data', 'Front end', 'Back end', 'Business AI Platform', 'Environment access', "Something's broken", 'Other'];
+  const ERR = {
+    invalid: 'That PIN did not work. Check it and try again.',
+    locked: 'Too many wrong tries from this network. Wait 15 minutes, or find a cowboy hat.',
+    auth: 'Your session ended. Enter the PIN again.',
+    name_required: 'Pick your callsign first.',
+    slow_down: 'One at a time. Try again in a few seconds.',
+    too_many_open: 'Your team has 15 open requests. Cancel one or wait for the crew.',
+    already_asked: 'Your team already asked to stay late tonight.',
+    empty: 'Say what you need.',
+    name_taken: 'That callsign is already in use.',
+    full: 'The list is full. Find a cowboy hat.',
+    not_found: 'That item is gone. Refresh and try again.',
+    crew_only: 'Only the Flight Crew can do that.',
+    bad_time: 'Check the day, the start time, and the length.',
+    cal_full: 'This calendar already has 60 sessions. Cancel one first.',
+    uc_full: 'Your list has 20 use cases. Remove one first.',
+    limit: 'That is the limit. Find a cowboy hat.',
+    bad_name: 'Use 2 to 40 characters.',
+    rename_limit: 'Your team has changed its callsign 20 times. Find a cowboy hat.',
+    cannot_disable_self: 'You cannot turn off the door you came in through.',
+    teams_only: 'Only teams can be deleted.',
+    judge_only: 'Only a judge can do that.',
+    judging_closed: 'Judging is closed. Cards can no longer change.',
+    bad_score: 'Each score is 1 to 5.',
+    incomplete: 'Score all seven criteria before you submit.',
+    removed: 'Staff removed you from the judge list. See staff if that is a mistake.',
+    too_many: 'Too many sign-ins from this network. Wait 15 minutes, or find a cowboy hat.',
+    cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
+    network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
+  };
+  const msg = code => ERR[code] || 'Something went wrong. Try again.';
+
+  // -------------------------------------------------------------- state
+  const state = {
+    pub: null, offset: 0, token: store.get(TOKEN_KEY), me: null,
+    team: null, crew: null, staff: null, cal: null, calEdit: null, renameOpen: false,
+    alerts: store.get('ev_alerts') === '1', unseen: false, count: 0, sessOpen: false, sessEdit: null,
+    uc: null, ucFail: false, ucOpen: false, ucEdit: null,
+    tab: JUDGE_PAGE ? 'judge' : 'schedule', day: null, form: null, crewTab: 'open',
+    drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
+    editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}, showDeleted: false, openMore: null,
+    judge: null, jTeam: null, judging: null, jRemoved: false
+  };
+
+  // ---------------------------------------------------------------- api
+  // Each key is tried two ways (with and without the Authorization header) so a
+  // change in how the API gateway treats keys cannot take the site down.
+  const VARIANTS = [];
+  for (const k of (CONFIG.keys || [])) { VARIANTS.push({ key: k, auth: true }); VARIANTS.push({ key: k, auth: false }); }
+  if (!VARIANTS.length) VARIANTS.push(null);
+  let variant = 0;
+  async function api(fn, args) {
+    if (CONFIG.mode === 'demo') return demo(fn, args || {});
+    for (let i = 0; i < VARIANTS.length; i++) {
+      const idx = (variant + i) % VARIANTS.length, v = VARIANTS[idx];
+      const headers = { 'Content-Type': 'application/json' };
+      if (v) { headers.apikey = v.key; if (v.auth) headers.Authorization = 'Bearer ' + v.key; }
+      const opts = { method: 'POST', headers, body: JSON.stringify(args || {}) };
+      if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) opts.signal = AbortSignal.timeout(12000);
+      const res = await fetch(CONFIG.url + '/rest/v1/rpc/' + fn, opts);
+      if (res.status === 401 || res.status === 403) continue;
+      if (!res.ok) throw new Error('http ' + res.status);
+      variant = idx;
+      return res.json();
+    }
+    throw new Error('http auth');
+  }
+  async function call(fn, args) {
+    try {
+      const r = await api(fn, args);
+      if (state.offline) { state.offline = false; }
+      return r;
+    } catch (e) {
+      state.offline = true;
+      return { ok: false, error: 'network' };
+    }
+  }
+  // The calendar is an add-on. A failed calendar read never raises the offline notice.
+  async function quiet(fn, args) {
+    try { return await api(fn, args); } catch (e) { return { ok: false, error: 'network' }; }
+  }
+
+  // ------------------------------------------------------------ loaders
+  function changed(key, data) {
+    const s = JSON.stringify(data);
+    if (state.last[key] === s) return false;
+    state.last[key] = s;
+    return true;
+  }
+  function pickDay() {
+    const days = uniqueDays(), today = etNow().day;
+    state.day = days.indexOf(today) >= 0 ? today : days[0];
+  }
+  async function loadPublic(force) {
+    const r = await call('event_public', {});
+    if (!r.ok) {
+      // Server unreachable: show the schedule that shipped with the page.
+      if (!state.pub && FALLBACK) {
+        state.pub = { schedule: FALLBACK.schedule, announcements: [], topics: FALLBACK.topics };
+        pickDay();
+      }
+      state.loaded = true; render();
+      return;
+    }
+    state.offset = new Date(r.now).getTime() - Date.now();
+    const data = { schedule: r.schedule, announcements: r.announcements, topics: r.topics };
+    const first = !state.pub || !state.day;
+    if (changed('pub', data) || force) {
+      state.pub = data;
+      if (first) pickDay();
+      state.loaded = true;
+      render();
+    }
+  }
+  async function loadTeam(force) {
+    if (!state.token) return;
+    const r = await call('event_team_state', { p_token: state.token });
+    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    const was = state.me ? state.me.kind : null;
+    state.me = r.me;
+    if (changed('team', r) || force) { state.team = r; render(); }
+    if (!was && isCrewKind(state.me.kind)) loadCrew(true);
+  }
+  async function loadCrew(force, noRender) {
+    if (!state.token || !state.me || !isCrewKind(state.me.kind)) return;
+    const r = await call('event_crew_queue', { p_token: state.token });
+    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    state.count = r.open.filter(q => q.status === 'new').length + r.free_agents.filter(f => !f.placed).length;
+    // Anything that is new now and was not new at the last check raises an alert.
+    const cur = {};
+    for (const q of r.open) if (q.status === 'new') cur['r' + q.id] = true;
+    for (const f of r.free_agents) if (!f.placed) cur['a' + f.id] = true;
+    if (alertPrev && state.alerts) {
+      const fresh = Object.keys(cur).filter(k => !alertPrev[k]);
+      if (fresh.length) raiseAlert(fresh, r);
+    }
+    alertPrev = cur;
+    setTitle();
+    if (changed('crew', r) || force) { state.crew = r; if (!noRender) render(); }
+  }
+
+  // --------------------------------------------------------------- alerts
+  // The crew console alerts on its own: a sound, a desktop pop-up, and the tab title.
+  let alertPrev = null, actx = null;
+  function setTitle() {
+    document.title = (state.unseen ? 'NEW \u00b7 ' : '') + (state.count ? '(' + state.count + ') ' : '') + 'A&D AI Hackathon 2026';
+  }
+  function audioOn() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!actx) actx = new AC();
+      if (actx.state === 'suspended') actx.resume();
+    } catch (e) {}
+  }
+  function beep() {
+    try {
+      if (!actx || actx.state !== 'running') return;
+      const t = actx.currentTime;
+      [[880, 0], [1175, 0.22]].forEach(pair => {
+        const o = actx.createOscillator(), g = actx.createGain(), at = t + pair[1];
+        o.type = 'sine'; o.frequency.value = pair[0];
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.25, at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+        o.connect(g); g.connect(actx.destination);
+        o.start(at); o.stop(at + 0.2);
+      });
+    } catch (e) {}
+  }
+  const canPop = () => typeof Notification !== 'undefined';
+  function popUp(title, body) {
+    try {
+      if (!canPop() || Notification.permission !== 'granted') return;
+      const n = new Notification(title, { body: body });
+      n.onclick = () => { try { window.focus(); } catch (e) {} try { n.close(); } catch (e) {} };
+    } catch (e) {}
+  }
+  function raiseAlert(keys, r) {
+    let title = keys.length + ' new items in the crew queue', body = 'Open the crew console.';
+    if (keys.length === 1) {
+      const k = keys[0];
+      if (k[0] === 'r') {
+        const q = r.open.find(x => 'r' + x.id === k);
+        title = 'New request: ' + (q.team || 'a team');
+        body = q.kind === 'stay_late' ? 'Stay late tonight' : isJoule(q) ? 'Joule consultation: bring Joule and a laptop'
+          : (q.kind === 'session' ? 'Expert session' : 'Technical request') + (q.topic || q.category ? ': ' + (q.topic || q.category) : '');
+      } else {
+        const f = r.free_agents.find(x => 'a' + x.id === k);
+        title = 'Someone needs a team';
+        body = f.name + (f.company ? ', ' + f.company : '');
+      }
+    }
+    beep();
+    if (document.hidden || !document.hasFocus()) { popUp(title, body); state.unseen = true; }
+  }
+  async function alertsOn() {
+    state.alerts = true; store.set('ev_alerts', '1');
+    audioOn();
+    try { if (canPop() && Notification.permission === 'default') await Notification.requestPermission(); } catch (e) {}
+    beep();
+    render();
+  }
+  function alertsOff() { state.alerts = false; store.del('ev_alerts'); state.unseen = false; setTitle(); render(); }
+  function alertTest() { audioOn(); beep(); popUp('Test alert', 'This is how a new request will look.'); }
+  function seen() { if (state.unseen) { state.unseen = false; setTitle(); } }
+  const isCrewKind = k => k === 'crew' || k === 'staff';
+  // Judging. The rubric is section 8 of the use case form: criterion, weight, what judges look for.
+  const RUBRIC = [
+    ['Business value', 20, "Minutes returned are the common unit; cost, quality, and risk count through the function's own KPIs. Specific and believable beats big."],
+    ['Working prototype', 20, 'It runs on the landscape; judges see the system work, not slides about the system.'],
+    ['Architecture fit', 15, 'Honest delivery pattern, clean core, aligned to the reference architecture.'],
+    ['Interoperability', 15, 'Reaches across company or system boundaries through the Business Network; the Schwerpunkt.'],
+    ['Originality / novelty', 10, 'An approach no other team in the room would have taken; creative use of the stack, the data, or the team itself.'],
+    ['New capability', 10, 'Does something that does not exist today, not just faster.'],
+    ['Presentation', 10, 'Clear story from persona in trouble to minutes returned, inside the time box.']
+  ];
+  const MYTH = "The demo disproves something the industry believes: that it can't be done across companies, that it takes weeks, that AI can't be trusted with it.";
+  const fmtScore = x => String(Math.round(Number(x) * 100) / 100);
+  async function loadJudge(force) {
+    if (!state.token || !state.me || state.me.kind !== 'judge') return;
+    const r = await call('event_judge_state', { p_token: state.token });
+    if (!r.ok) {
+      // A removed judge keeps the session. If staff put the judge back, the cards return on the next check.
+      if (r.error === 'removed') { if (!state.jRemoved) { state.jRemoved = true; state.jTeam = null; state.last.judge = null; render(); } }
+      else if (r.error === 'auth' || r.error === 'judge_only') signedOut(msg('auth'));
+      return;
+    }
+    if (state.jRemoved) { state.jRemoved = false; force = true; }
+    if (r.open && state.judge && !state.judge.open) state.err.judge = null;
+    if (changed('judge', r) || force) { state.judge = r; render(); }
+  }
+  async function loadJudging(force) {
+    if (!state.token || !state.me || state.me.kind !== 'staff') return;
+    const r = await quiet('event_staff_judging', { p_token: state.token });
+    if (!r || !r.ok) return;
+    if (changed('judging', r) || force) { state.judging = r; render(); }
+  }
+  async function loadCal(force) {
+    if (!state.token || !state.me || state.me.kind === 'judge') return;
+    const r = await quiet('event_calendar', { p_token: state.token });
+    if (!r || !r.ok) return;
+    if (changed('cal', r) || force) { state.cal = r; render(); }
+  }
+  // Use case lists are an add-on, like the calendar. A failed read never raises the offline notice.
+  async function loadUC(force) {
+    if (!state.token || !state.me) return;
+    const r = await quiet('event_use_cases', { p_token: state.token });
+    if (!r || !r.ok) { if (!state.uc && !state.ucFail) { state.ucFail = true; render(); } return; }
+    state.ucFail = false;
+    if (changed('uc', r) || force) { state.uc = r; render(); }
+  }
+  async function loadStaff(force) {
+    if (!state.token || !state.me || state.me.kind !== 'staff') return;
+    const r = await call('event_staff_state', { p_token: state.token });
+    if (!r.ok) return;
+    const n = await quiet('event_staff_renames', { p_token: state.token });
+    r.renames = {};
+    if (n && n.ok) for (const x of n.renames) r.renames[x.door_id] = x;
+    const p = await quiet('event_staff_people', { p_token: state.token });
+    r.members = {}; r.removed = [];
+    if (p && p.ok) {
+      for (const m of p.members) {
+        const g = r.members[m.door_id] || (r.members[m.door_id] = { names: [], unnamed: 0 });
+        if (m.name) g.names.push({ name: m.name, devices: m.devices }); else g.unnamed += m.devices;
+      }
+      r.removed = p.removed;
+    }
+    if (changed('staff', r) || force) { state.staff = r; render(); }
+  }
+  function signedOut(why) {
+    state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
+    state.cal = null; state.calEdit = null; state.renameOpen = false; state.sessOpen = false; state.sessEdit = null;
+    state.uc = null; state.ucFail = false; state.ucOpen = false; state.ucEdit = null;
+    state.judge = null; state.jTeam = null; state.judging = null; state.jRemoved = false;
+    state.last = { pub: state.last.pub };
+    store.del(TOKEN_KEY);
+    if (JUDGE_PAGE) { state.err.jjoin = why === ERR.auth ? 'Your session ended. Enter your name to start again.' : (why || null); state.tab = 'judge'; }
+    else { state.err.pin = why || null; state.tab = 'team'; }
+    alertPrev = null; state.unseen = false; state.count = 0;
+    setTitle();
+    render();
+  }
+  function uniqueDays() {
+    const out = [];
+    for (const it of state.pub.schedule) if (out.indexOf(it.day) < 0) out.push(it.day);
+    for (const e of myEvents()) if (e.active && out.indexOf(e.day) < 0) out.push(e.day);
+    return out.sort();
+  }
+  // Rooms can differ by day. The server sends each team's room for every event day.
+  function eventDays() {
+    const out = [];
+    for (const it of (state.pub ? state.pub.schedule : [])) if (out.indexOf(it.day) < 0) out.push(it.day);
+    return out.sort();
+  }
+  function teamRooms() { return state.team && state.team.rooms ? state.team.rooms : []; }
+  function myRoomOn(day) { const x = teamRooms().find(r => r.day === day); return x ? x.room : (state.me ? state.me.room : null); }
+  // The room to show first: today's, or the next event day's when today is not an event day.
+  function roomRef() {
+    const rooms = teamRooms(), today = etNow().day;
+    const ref = rooms.find(r => r.day >= today) || rooms[rooms.length - 1] || null;
+    return { rooms, today, ref, now: ref ? ref.room : (state.me ? state.me.room : null) };
+  }
+  const roomFor = (t, day) => { const x = (t.rooms || []).find(r => r.day === day); return x ? x.room : t.room; };
+  // A team's own sessions. Empty for crew, staff, and visitors.
+  function myEvents() {
+    return state.me && state.me.kind === 'team' && state.cal ? state.cal.events : [];
+  }
+  const minsOf = hm => { const p = hm.split(':'); return +p[0] * 60 + +p[1]; };
+  const hmOf = m => { m = Math.max(0, Math.min(1439, m)); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const endOf = e => hmOf(minsOf(e.start) + e.minutes);
+  const span = e => fmtTime(e.start) + ' to ' + fmtTime(endOf(e)) + ' ET';
+  const linked = r => state.cal ? state.cal.events.find(x => x.request_id === r.id && x.active) : null;
+
+  // ------------------------------------------------------------- actions
+  async function withBusy(key, fn) {
+    if (state.busy[key]) return;
+    state.busy[key] = true; render();
+    try { await fn(); } finally { state.busy[key] = false; render(); }
+  }
+  function doLogin() {
+    return withBusy('pin', async () => {
+      state.err.pin = null;
+      const pin = (state.drafts.pin || '').replace(/\D/g, '');
+      if (pin.length < 6) { state.err.pin = 'Enter the full PIN.'; return; }
+      const r = await call('event_login', { p_pin: pin });
+      if (!r.ok) { state.err.pin = msg(r.error); return; }
+      state.token = r.token; state.me = r.me; state.drafts.pin = '';
+      store.set(TOKEN_KEY, r.token);
+      state.tab = r.me.kind === 'team' ? 'team' : r.me.kind === 'judge' ? 'judge' : 'crew';
+      await loadTeam(true);
+      if (isCrewKind(r.me.kind)) await loadCrew(true);
+      if (r.me.kind === 'staff') { await loadStaff(true); loadJudging(true); }
+      if (r.me.kind === 'judge') await loadJudge(true);
+      loadCal(true);
+    });
+  }
+  function doName() {
+    return withBusy('name', async () => {
+      state.err.name = null;
+      const r = await call('event_set_name', { p_token: state.token, p_name: state.drafts.name || '' });
+      if (!r.ok) { state.err.name = msg(r.error); return; }
+      state.me = r.me; state.drafts.name = '';
+      if (state.team) state.team.me = r.me;
+      if (r.me.kind === 'judge') await loadJudge(true);
+    });
+  }
+  function openRename() {
+    state.renameOpen = !state.renameOpen; state.err.rename = null;
+    if (state.renameOpen) state.drafts.tn = state.me.name;
+    render();
+  }
+  function doRename() {
+    return withBusy('rename', async () => {
+      state.err.rename = null;
+      const r = await call('event_team_rename', { p_token: state.token, p_name: state.drafts.tn || '' });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.rename = msg(r.error); return; }
+      state.me = r.me;
+      if (state.team) state.team.me = r.me;
+      state.renameOpen = false; delete state.drafts.tn;
+      state.note.rename = 'Your team is now ' + r.me.name + '.';
+      setTimeout(() => { state.note.rename = null; render(); }, 6000);
+    });
+  }
+  async function doLogout() {
+    const t = state.token;
+    signedOut(null);
+    if (t) await call('event_logout', { p_token: t });
+  }
+  function submitRequest(kind) {
+    return withBusy('req', async () => {
+      state.err.req = null;
+      const d = state.drafts;
+      let args;
+      if (kind === 'session') {
+        const topic = d.s_topic === '__own' ? (d.s_own || '') : (d.s_topic || '');
+        args = { p_kind: 'session', p_category: null, p_topic: topic, p_details: d.s_details || '', p_preferred_time: d.s_when || '' };
+      } else if (kind === 'joule') {
+        args = { p_kind: 'session', p_category: JOULE, p_topic: JOULE_TOPIC, p_details: d.j_details || '', p_preferred_time: d.j_when || '' };
+      } else if (kind === 'technical') {
+        args = { p_kind: 'technical', p_category: d.t_cat || TECH[0], p_topic: null, p_details: d.t_details || '', p_preferred_time: d.t_when || '' };
+        if (!(d.t_details || '').trim()) { state.err.req = msg('empty'); return; }
+      } else {
+        args = { p_kind: 'stay_late', p_category: null, p_topic: null, p_details: null, p_preferred_time: d.l_until || '' };
+      }
+      args.p_token = state.token;
+      const r = await call('event_create_request', args);
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.req = msg(r.error); return; }
+      ['s_topic', 's_own', 's_details', 's_when', 'j_details', 'j_when', 't_cat', 't_details', 't_when', 'l_until'].forEach(k => delete d[k]);
+      state.form = null;
+      state.note.req = 'Sent. The Flight Crew has it.';
+      setTimeout(() => { state.note.req = null; render(); }, 6000);
+      await loadTeam(true);
+    });
+  }
+  function twoTap(key, fn) {
+    if (state.confirm === key) { state.confirm = null; fn(); return; }
+    state.confirm = key; render();
+    setTimeout(() => { if (state.confirm === key) { state.confirm = null; render(); } }, 4000);
+  }
+  async function cancelRequest(id) {
+    const r = await call('event_cancel_request', { p_token: state.token, p_id: id });
+    if (!r.ok && r.error === 'auth') return signedOut(msg('auth'));
+    await loadTeam(true);
+  }
+  async function crewUpdate(id, status, note) {
+    state.err.crew = null;
+    const r = await call('event_crew_update', { p_token: state.token, p_id: id, p_status: status, p_note: note });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.crew = msg(r.error); render(); return; }
+    if (note != null) { state.noteOpen = null; delete state.drafts['note_' + id]; }
+    await loadCrew(true);
+  }
+  async function placeAgent(id, placed) {
+    const r = await call('event_crew_place_agent', { p_token: state.token, p_id: id, p_placed: placed, p_team: state.drafts['fa_' + id] || null });
+    if (!r.ok && r.error === 'auth') return signedOut(msg('auth'));
+    delete state.drafts['fa_' + id];
+    await loadCrew(true);
+  }
+  async function removeAgent(id, removed) {
+    state.err.crew = null;
+    const r = await call('event_staff_remove_agent', { p_token: state.token, p_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.crew = msg(r.error); render(); return; }
+    delete state.drafts['fa_' + id];
+    await Promise.all([loadCrew(true), loadStaff(true)]);
+  }
+  function joinPool() {
+    return withBusy('join', async () => {
+      state.err.join = null;
+      const d = state.drafts;
+      const r = await call('event_free_agent_join', { p_name: d.fa_name || '', p_company: d.fa_company || '', p_note: d.fa_note || '' });
+      if (!r.ok) { state.err.join = msg(r.error); return; }
+      state.joined = true;
+      ['fa_name', 'fa_company', 'fa_note'].forEach(k => delete d[k]);
+    });
+  }
+  function staffAnnounce() {
+    return withBusy('ann', async () => {
+      state.err.ann = null;
+      const to = state.drafts.ann_to || '', team = to && state.staff ? state.staff.doors.find(x => x.id === to) : null;
+      const r = to ? await call('event_staff_announce_to', { p_token: state.token, p_door_id: to, p_body: state.drafts.ann || '' })
+        : await call('event_staff_announce', { p_token: state.token, p_body: state.drafts.ann || '' });
+      if (!r.ok) { state.err.ann = msg(r.error); return; }
+      state.drafts.ann = ''; state.drafts.ann_to = '';
+      state.note.ann = 'Posted to ' + (team ? team.name : 'everyone') + '.';
+      setTimeout(() => { state.note.ann = null; render(); }, 6000);
+      await Promise.all([loadStaff(true), loadPublic(true)]);
+    });
+  }
+  async function staffAnnounceOff(id) {
+    await call('event_staff_announce_off', { p_token: state.token, p_id: id });
+    await Promise.all([loadStaff(true), loadPublic(true)]);
+  }
+  function staffCreateDoor() {
+    return withBusy('door', async () => {
+      state.err.door = null;
+      const d = state.drafts;
+      const r = await call('event_staff_create_door', { p_token: state.token, p_kind: d.d_kind || 'team', p_name: d.d_name || '', p_room: d.d_room || null, p_coach: d.d_coach || null });
+      if (!r.ok) {
+        const want = (d.d_name || '').trim().toLowerCase();
+        state.err.door = r.error === 'name_taken' && deletedDoors().some(x => x.name.toLowerCase() === want)
+          ? 'A deleted team has that callsign. Put it back from the deleted teams below.' : msg(r.error);
+        return;
+      }
+      state.pinReveal = { name: r.name, kind: r.kind, pin: r.pin };
+      ['d_name', 'd_room', 'd_coach'].forEach(k => delete d[k]);
+      await loadStaff(true);
+    });
+  }
+  async function staffSaveDoor(id) {
+    const d = state.drafts, door = state.staff ? state.staff.doors.find(x => x.id === id) : null;
+    const r = await call('event_staff_update_door', { p_token: state.token, p_door_id: id, p_name: d.e_name || null, p_room: d.e_room || '', p_coach: d.e_coach || '', p_active: null });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    // A day's room is saved only when it changed. A blank field puts the team back in its main room that day.
+    if (door && door.kind === 'team') {
+      for (const day of eventDays()) {
+        const cur = ((door.rooms || []).find(x => x.day === day) || {}).room || '', want = (d['e_rd_' + day] || '').trim();
+        if (want === cur) continue;
+        const q = await call('event_staff_set_room', { p_token: state.token, p_door_id: id, p_day: day, p_room: want || null });
+        if (!q.ok) { state.err.staff = msg(q.error); await loadStaff(true); return; }
+      }
+    }
+    eventDays().forEach(day => delete d['e_rd_' + day]);
+    state.editDoor = null; state.err.staff = null;
+    await loadStaff(true);
+  }
+  async function staffToggleDoor(door) {
+    const r = await call('event_staff_update_door', { p_token: state.token, p_door_id: door.id, p_name: null, p_room: null, p_coach: null, p_active: !door.active });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    await loadStaff(true);
+  }
+  // Delete takes a team off the Staff tab and turns off its PIN. The row is kept, so staff can put it back.
+  async function staffRemoveDoor(id, removed) {
+    const r = await call('event_staff_remove_door', { p_token: state.token, p_door_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    if (state.editDoor === id) state.editDoor = null;
+    await Promise.all([loadStaff(true), loadCrew(true)]);
+  }
+  const deletedDoors = () => (state.staff && state.staff.deleted) || [];
+  const delWarn = d => (d.people || d.open
+    ? d.people + (d.people === 1 ? ' device is' : ' devices are') + ' signed in and ' + d.open + (d.open === 1 ? ' request is' : ' requests are') + ' open. ' : '')
+    + 'Deleting turns off the PIN and takes the team off this list. You can put it back.';
+  async function staffResetPin(door) {
+    const r = await call('event_staff_reset_pin', { p_token: state.token, p_door_id: door.id });
+    if (!r.ok) { state.err.staff = msg(r.error); render(); return; }
+    state.err.staff = null;
+    state.pinReveal = { name: door.name, kind: door.kind, pin: r.pin };
+    window.scrollTo(0, 0);
+    await loadStaff(true);
+  }
+
+  // ------------------------------------------------------------ calendar
+  const CAL_KEYS = ['c_team', 'c_what', 'c_own', 'c_day', 'c_start', 'c_len', 'c_where', 'c_with', 'c_note', 'c_req'];
+  function resetCalForm(keepNote) {
+    CAL_KEYS.forEach(k => delete state.drafts[k]);
+    state.calEdit = null; state.err.cal = null;
+    if (keepNote !== true) state.note.cal = null;
+    render();
+  }
+  function saveCal() {
+    return withBusy('cal', async () => {
+      state.err.cal = null; state.note.cal = null;
+      const d = state.drafts, editing = state.calEdit;
+      const title = (d.c_what === '__own' ? (d.c_own || '') : (d.c_what || '')).trim();
+      if (!title) { state.err.cal = 'Say what the session is.'; return; }
+      if (!/^\d\d:\d\d$/.test(d.c_start || '')) { state.err.cal = 'Pick a start time.'; return; }
+      const len = +d.c_len || 30;
+      const r = await call('event_calendar_save', {
+        p_token: state.token, p_id: editing, p_door_id: editing ? null : (d.c_team || null), p_title: title,
+        p_day: d.c_day, p_start: d.c_start, p_minutes: len, p_location: d.c_where || null, p_host: d.c_with || null,
+        p_note: d.c_note || null, p_request_id: editing ? null : (d.c_req ? +d.c_req : null)
+      });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.cal = msg(r.error); return; }
+      const e = r.event;
+      let note = (editing ? 'Saved: ' : 'On the calendar: ') + e.team + ', ' + dayLabel(e.day) + ' ' + fmtTime(e.start) + ' ET.';
+      if (r.overlap) note += ' Heads up: this team has another session at that time.';
+      if (editing || d.c_req) {
+        CAL_KEYS.forEach(k => delete d[k]);
+        state.calEdit = null;
+      } else {
+        // Load the next slot: same session, the next team that does not have it yet, start moved by the length.
+        const teams = (state.cal && state.cal.teams) || [], evs = (state.cal && state.cal.events) || [];
+        const has = t => t.id === d.c_team || evs.some(x => x.active && x.team_id === t.id && x.day === d.c_day && x.title === title);
+        const i = teams.findIndex(t => t.id === d.c_team);
+        let next = null;
+        for (let k = 1; k <= teams.length && !next; k++) { const t = teams[(i + k) % teams.length]; if (!has(t)) next = t; }
+        if (next) {
+          d.c_team = next.id;
+          d.c_start = hmOf(minsOf(d.c_start) + len);
+          note += ' Next slot is loaded: ' + next.name + ', ' + fmtTime(d.c_start) + '.';
+        } else if (teams.length > 1) {
+          note += ' Every team now has this session on ' + dayLabel(d.c_day) + '.';
+        }
+        delete d.c_where; delete d.c_note;
+      }
+      state.note.cal = note;
+      await loadCal(true);
+    });
+  }
+  function editCal(e) {
+    const d = state.drafts, preset = WHAT.indexOf(e.title) >= 0;
+    CAL_KEYS.forEach(k => delete d[k]);
+    state.calEdit = e.id;
+    d.c_what = preset ? e.title : '__own'; d.c_own = preset ? '' : e.title;
+    d.c_day = e.day; d.c_start = e.start; d.c_len = String(e.minutes);
+    d.c_where = e.location || ''; d.c_with = e.host || ''; d.c_note = e.note || '';
+    state.err.cal = null; state.note.cal = null;
+    render();
+    window.scrollTo(0, 0);
+  }
+  async function setCalActive(id, active) {
+    state.err.cal = null;
+    const r = await call('event_calendar_set_active', { p_token: state.token, p_id: id, p_active: active });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.cal = msg(r.error); render(); return; }
+    if (state.calEdit === id) { CAL_KEYS.forEach(k => delete state.drafts[k]); state.calEdit = null; }
+    state.note.cal = null;
+    await loadCal(true);
+  }
+  // A team's use case list. The team, the crew, and staff read it. Other teams never do.
+  function openUC(x) {
+    const d = state.drafts;
+    delete d.u_title; delete d.u_details;
+    state.err.uc = null; state.note.uc = null;
+    if (x && x.id) { state.ucOpen = true; state.ucEdit = x.id; d.u_title = x.title; d.u_details = x.details || ''; }
+    else { const wasAdding = state.ucOpen && state.ucEdit == null; state.ucOpen = !wasAdding; state.ucEdit = null; }
+    render();
+  }
+  function closeUC() {
+    delete state.drafts.u_title; delete state.drafts.u_details;
+    state.ucOpen = false; state.ucEdit = null; state.err.uc = null;
+    render();
+  }
+  function saveUC() {
+    return withBusy('uc', async () => {
+      state.err.uc = null; state.note.uc = null;
+      const d = state.drafts, title = (d.u_title || '').trim(), editing = state.ucEdit != null;
+      if (!title) { state.err.uc = 'Give the use case a one-line title.'; return; }
+      const r = await call('event_use_case_save', { p_token: state.token, p_id: state.ucEdit, p_title: title, p_details: d.u_details || null });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.uc = msg(r.error); return; }
+      delete d.u_title; delete d.u_details;
+      state.ucOpen = false; state.ucEdit = null;
+      state.note.uc = editing ? 'Saved.' : 'Added to your list.';
+      setTimeout(() => { state.note.uc = null; render(); }, 6000);
+      await loadUC(true);
+    });
+  }
+  async function removeUC(id) {
+    state.err.uc = null;
+    const r = await call('event_use_case_remove', { p_token: state.token, p_id: id });
+    if (!r.ok) {
+      if (r.error === 'auth') return signedOut(msg('auth'));
+      state.err.uc = msg(r.error);
+      if (r.error !== 'not_found') { render(); return; }
+    }
+    if (state.ucEdit === id) { state.ucOpen = false; state.ucEdit = null; }
+    await loadUC(true);
+  }
+  // A team's own sessions: free-form entries on its own calendar. They ask the Flight Crew for nothing.
+  const SESS_KEYS = ['m_title', 'm_day', 'm_start', 'm_len', 'm_where', 'm_note'];
+  function openSess(e) {
+    const d = state.drafts;
+    SESS_KEYS.forEach(k => delete d[k]);
+    state.err.sess = null; state.note.sess = null;
+    if (e && e.id) {
+      state.sessOpen = true; state.sessEdit = e.id;
+      d.m_title = e.title; d.m_day = e.day; d.m_start = e.start; d.m_len = String(e.minutes);
+      d.m_where = e.location || ''; d.m_note = e.note || '';
+    } else {
+      const wasAdding = state.sessOpen && state.sessEdit == null;
+      state.sessOpen = !wasAdding; state.sessEdit = null;
+    }
+    render();
+  }
+  function closeSess() {
+    SESS_KEYS.forEach(k => delete state.drafts[k]);
+    state.sessOpen = false; state.sessEdit = null; state.err.sess = null;
+    render();
+  }
+  function saveSess() {
+    return withBusy('sess', async () => {
+      state.err.sess = null; state.note.sess = null;
+      const d = state.drafts, title = (d.m_title || '').trim();
+      if (!title) { state.err.sess = 'Say what the session is.'; return; }
+      if (!d.m_start || d.m_start.length !== 5) { state.err.sess = 'Pick a start time.'; return; }
+      const r = await call('event_team_session_save', {
+        p_token: state.token, p_id: state.sessEdit, p_title: title, p_day: d.m_day, p_start: d.m_start,
+        p_minutes: +d.m_len || 30, p_location: d.m_where || null, p_note: d.m_note || null
+      });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.sess = msg(r.error); return; }
+      const e = r.event;
+      state.note.sess = 'On your calendar: ' + dayLabel(e.day) + ' ' + fmtTime(e.start) + ' ET.' + (r.overlap ? ' Heads up: your team has another session at that time.' : '');
+      SESS_KEYS.forEach(k => delete d[k]);
+      state.sessOpen = false; state.sessEdit = null;
+      setTimeout(() => { state.note.sess = null; render(); }, 8000);
+      await loadCal(true);
+    });
+  }
+  async function setSessActive(id, active) {
+    state.err.sess = null;
+    const r = await call('event_team_session_set_active', { p_token: state.token, p_id: id, p_active: active });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.sess = msg(r.error); render(); return; }
+    if (state.sessEdit === id) { state.sessOpen = false; state.sessEdit = null; }
+    await loadCal(true);
+  }
+  // From a request in the crew queue: open the calendar form for that team, linked to the request.
+  async function calFromRequest(r) {
+    state.err.crew = null;
+    await loadCal(true);
+    const c = state.cal;
+    if (!c) return;
+    const ev = linked(r);
+    if (ev) { state.crewTab = 'cal'; return editCal(ev); }
+    const d = state.drafts, team = (c.teams || []).find(t => t.name === r.team);
+    if (!team) { state.err.crew = 'That team just changed its callsign or was turned off. Wait a few seconds and try again.'; render(); return; }
+    state.crewTab = 'cal';
+    CAL_KEYS.forEach(k => delete d[k]);
+    state.calEdit = null; state.err.cal = null; state.note.cal = null;
+    d.c_team = team.id;
+    d.c_what = '__own';
+    d.c_own = isJoule(r) ? JOULE_TOPIC : ((r.kind === 'session' ? 'Expert session: ' : 'Technical help: ') + (r.topic || r.category || '')).slice(0, 80);
+    d.c_req = String(r.id);
+    render();
+    window.scrollTo(0, 0);
+  }
+  // The instant in time for an Eastern wall-clock day and time.
+  function etToUtc(day, hm) {
+    const a = day.split('-').map(Number), b = hm.split(':').map(Number);
+    const wall = Date.UTC(a[0], a[1] - 1, a[2], b[0], b[1]);
+    let t = wall;
+    for (let i = 0; i < 2; i++) {
+      const p = {};
+      for (const x of etFmt.formatToParts(new Date(t))) p[x.type] = x.value;
+      t += wall - Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+    }
+    return new Date(t);
+  }
+  // A calendar file (.ics) that Outlook, Apple Calendar, and Google Calendar can open.
+  function icsText(list, withTeam) {
+    const pad = n => String(n).padStart(2, '0');
+    const f = d => d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z';
+    const esc = v => String(v == null ? '' : v).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+    const fold = v => { const out = []; while (v.length > 73) { out.push(v.slice(0, 73)); v = ' ' + v.slice(73); } out.push(v); return out.join('\r\n'); };
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Evil Brain Labs//A&D AI Hackathon 2026//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+    const stamp = f(new Date());
+    for (const e of list) {
+      const start = etToUtc(e.day, e.start), end = new Date(start.getTime() + e.minutes * 60000);
+      const room = e.room || (withTeam ? null : myRoomOn(e.day));
+      const where = e.location || (room ? 'Room ' + room : '');
+      const desc = [e.host ? 'With ' + e.host : '', e.note || '', 'A&D AI Hackathon 2026, IBM One Madison'].filter(Boolean).join('\n');
+      L.push('BEGIN:VEVENT', 'UID:session-' + e.id + '@easyassap.com', 'DTSTAMP:' + stamp, 'DTSTART:' + f(start), 'DTEND:' + f(end),
+        fold('SUMMARY:' + esc(e.title + (withTeam && e.team ? ' (' + e.team + ')' : ''))));
+      if (where) L.push(fold('LOCATION:' + esc(where)));
+      L.push(fold('DESCRIPTION:' + esc(desc)), 'END:VEVENT');
+    }
+    L.push('END:VCALENDAR');
+    return L.join('\r\n') + '\r\n';
+  }
+  function saveIcs(list, withTeam, name) {
+    try {
+      const url = URL.createObjectURL(new Blob([icsText(list, withTeam)], { type: 'text/calendar;charset=utf-8' }));
+      const a = h('a', { href: url, download: name, style: 'display:none' });
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (e) {}
+  }
+
+  // -------------------------------------------------------------- fields
+  function input(key, attrs) {
+    const el = h('input', Object.assign({ 'data-key': key, autocomplete: 'off' }, attrs));
+    el.value = state.drafts[key] || '';
+    el.addEventListener('input', () => { state.drafts[key] = el.value; });
+    return el;
+  }
+  function textarea(key, attrs) {
+    const el = h('textarea', Object.assign({ 'data-key': key }, attrs));
+    el.value = state.drafts[key] || '';
+    el.addEventListener('input', () => { state.drafts[key] = el.value; });
+    return el;
+  }
+  function select(key, options, attrs) {
+    const el = h('select', Object.assign({ 'data-key': key }, attrs));
+    for (const o of options) {
+      if (o.group) el.appendChild(h('optgroup', { label: o.group }, o.items.map(i => h('option', { value: i.value }, i.label))));
+      else el.appendChild(h('option', { value: o.value }, o.label));
+    }
+    if (state.drafts[key] != null) el.value = state.drafts[key];
+    state.drafts[key] = el.value;
+    el.addEventListener('change', () => { state.drafts[key] = el.value; render(); });
+    return el;
+  }
+  function form(onsubmit, ...kids) {
+    return h('form', { onsubmit: e => { e.preventDefault(); onsubmit(); }, novalidate: true }, kids);
+  }
+  const errLine = key => state.err[key] ? h('div', { class: 'err', role: 'alert' }, state.err[key]) : null;
+
+  // -------------------------------------------------------------- render
+  function render() {
+    const app = document.getElementById('app');
+    const ae = document.activeElement;
+    const fkey = ae && ae.dataset ? ae.dataset.key : null;
+    let ss = null, se = null;
+    if (fkey && ae.tagName !== 'SELECT') { try { ss = ae.selectionStart; se = ae.selectionEnd; } catch (e) {} }
+
+    const kids = [];
+    kids.push(h('header', { class: 'top' },
+      h('div', { class: 'eyebrow' }, 'NOV 16-19 · IBM ONE MADISON · NYC'),
+      h('h1', null, 'A&D AI HACKATHON', h('span', { class: 'cursor', 'aria-hidden': 'true' })),
+      h('div', { class: 'sub' }, 'PARTNER EDITION · ' + (JUDGE_PAGE ? 'JUDGING' : 'COMPANION SITE'))));
+
+    if (CONFIG.mode === 'demo') kids.push(h('div', { class: 'demo' }, demo.hint));
+    if (state.offline) kids.push(h('div', { class: 'err', role: 'alert' }, msg('network')));
+
+    const kind = state.me ? state.me.kind : null;
+    const tabs = JUDGE_PAGE ? [['judge', 'Judging'], ['schedule', 'Schedule']] : [['schedule', 'Schedule']];
+    if (!JUDGE_PAGE) {
+      if (!kind) tabs.push(['team', 'Enter PIN']);
+      if (kind === 'team') { tabs.push(['team', 'My team']); tabs.push(['uc', 'Use cases']); }
+      if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
+      if (kind === 'staff') tabs.push(['staff', 'Staff']);
+    }
+    if (!tabs.some(t => t[0] === state.tab)) state.tab = JUDGE_PAGE ? 'judge' : 'schedule';
+    kids.push(h('nav', { class: 'tabs', 'aria-label': 'Sections' }, tabs.map(t =>
+      h('button', { type: 'button', class: state.tab === t[0] ? 'on' : null, 'data-tab': t[0], onclick: () => go(t[0]) }, t[1]))));
+
+    const teamAnns = kind === 'team' && state.team && state.team.announcements ? state.team.announcements : [];
+    if (teamAnns.length) kids.push(teamAnns.map(a =>
+      h('div', { class: 'ann team', 'data-teamann': a.id }, h('div', { class: 'lab' }, 'FOR YOUR TEAM'), h('p', null, a.body), h('div', { class: 'when' }, ago(a.at)))));
+    if (state.pub && state.pub.announcements.length) kids.push(state.pub.announcements.map(a =>
+      h('div', { class: 'ann' }, h('div', { class: 'lab' }, 'ANNOUNCEMENT'), h('p', null, a.body), h('div', { class: 'when' }, ago(a.at)))));
+    if (kind === 'team' && state.tab !== 'team' && state.me.display_name) kids.push(roomStrip());
+
+    if (!state.loaded) kids.push(h('p', { class: 'muted' }, 'Loading...'));
+    else if (state.tab === 'schedule') kids.push(viewSchedule());
+    else if (state.tab === 'team') kids.push(kind === 'team' ? viewTeam() : viewDoor());
+    else if (state.tab === 'uc') kids.push(viewUC());
+    else if (state.tab === 'crew') kids.push(viewCrew());
+    else if (state.tab === 'staff') kids.push(viewStaff());
+    else if (state.tab === 'judge') kids.push(kind === 'judge' ? viewJudge() : viewJudgeJoin());
+
+    kids.push(h('footer', null,
+      h('div', null, 'Unofficial companion site for the SAP Aerospace & Defense AI Hackathon 2026: Partner Edition. Not an SAP system. Do not enter proprietary, export-controlled, or classified information.'),
+      h('div', { class: 'ebl' }, 'PRODUCED BY EVIL BRAIN LABS ', h('span', null, '· THIRD WORST IN AI'))));
+
+    app.className = (state.tab === 'crew' || state.tab === 'staff') ? 'wide' : '';
+    app.replaceChildren(...kids.flat(Infinity).filter(Boolean));
+
+    if (fkey) {
+      const el = app.querySelector('[data-key="' + fkey.replace(/"/g, '') + '"]');
+      if (el) {
+        el.focus({ preventScroll: true });
+        if (ss != null) { try { el.setSelectionRange(ss, se); } catch (e) {} }
+      }
+    }
+  }
+  function go(tab) {
+    state.tab = tab; state.err = {}; state.confirm = null;
+    if (tab === 'crew') loadCrew(true);
+    if (tab === 'staff') { loadStaff(true); loadJudging(true); }
+    if (tab === 'judge') loadJudge(true);
+    if (tab === 'uc') loadUC(true);
+    if (state.me) loadCal(false);
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  // ------------------------------------------------------- view: schedule
+  // More details on a schedule entry. Marks: "# " heading, "## " sub-heading, "- " list item. Anything else is a paragraph.
+  function moreNodes(text) {
+    return String(text).split('\n').map(x => x.trim()).filter(Boolean).map(x =>
+      x.startsWith('## ') ? h('div', { class: 'ms' }, x.slice(3))
+      : x.startsWith('# ') ? h('div', { class: 'mh' }, x.slice(2))
+      : x.startsWith('- ') ? h('div', { class: 'mi' }, '\u00b7 ' + x.slice(2))
+      : h('div', { class: 'mp' }, x));
+  }
+  function viewSchedule() {
+    if (!state.pub) return h('div', { class: 'card' }, h('p', { class: 'muted' }, 'The schedule is not available right now. Try again in a minute.'));
+    const n = etNow(), nowKey = n.day + ' ' + n.hm, key = it => it.day + ' ' + it.start;
+    // A signed-in team sees its own sessions in line with the event schedule.
+    const mine = myEvents().filter(e => e.active).map(e => ({
+      id: 'e' + e.id, day: e.day, start: e.start, end: endOf(e), time_label: null, title: e.title, mine: true,
+      detail: span(e) + (e.host ? ' · With ' + e.host : ''), note: e.note,
+      location: e.location || ((e.room || myRoomOn(e.day)) ? 'Room ' + (e.room || myRoomOn(e.day)) : null)
+    }));
+    const items = state.pub.schedule.concat(mine).sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
+    let cur = null, next = null;
+    for (const it of items) {
+      // A team session stops being "now" when it ends. A schedule block runs until the next one starts.
+      if (key(it) <= nowKey) { if (!it.mine || nowKey < it.day + ' ' + it.end) cur = it; }
+      else { next = it; break; }
+    }
+    if (cur && cur.day !== n.day) cur = null;
+    const when = it => (it.day === n.day ? '' : dayLabel(it.day) + ' · ') + (it.time_label || fmtTime(it.start)) + ' ET';
+
+    const out = [];
+    out.push(h('div', { class: 'nn' },
+      h('div', { class: 'cell now' }, h('div', { class: 'lab' }, 'NOW'),
+        h('div', { class: 't' }, cur ? cur.title : (next ? 'Between sessions' : 'That is a wrap')),
+        h('div', { class: 'w' }, cur ? 'since ' + (cur.time_label || fmtTime(cur.start)) + ' ET' : (next ? '' : 'See you at the next one'))),
+      h('div', { class: 'cell' }, h('div', { class: 'lab' }, 'NEXT'),
+        h('div', { class: 't' }, next ? next.title : 'Nothing scheduled'),
+        h('div', { class: 'w' }, next ? when(next) : ''))));
+
+    out.push(h('div', { class: 'days', role: 'tablist' }, uniqueDays().map(d =>
+      h('button', { type: 'button', class: state.day === d ? 'on' : null, 'data-day': d, onclick: () => { state.day = d; render(); } }, dayLabel(d)))));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, dayLabel(state.day) + ' · ALL TIMES EASTERN'),
+      items.filter(it => it.day === state.day).map(it =>
+        h('div', { class: 'row' + (it.mine ? ' mine' : '') },
+          h('div', { class: 'time' }, it.time_label || fmtTime(it.start)),
+          h('div', null,
+            h('div', { class: 'title' }, it.title,
+              it.mine ? h('span', { class: 'badge mine' }, 'YOUR TEAM') : null,
+              cur && cur.id === it.id ? h('span', { class: 'badge now' }, 'NOW') : null),
+            it.detail ? h('div', { class: 'detail' }, it.detail) : null,
+            it.note ? h('div', { class: 'detail' }, it.note) : null,
+            it.location ? h('div', { class: 'loc' }, it.location) : null,
+            it.more ? h('button', { type: 'button', class: 'quiet morebtn', 'data-more': it.id, 'aria-expanded': state.openMore === it.id ? 'true' : 'false',
+              onclick: () => { state.openMore = state.openMore === it.id ? null : it.id; render(); } }, state.openMore === it.id ? 'Hide details' : 'More details') : null,
+            it.more && state.openMore === it.id ? h('div', { class: 'more', 'data-more-body': it.id }, moreNodes(it.more)) : null)))));
+
+    if (state.pub.topics.length) {
+      const groups = [];
+      for (const t of state.pub.topics) { let g = groups.find(x => x.name === t.grp); if (!g) groups.push(g = { name: t.grp, items: [] }); g.items.push(t.name); }
+      out.push(h('div', { class: 'card' }, h('h2', null, 'WHAT THE FLIGHT CREW COVERS'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Enter your team PIN to request an expert on any of these, or on a topic of your own.'),
+        groups.map(g => [h('label', null, g.name.toUpperCase()), h('div', { class: 'chips' }, g.items.map(n2 => h('span', { class: 'chip' }, n2)))])));
+    }
+    return out;
+  }
+
+  // ----------------------------------------------------------- view: door
+  function viewDoor() {
+    const out = [];
+    out.push(h('div', { class: 'card' }, h('h2', null, 'TEAM DOOR'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Enter the PIN your coach gave you. Your phone stays signed in all week.'),
+      form(doLogin,
+        h('label', { for: 'pin' }, 'PIN'),
+        input('pin', { id: 'pin', class: 'pin', inputmode: 'numeric', pattern: '[0-9 ]*', maxlength: '12', 'aria-label': 'PIN' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.pin, id: 'pin-go' }, state.busy.pin ? 'Checking...' : 'Enter')),
+        errLine('pin'))));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, 'NO TEAM YET?'),
+      state.joined
+        ? h('p', { class: 'ok', id: 'joined' }, 'You are on the list. Come to the 4 PM orientation on Monday. Staff will place you with a team and give you its PIN.')
+        : [h('p', { class: 'muted', style: 'margin-top:0' }, 'Add yourself to the matchmaking list. Use a callsign, not your real name. Teams and staff will see what you enter here.'),
+          form(joinPool,
+            h('label', { for: 'fa_name' }, 'CALLSIGN'), input('fa_name', { id: 'fa_name', maxlength: '40', placeholder: 'e.g., Sparky' }),
+            h('label', { for: 'fa_company' }, 'COMPANY'), input('fa_company', { id: 'fa_company', maxlength: '60' }),
+            h('label', { for: 'fa_note' }, 'WHAT YOU BRING'), input('fa_note', { id: 'fa_note', maxlength: '200', placeholder: 'e.g., supply chain, UI5, data modeling' }),
+            h('div', { class: 'rowbtn' }, h('button', { type: 'submit', disabled: state.busy.join, id: 'join-go' }, 'Add me to the list')),
+            errLine('join'))]));
+    return out;
+  }
+
+  // ----------------------------------------------------------- view: name
+  function nameCard(what) {
+    return h('div', { class: 'card gold' }, h('h2', null, 'ONE MORE THING'),
+      h('p', { style: 'margin-top:0' }, 'You are in: ', h('strong', null, state.me.name), '. ', what),
+      form(doName,
+        h('label', { for: 'name' }, 'CALLSIGN'), input('name', { id: 'name', maxlength: '40', placeholder: 'e.g., Sparky' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.name, id: 'name-go' }, 'Save')),
+        errLine('name')));
+  }
+  // The team's room, in large type. Rooms can change by day, so every event day is listed when they differ.
+  function roomCard() {
+    const x = roomRef(), differ = x.rooms.some(r => r.room !== x.rooms[0].room);
+    const label = !x.ref ? 'YOUR ROOM' : x.ref.day === x.today ? 'YOUR ROOM TODAY' : 'YOUR ROOM ' + dayLabel(x.ref.day);
+    return h('div', { class: 'card', id: 'room' }, h('h2', null, label),
+      h('div', { class: 'roomnow', id: 'room-now' }, x.now ? 'Room ' + x.now : 'Not assigned yet'),
+      differ ? h('div', { class: 'roomdays', id: 'room-days' }, x.rooms.map(r => h('div', { class: r === x.ref ? 'on' : null, 'data-roomday': r.day },
+          h('span', { class: 'd' }, dayLabel(r.day)), ' ', r.room ? 'Room ' + r.room : 'Not assigned yet')))
+        : h('p', { class: 'muted', style: 'margin:6px 0 0', id: 'room-hint' }, x.now ? 'Rooms can change by day. Check here each morning.' : 'Staff will post it here.'));
+  }
+  function roomStrip() {
+    const x = roomRef();
+    if (!x.now) return null;
+    return h('div', { class: 'roomstrip', id: 'roomstrip' }, state.me.name + ' · ' + (x.ref && x.ref.day !== x.today ? dayLabel(x.ref.day) : 'TODAY') + ' · ', h('strong', null, 'Room ' + x.now));
+  }
+  function whoCard(title, meta, extra) {
+    return h('div', { class: 'card' }, h('div', { class: 'who' },
+      h('div', null, h('div', { class: 'name' }, title), h('div', { class: 'meta' }, meta)),
+      h('div', { class: 'rowbtn', style: 'margin-top:0' }, extra || null,
+        h('button', { type: 'button', class: 'quiet', id: 'signout', onclick: () => twoTap('out', doLogout) }, state.confirm === 'out' ? 'Tap again to sign out' : 'Sign out'))));
+  }
+
+  // ----------------------------------------------------------- view: team
+  function viewTeam() {
+    const me = state.me, t = state.team;
+    if (!me.display_name) return nameCard('Pick a callsign. The Flight Crew will call you by it. No real names.');
+    const out = [];
+    const preset = DEFAULT_TEAM.test(me.name);
+    out.push(whoCard(me.name,
+      (me.coach ? 'Coach: ' + me.coach + ' · ' : '') + 'Signed in as ' + me.display_name,
+      h('button', { type: 'button', class: preset ? (state.renameOpen ? 'on' : null) : 'quiet', id: 'rename-open', onclick: openRename }, preset ? 'Pick a team callsign' : 'Change callsign')));
+    if (state.renameOpen) out.push(h('div', { class: 'card gold', id: 'rename-form' }, h('h2', null, 'TEAM CALLSIGN'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Pick a callsign. A company name is fine. Your teammates, the Flight Crew, and staff see it. Your PIN and room stay the same.'),
+      form(doRename,
+        h('label', { for: 'tn' }, 'CALLSIGN'), input('tn', { id: 'tn', maxlength: '40' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.rename, id: 'rename-go' }, 'Save callsign'),
+          h('button', { type: 'button', onclick: openRename }, 'Never mind')),
+        errLine('rename'))));
+    if (state.note.rename) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'renamed' }, state.note.rename));
+    out.push(roomCard());
+
+    const today = etNow().day, evs = myEvents().filter(e => e.day >= today);
+    out.push(h('div', { class: 'card', id: 'my-cal' }, h('h2', null, "YOUR TEAM'S CALENDAR"),
+      evs.length ? evs.map(e => calItem(e, false))
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled for your team yet. Workshops and expert visits show up here.'),
+      state.sessOpen ? null : errLine('sess'),
+      h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: state.sessOpen && state.sessEdit == null ? 'on' : null, id: 'sess-open', onclick: () => openSess(null) }, 'Add your own session'))));
+    if (state.note.sess) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'sess-ok' }, state.note.sess));
+    if (state.sessOpen) out.push(sessForm());
+
+    out.push(h('div', { class: 'rowbtn', style: 'margin:0 0 14px' },
+      h('button', { type: 'button', class: state.form === 'session' ? 'on' : 'go', id: 'btn-session', onclick: () => openForm('session') }, 'Request an expert'),
+      h('button', { type: 'button', class: state.form === 'joule' ? 'on' : null, id: 'btn-joule', onclick: () => openForm('joule') }, 'Joule consultation'),
+      h('button', { type: 'button', class: state.form === 'technical' ? 'on' : null, id: 'btn-technical', onclick: () => openForm('technical') }, 'Technical request'),
+      h('button', { type: 'button', class: state.form === 'late' ? 'on' : null, id: 'btn-late', onclick: () => openForm('late') }, 'Stay late tonight')));
+    if (state.note.req) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'sent' }, state.note.req));
+
+    if (state.form === 'session') {
+      const groups = [];
+      for (const tp of (t ? t.topics : [])) { let g = groups.find(x => x.group === tp.grp); if (!g) groups.push(g = { group: tp.grp, items: [] }); g.items.push({ value: tp.name, label: tp.name + (tp.covered_by ? ' (' + tp.covered_by + ')' : '') }); }
+      groups.push({ value: '__own', label: 'Something else (write your own)' });
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'REQUEST AN EXPERT'),
+        form(() => submitRequest('session'),
+          h('label', { for: 's_topic' }, 'TOPIC'), select('s_topic', groups, { id: 's_topic' }),
+          state.drafts.s_topic === '__own' ? [h('label', { for: 's_own' }, 'YOUR TOPIC'), input('s_own', { id: 's_own', maxlength: '160' })] : null,
+          h('label', { for: 's_details' }, 'WHAT DO YOU WANT TO COVER?'), textarea('s_details', { id: 's_details', maxlength: '1000' }),
+          h('label', { for: 's_when' }, 'WHEN'), input('s_when', { id: 's_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-session' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'joule') {
+      out.push(h('div', { class: 'card gold', id: 'joule-form' }, h('h2', null, 'JOULE CONSULTATION'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Someone comes to your room with Joule and a laptop. Say what you want to do and when.'),
+        form(() => submitRequest('joule'),
+          h('label', { for: 'j_details' }, 'WHAT DO YOU WANT TO DO WITH JOULE?'), textarea('j_details', { id: 'j_details', maxlength: '1000' }),
+          h('label', { for: 'j_when' }, 'WHEN'), input('j_when', { id: 'j_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-joule' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'technical') {
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'TECHNICAL REQUEST'),
+        form(() => submitRequest('technical'),
+          h('label', { for: 't_cat' }, 'TYPE'), select('t_cat', TECH.map(x => ({ value: x, label: x })), { id: 't_cat' }),
+          h('label', { for: 't_details' }, 'WHAT DO YOU NEED?'), textarea('t_details', { id: 't_details', maxlength: '1000' }),
+          h('label', { for: 't_when' }, 'WHEN'), input('t_when', { id: 't_when', maxlength: '80', placeholder: 'As soon as possible' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-technical' }, 'Send to the Flight Crew'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+    if (state.form === 'late') {
+      out.push(h('div', { class: 'card gold' }, h('h2', null, 'STAY LATE TONIGHT'),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'The space closes at 5 PM unless a team asks. Staff will confirm here.'),
+        form(() => submitRequest('late'),
+          h('label', { for: 'l_until' }, 'UNTIL WHEN?'), input('l_until', { id: 'l_until', maxlength: '80', placeholder: 'e.g., 8 PM' }),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.req, id: 'send-late' }, 'Ask staff'),
+            h('button', { type: 'button', onclick: () => openForm(null) }, 'Never mind')),
+          errLine('req'))));
+    }
+
+    const reqs = t ? t.requests : [];
+    out.push(h('div', { class: 'card', id: 'my-requests' }, h('h2', null, "YOUR TEAM'S REQUESTS"),
+      reqs.length ? reqs.map(r => reqItem(r, false)) : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing yet. Ask for an expert when you need one.')));
+
+    if (t && t.free_agents.length) out.push(h('div', { class: 'card' }, h('h2', null, 'LOOKING FOR A TEAM'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Want one of them? Tell a cowboy hat.'),
+      t.free_agents.map(f => h('div', { class: 'door' }, h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', f.note ? h('div', { class: 'muted' }, f.note) : null))));
+
+    if (t && t.help) out.push(h('p', { class: 'muted' }, t.help));
+    return out;
+  }
+  function openForm(f) { state.form = state.form === f ? null : f; state.err.req = null; render(); }
+
+  function reqItem(r, crew) {
+    const open = r.status === 'new' || r.status === 'claimed' || r.status === 'on_the_way';
+    const what = r.kind === 'stay_late' ? 'Keep the space open late'
+      : isJoule(r) ? (crew ? 'Bring Joule and a laptop to the room' : 'Someone comes to your room with Joule and a laptop')
+      : (r.topic || r.category || 'Request');
+    const meta = [];
+    if (r.kind === 'technical' && r.category && r.topic) meta.push(r.category);
+    if (r.preferred_time) meta.push((r.kind === 'stay_late' ? 'Until: ' : 'When: ') + r.preferred_time);
+    if (r.requested_by) meta.push('From ' + r.requested_by);
+    meta.push(ago(r.created_at));
+    let line = null;
+    if (!crew && r.status === 'claimed' && r.claimed_by) line = r.claimed_by + ' has it.';
+    if (!crew && r.status === 'on_the_way' && r.claimed_by) line = r.claimed_by + ' is on the way.';
+    if (crew && r.claimed_by && open) line = 'Owner: ' + r.claimed_by;
+    const ce = linked(r);
+    return h('div', { class: 'req', 'data-req': r.id },
+      h('div', { class: 'head' },
+        h('span', { class: 'kind' }, '#' + r.id + ' · ' + kindLabel(r)),
+        h('span', { class: 'st ' + r.status }, STATUS[r.status])),
+      crew ? h('div', { class: 'team' }, (r.team || '?') + ' · ' + (r.room ? 'Room ' + r.room : 'room not set')) : null,
+      h('div', { class: 'what' }, what),
+      r.details ? h('div', { class: 'body' }, r.details) : null,
+      h('div', { class: 'meta' }, meta.join(' · ')),
+      line ? h('div', { class: 'meta', style: 'color:var(--paper)' }, line) : null,
+      ce ? h('div', { class: 'meta', style: 'color:var(--cyan)', 'data-linked': ce.id },
+        (crew ? 'On their calendar: ' : 'On your calendar: ') + dayLabel(ce.day) + ' · ' + fmtTime(ce.start) + ' ET' + (ce.host ? ' with ' + ce.host : '')) : null,
+      r.crew_note ? h('div', { class: 'note' }, (crew ? 'Note to team: ' : 'Note from the crew: ') + r.crew_note) : null,
+      crew ? crewButtons(r, open) : (open ? h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'quiet', 'data-cancel': r.id, onclick: () => twoTap('c' + r.id, () => cancelRequest(r.id)) },
+          state.confirm === 'c' + r.id ? 'Tap again to cancel' : 'Cancel request')) : null));
+  }
+
+  // ----------------------------------------------------------- view: crew
+  function crewButtons(r, open) {
+    const b = (label, cls, fn, id) => h('button', { type: 'button', class: cls, 'data-act': id, onclick: fn }, label);
+    const btns = [];
+    if (r.status === 'new') btns.push(b('Claim', 'go', () => crewUpdate(r.id, 'claimed', null), 'claim'));
+    if (r.status === 'claimed') btns.push(b('On my way', 'go', () => crewUpdate(r.id, 'on_the_way', null), 'otw'));
+    if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Done', r.status === 'on_the_way' ? 'go' : null, () => crewUpdate(r.id, 'done', null), 'done'));
+    if (open) btns.push(b(state.noteOpen === r.id ? 'Close note' : 'Note to team', null, () => { state.noteOpen = state.noteOpen === r.id ? null : r.id; if (state.noteOpen) state.drafts['note_' + r.id] = r.crew_note || ''; render(); }, 'note'));
+    if (open && r.kind !== 'stay_late') btns.push(b(linked(r) ? 'Change time' : 'Set a time', null, () => calFromRequest(r), 'settime'));
+    if (r.status === 'claimed' || r.status === 'on_the_way') btns.push(b('Release', 'quiet', () => crewUpdate(r.id, 'new', null), 'release'));
+    if (open) btns.push(b(state.confirm === 'x' + r.id ? 'Tap again to cancel' : 'Cancel', 'quiet', () => twoTap('x' + r.id, () => crewUpdate(r.id, 'cancelled', null)), 'cancel'));
+    if (!open) btns.push(b('Reopen', 'quiet', () => crewUpdate(r.id, 'new', null), 'reopen'));
+    const out = [h('div', { class: 'rowbtn' }, btns)];
+    if (state.noteOpen === r.id) out.push(form(() => crewUpdate(r.id, null, state.drafts['note_' + r.id] || ''),
+      h('label', { for: 'note_' + r.id }, 'NOTE THE TEAM WILL SEE'),
+      input('note_' + r.id, { id: 'note_' + r.id, maxlength: '300', placeholder: 'e.g., There at 2:30. Bring your data model.' }),
+      h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-note' }, 'Save note'))));
+    return out;
+  }
+  function viewCrew() {
+    const me = state.me, c = state.crew;
+    if (!me.display_name) return nameCard('Pick a callsign. Teams see it when you claim a request. No real names.');
+    const out = [];
+    out.push(whoCard('Flight Crew console', 'Signed in as ' + me.display_name + (me.kind === 'staff' ? ' · staff' : '')));
+    const perm = canPop() ? Notification.permission : 'none';
+    const how = !state.alerts ? 'Off. Turn them on to get a pop-up and a sound when a team files a request.'
+      : perm === 'granted' ? 'On: pop-up, sound, and tab title. Keep this tab open, even in the background.'
+      : perm === 'denied' ? 'On: sound and tab title. Pop-ups are blocked for this site in your browser settings.'
+      : perm === 'default' ? 'On: sound and tab title. Allow notifications when the browser asks, to get pop-ups too.'
+      : 'On: sound, while this page is on screen. This browser has no pop-ups.';
+    out.push(h('div', { class: 'card', id: 'alerts' }, h('h2', null, 'ALERTS'),
+      h('p', { class: 'muted', style: 'margin:0', id: 'alerts-how' }, how),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: state.alerts ? 'quiet' : 'go', id: 'alerts-toggle', onclick: state.alerts ? alertsOff : alertsOn }, state.alerts ? 'Turn off' : 'Turn on alerts'),
+        state.alerts ? h('button', { type: 'button', class: 'quiet', id: 'alerts-test', onclick: alertTest }, 'Test alert') : null)));
+    if (!c) { out.push(h('p', { class: 'muted' }, 'Loading the queue...')); return out; }
+    const waiting = c.free_agents.filter(f => !f.placed).length;
+    const tabs = [['open', 'Open (' + c.open.length + ')'], ['closed', 'Closed'], ['agents', 'No team (' + waiting + ')'], ['cal', 'Calendar'], ['uc', 'Use cases']];
+    out.push(h('div', { class: 'days' }, tabs.map(t => h('button', { type: 'button', class: state.crewTab === t[0] ? 'on' : null, 'data-crewtab': t[0], onclick: () => { state.crewTab = t[0]; if (t[0] === 'cal') loadCal(true); if (t[0] === 'uc') loadUC(true); if (t[0] === 'agents') loadStaff(true); render(); } }, t[1]))));
+    if (state.err.crew) out.push(errLine('crew'));
+    if (state.crewTab === 'open') out.push(h('div', { class: 'card', id: 'queue' }, h('h2', null, 'OPEN REQUESTS, OLDEST FIRST'),
+      c.open.length ? c.open.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Queue is clear.')));
+    if (state.crewTab === 'closed') out.push(h('div', { class: 'card' }, h('h2', null, 'RECENTLY CLOSED'),
+      c.closed.length ? c.closed.map(r => reqItem(r, true)) : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing closed yet.')));
+    if (state.crewTab === 'agents') {
+      // Staff can take a person off the list without placing them. The crew cannot.
+      const isStaff = me.kind === 'staff', gone = isStaff && state.staff && state.staff.removed ? state.staff.removed : [];
+      const rm = f => isStaff ? h('button', { type: 'button', class: 'quiet', 'data-act': 'agent-remove', onclick: () => twoTap('g' + f.id, () => removeAgent(f.id, true)) },
+        state.confirm === 'g' + f.id ? 'Tap again to remove' : 'Remove') : null;
+      out.push(h('div', { class: 'card', id: 'agents' }, h('h2', null, 'PEOPLE WITHOUT A TEAM'),
+        isStaff ? h('p', { class: 'muted', style: 'margin-top:0', id: 'agents-how' }, 'Remove takes a person off this list for the crew and for every team. Staff can put them back.') : null,
+        c.free_agents.length ? c.free_agents.map(f => h('div', { class: 'door', 'data-agent': f.id },
+          h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '', ' · ', h('span', { class: 'muted' }, ago(f.at)),
+          f.note ? h('div', { class: 'muted' }, f.note) : null,
+          f.placed
+            ? h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Placed' + (f.placed_team ? ' with ' + f.placed_team : '')),
+                h('button', { type: 'button', class: 'quiet', onclick: () => placeAgent(f.id, false) }, 'Undo'), rm(f))
+            : h('div', { class: 'rowbtn' }, input('fa_' + f.id, { placeholder: 'Team callsign', maxlength: '60', 'aria-label': 'Team callsign', style: 'flex:2 1 160px' }),
+                h('button', { type: 'button', class: 'go', 'data-act': 'place', onclick: () => placeAgent(f.id, true) }, 'Placed'), rm(f))))
+          : h('p', { class: 'muted', style: 'margin:0' }, 'Nobody is waiting.'),
+        gone.length ? h('div', { class: 'calday', id: 'agents-removed' }, h('label', null, 'REMOVED FROM THE LIST · ' + gone.length),
+          gone.map(f => h('div', { class: 'door', 'data-removed': f.id },
+            h('span', { class: 'n' }, f.name), f.company ? ' · ' + f.company : '',
+            f.note ? h('div', { class: 'muted' }, f.note) : null,
+            h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Removed' + (f.removed_by ? ' by ' + f.removed_by : '')),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'agent-restore', onclick: () => removeAgent(f.id, false) }, 'Put back'))))) : null));
+    }
+    if (state.crewTab === 'cal') out.push(viewCal());
+    if (state.crewTab === 'uc') out.push(viewUCAll());
+    return out;
+  }
+
+  // ------------------------------------------------------ view: use cases
+  function ucItem(x, n, crew) {
+    return h('div', { class: 'uc', 'data-uc': x.id },
+      h('div', { class: 'what' }, n + '. ' + x.title),
+      x.details ? h('div', { class: 'body' }, x.details) : null,
+      h('div', { class: 'meta' }, (x.by ? 'From ' + x.by + ' · ' : '') + ago(x.updated_at)),
+      crew ? null : h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'quiet', 'data-act': 'uc-edit', onclick: () => openUC(x) }, 'Change'),
+        h('button', { type: 'button', class: 'quiet', 'data-act': 'uc-remove', onclick: () => twoTap('u' + x.id, () => removeUC(x.id)) }, state.confirm === 'u' + x.id ? 'Tap again to remove it' : 'Remove')));
+  }
+  function viewUC() {
+    const me = state.me, u = state.uc;
+    if (!me.display_name) return nameCard('Pick a callsign. The Flight Crew will call you by it. No real names.');
+    const out = [], list = u ? u.use_cases : null;
+    out.push(h('div', { class: 'card', id: 'uc-list' }, h('h2', null, "YOUR TEAM'S USE CASES"),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'List what your team is working on. Your team, the Flight Crew, and staff can read it. Other teams cannot.'),
+      !list ? h('p', { class: 'muted', style: 'margin:0' }, state.ucFail ? 'The list is not available right now. Try again in a minute.' : 'Loading the list...')
+        : list.length ? list.map((x, i) => ucItem(x, i + 1, false))
+        : h('p', { class: 'muted', style: 'margin:0', id: 'uc-none' }, 'Nothing on the list yet.'),
+      state.ucOpen ? null : errLine('uc'),
+      list ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: state.ucOpen && state.ucEdit == null ? 'on' : 'go', id: 'uc-open', onclick: () => openUC(null) }, 'Add a use case')) : null));
+    if (state.note.uc) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'uc-ok' }, state.note.uc));
+    if (state.ucOpen) out.push(h('div', { class: 'card gold', id: 'uc-form' }, h('h2', null, state.ucEdit != null ? 'CHANGE A USE CASE' : 'ADD A USE CASE'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Do not enter proprietary, export-controlled, or classified information.'),
+      form(saveUC,
+        h('label', { for: 'u_title' }, 'USE CASE, IN ONE LINE'), input('u_title', { id: 'u_title', maxlength: '100' }),
+        h('label', { for: 'u_details' }, 'WHAT IT DOES AND WHO IT HELPS'), textarea('u_details', { id: 'u_details', maxlength: '600' }),
+        h('div', { class: 'rowbtn' },
+          h('button', { type: 'submit', class: 'go', disabled: state.busy.uc, id: 'uc-save' }, state.ucEdit != null ? 'Save changes' : 'Add to the list'),
+          h('button', { type: 'button', id: 'uc-close', onclick: closeUC }, 'Never mind')),
+        errLine('uc'))));
+    return out;
+  }
+  // Crew and staff: every team's list, read only.
+  function viewUCAll() {
+    const u = state.uc;
+    if (!u) return h('p', { class: 'muted' }, state.ucFail ? 'The use cases are not available right now. Try again in a minute.' : 'Loading the use cases...');
+    const teams = u.teams || [], all = u.use_cases || [];
+    const withAny = teams.filter(t => all.some(x => x.team_id === t.id)).length;
+    return h('div', { class: 'card', id: 'uc-all' }, h('h2', null, 'USE CASES, ALL TEAMS'),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'uc-count' }, all.length + (all.length === 1 ? ' use case from ' : ' use cases from ') + withAny + ' of ' + teams.length + (teams.length === 1 ? ' team.' : ' teams.') + ' Teams enter these on their Use cases tab.'),
+      teams.length ? teams.map(t => {
+        const mine = all.filter(x => x.team_id === t.id);
+        return h('div', { 'data-ucteam': t.name }, h('p', { class: 'uc-team' }, t.name + (t.room ? ' · Room ' + t.room : '') + ' · ' + mine.length),
+          mine.length ? mine.map((x, i) => ucItem(x, i + 1, true)) : h('p', { class: 'muted', style: 'margin:4px 0 0' }, 'Nothing entered yet.'));
+      }) : h('p', { class: 'muted', style: 'margin:0' }, 'No teams yet. Add teams on the Staff tab first.'));
+  }
+
+  // ------------------------------------------------------- view: calendar
+  function calItem(e, crew) {
+    const room = e.room || (crew ? null : myRoomOn(e.day));
+    const where = e.location || (room ? 'Room ' + room : null);
+    return h('div', { class: 'cal' + (e.active ? '' : ' off'), 'data-cal': e.id },
+      h('div', { class: 'head' },
+        h('span', { class: 'when' }, dayLabel(e.day) + ' · ' + span(e)),
+        e.active ? null : h('span', { class: 'st cancelled' }, 'CANCELLED')),
+      crew ? h('div', { class: 'team' }, e.team + (e.room ? ' · Room ' + e.room : '')) : null,
+      h('div', { class: 'what' }, e.title),
+      e.host || where ? h('div', { class: 'meta' }, [e.host ? 'With ' + e.host : null, where].filter(Boolean).join(' · ')) : null,
+      e.note ? h('div', { class: 'meta' }, e.note) : null,
+      crew ? h('div', { class: 'meta' }, e.by_team ? 'Added by the team' + (e.by ? ' (' + e.by + ')' : '') : 'Set by ' + (e.by || 'staff') + (e.request_id ? ' · from request #' + e.request_id : ''))
+        : (e.by_team ? h('div', { class: 'meta', 'data-own': e.id }, 'Added by your team' + (e.by ? ' (' + e.by + ')' : '')) : null),
+      crew ? h('div', { class: 'rowbtn' },
+        e.active ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-edit', onclick: () => editCal(e) }, 'Change') : null,
+        e.active
+          ? h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-cancel', onclick: () => twoTap('k' + e.id, () => setCalActive(e.id, false)) }, state.confirm === 'k' + e.id ? 'Tap again to cancel it' : 'Cancel session')
+          : h('button', { type: 'button', class: 'quiet', 'data-act': 'cal-restore', onclick: () => setCalActive(e.id, true) }, 'Put it back'),
+        e.active ? h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], true, 'hackathon-session-' + e.id + '.ics') }, 'Add to my calendar') : null)
+        : (e.active || e.by_team ? h('div', { class: 'rowbtn' },
+            e.active && e.by_team ? h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-edit', onclick: () => openSess(e) }, 'Change') : null,
+            e.by_team ? (e.active
+              ? h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-cancel', onclick: () => twoTap('m' + e.id, () => setSessActive(e.id, false)) }, state.confirm === 'm' + e.id ? 'Tap again to cancel it' : 'Cancel session')
+              : h('button', { type: 'button', class: 'quiet', 'data-act': 'sess-restore', onclick: () => setSessActive(e.id, true) }, 'Put it back')) : null,
+            e.active ? h('button', { type: 'button', class: 'quiet', 'data-ics': e.id, onclick: () => saveIcs([e], false, 'hackathon-session-' + e.id + '.ics') }, 'Add to calendar') : null) : null));
+  }
+  function sessForm() {
+    const d = state.drafts, days = [], today = etNow().day;
+    for (const it of state.pub.schedule) if (days.indexOf(it.day) < 0) days.push(it.day);
+    if (d.m_day && days.indexOf(d.m_day) < 0) days.push(d.m_day);
+    days.sort();
+    if (!d.m_day) d.m_day = days.find(x => x >= today) || days[0];
+    if (!d.m_start) d.m_start = '09:00';
+    if (!d.m_len) d.m_len = '30';
+    const lens = LENS.slice();
+    if (lens.indexOf(+d.m_len) < 0) { lens.push(+d.m_len); lens.sort((a, b) => a - b); }
+    return h('div', { class: 'card gold', id: 'sess-form' }, h('h2', null, state.sessEdit != null ? 'CHANGE YOUR SESSION' : 'ADD YOUR OWN SESSION'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'This goes on your team calendar for your teammates. It does not ask the Flight Crew for anything. To get an expert, use Request an expert.'),
+      form(saveSess,
+        h('label', { for: 'm_title' }, 'WHAT'), input('m_title', { id: 'm_title', maxlength: '80', placeholder: 'e.g., Team standup' }),
+        h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'm_day' }, 'DAY'), select('m_day', days.map(x => ({ value: x, label: dayLabel(x) })), { id: 'm_day' })),
+          h('div', null, h('label', { for: 'm_start' }, 'START (EASTERN)'), input('m_start', { id: 'm_start', type: 'time', step: '300' }))),
+        h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'm_len' }, 'LENGTH'), select('m_len', lens.map(m => ({ value: String(m), label: m + ' minutes' })), { id: 'm_len' })),
+          h('div', null, h('label', { for: 'm_where' }, 'WHERE'), input('m_where', { id: 'm_where', maxlength: '60', placeholder: 'Blank means your room' }))),
+        h('label', { for: 'm_note' }, 'NOTE'), input('m_note', { id: 'm_note', maxlength: '200' }),
+        h('div', { class: 'rowbtn' },
+          h('button', { type: 'submit', class: 'go', disabled: state.busy.sess, id: 'sess-save' }, state.sessEdit != null ? 'Save changes' : 'Put it on our calendar'),
+          h('button', { type: 'button', id: 'sess-close', onclick: closeSess }, 'Never mind')),
+        errLine('sess')));
+  }
+  function viewCal() {
+    const c = state.cal, d = state.drafts;
+    if (!c) return h('p', { class: 'muted' }, 'Loading the calendar...');
+    const out = [], teams = c.teams || [];
+    const editing = state.calEdit != null ? c.events.find(e => e.id === state.calEdit) : null;
+    if (state.calEdit != null && !editing) state.calEdit = null;
+
+    const days = [];
+    for (const it of state.pub.schedule) if (days.indexOf(it.day) < 0) days.push(it.day);
+    if (editing && days.indexOf(editing.day) < 0) days.push(editing.day);
+    days.sort();
+    const today = etNow().day;
+    if (!d.c_day) d.c_day = days.find(x => x >= today) || days[0];
+    if (!d.c_start) d.c_start = '09:00';
+    if (!d.c_len) d.c_len = '30';
+    const lens = LENS.slice();
+    if (lens.indexOf(+d.c_len) < 0) { lens.push(+d.c_len); lens.sort((a, b) => a - b); }
+
+    out.push(h('div', { class: 'card gold', id: 'cal-form' },
+      h('h2', null, editing ? 'CHANGE A SESSION' : "PUT A SESSION ON A TEAM'S CALENDAR"),
+      !teams.length && !editing
+        ? h('p', { class: 'muted', style: 'margin:0' }, 'No teams yet. Add teams on the Staff tab first.')
+        : form(saveCal,
+            editing
+              ? h('p', { style: 'margin:0', id: 'cal-editing' }, h('strong', null, editing.team), editing.room ? ' · Room ' + editing.room : '')
+              : [h('label', { for: 'c_team' }, 'TEAM'),
+                 select('c_team', teams.map(t => { const rm = roomFor(t, d.c_day); return { value: t.id, label: t.name + (rm ? ' · Room ' + rm : '') }; }), { id: 'c_team' })],
+            h('label', { for: 'c_what' }, 'WHAT'),
+            select('c_what', WHAT.map(w => ({ value: w, label: w })).concat([{ value: '__own', label: 'Something else (write your own)' }]), { id: 'c_what' }),
+            d.c_what === '__own' ? [h('label', { for: 'c_own' }, 'TITLE'), input('c_own', { id: 'c_own', maxlength: '80' })] : null,
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'c_day' }, 'DAY'), select('c_day', days.map(x => ({ value: x, label: dayLabel(x) })), { id: 'c_day' })),
+              h('div', null, h('label', { for: 'c_start' }, 'START (EASTERN)'), input('c_start', { id: 'c_start', type: 'time', step: '300' }))),
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'c_len' }, 'LENGTH'), select('c_len', lens.map(m => ({ value: String(m), label: m + ' minutes' })), { id: 'c_len' })),
+              h('div', null, h('label', { for: 'c_with' }, 'WITH'), input('c_with', { id: 'c_with', maxlength: '60', placeholder: 'A team or a callsign' }))),
+            h('label', { for: 'c_where' }, 'WHERE'), input('c_where', { id: 'c_where', maxlength: '60', placeholder: "Leave blank for the team's room" }),
+            h('label', { for: 'c_note' }, 'NOTE THE TEAM WILL SEE'), input('c_note', { id: 'c_note', maxlength: '200', placeholder: 'e.g., Bring your use case sheet.' }),
+            h('div', { class: 'rowbtn' },
+              h('button', { type: 'submit', class: 'go', disabled: state.busy.cal, id: 'cal-save' }, editing ? 'Save changes' : 'Put it on their calendar'),
+              editing || d.c_req ? h('button', { type: 'button', id: 'cal-reset', onclick: resetCalForm }, 'Never mind') : null),
+            d.c_req && !editing ? h('p', { class: 'muted', id: 'cal-linked' }, 'Linked to request #' + d.c_req + '. The team sees the time on that request.') : null),
+      errLine('cal'),
+      state.note.cal ? h('div', { class: 'ok', id: 'cal-ok' }, state.note.cal) : null));
+
+    const act = c.events.filter(e => e.active), off = c.events.filter(e => !e.active);
+    const byDay = [];
+    for (const e of act) { let g = byDay.find(x => x.day === e.day); if (!g) byDay.push(g = { day: e.day, items: [] }); g.items.push(e); }
+    out.push(h('div', { class: 'card', id: 'cal-list' }, h('h2', null, 'ON THE CALENDAR, ALL TEAMS'),
+      act.length
+        ? [byDay.map(g => h('div', { class: 'calday' }, h('label', null, dayLabel(g.day) + ' · ' + g.items.length), g.items.map(e => calItem(e, true)))),
+           h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'cal-all', onclick: () => saveIcs(act, true, 'hackathon-sessions.ics') },
+             'Add all ' + act.length + ' to my calendar'))]
+        : h('p', { class: 'muted', style: 'margin:0' }, 'Nothing scheduled yet.'),
+      off.length ? h('div', { class: 'calday' }, h('label', null, 'CANCELLED'), off.map(e => calItem(e, true))) : null));
+    return out;
+  }
+
+  // ---------------------------------------------------------- view: staff
+  // ------------------------------------------------------------- judging
+  const jCard = id => state.judge ? state.judge.cards.find(c => c.team_id === id) : null;
+  function openCard(id) {
+    const c = jCard(id), d = state.drafts;
+    for (let i = 0; i < 7; i++) d['j_s' + i] = c && c.scores[i] != null ? c.scores[i] : null;
+    d.j_myth = !!(c && c.myth); d.j_conflict = !!(c && c.conflict); d.j_note = c && c.note ? c.note : '';
+    state.jTeam = id; state.err.judge = null; state.note.judge = null;
+    render(); window.scrollTo(0, 0);
+  }
+  function closeCard() { state.jTeam = null; state.err.judge = null; render(); }
+  function saveCard(submit) {
+    return withBusy('judge', async () => {
+      state.err.judge = null;
+      const d = state.drafts, scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
+      if (submit && scores.some(x => x == null)) { state.err.judge = msg('incomplete'); return; }
+      const r = await call('event_judge_save', { p_token: state.token, p_team_id: state.jTeam, p_scores: scores, p_myth: !!d.j_myth, p_conflict: !!d.j_conflict, p_note: d.j_note || null, p_submit: submit });
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); if (r.error === 'removed') { state.jRemoved = true; state.jTeam = null; return; } state.err.judge = msg(r.error); if (r.error === 'judging_closed') loadJudge(true); return; }
+      const team = state.judge.teams.find(t => t.id === state.jTeam);
+      state.note.judge = (submit ? 'Submitted: ' : 'Draft saved: ') + (team ? team.name : 'the card') + '.';
+      state.jTeam = null;
+      await loadJudge(true);
+      window.scrollTo(0, 0);
+      const shown = state.note.judge;
+      setTimeout(() => { if (state.note.judge === shown) { state.note.judge = null; render(); } }, 8000);
+    });
+  }
+  function cardForm() {
+    const t = state.judge.teams.find(x => x.id === state.jTeam), d = state.drafts;
+    if (!t) { state.jTeam = null; return null; }
+    const scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
+    const total = scores.every(x => x != null) ? RUBRIC.reduce((n, r, i) => n + r[1] * scores[i], 0) / 5 : null;
+    const yesNo = (key, attr) => h('div', { class: 'pick two' },
+      h('button', { type: 'button', class: d[key] ? 'on' : null, ['data-' + attr]: 'yes', 'aria-pressed': d[key] ? 'true' : 'false', onclick: () => { d[key] = true; state.err.judge = null; render(); } }, 'Yes'),
+      h('button', { type: 'button', class: d[key] ? null : 'on', ['data-' + attr]: 'no', 'aria-pressed': d[key] ? 'false' : 'true', onclick: () => { d[key] = false; state.err.judge = null; render(); } }, 'No'));
+    return h('div', { class: 'card gold', id: 'judge-card' }, h('h2', null, 'SCORECARD · ' + t.name.toUpperCase()),
+      h('p', { class: 'muted', style: 'margin:0' }, '1 is the lowest score. 5 is the highest.'),
+      RUBRIC.map((r, i) => h('div', { class: 'crit', 'data-crit': String(i) },
+        h('div', { class: 'cn' }, r[0], h('span', { class: 'cw' }, ' · weight ' + r[1])),
+        h('div', { class: 'muted' }, r[2]),
+        h('div', { class: 'pick' }, [1, 2, 3, 4, 5].map(n => h('button', { type: 'button', class: scores[i] === n ? 'on' : null, 'data-score': String(n),
+          'aria-pressed': scores[i] === n ? 'true' : 'false', 'aria-label': r[0] + ': ' + n, onclick: () => { d['j_s' + i] = n; state.err.judge = null; render(); } }, String(n)))))),
+      h('div', { class: 'crit', 'data-crit': 'myth' },
+        h('div', { class: 'cn' }, 'Myth busted', h('span', { class: 'cw' }, ' · 5 bonus points')),
+        h('div', { class: 'muted' }, MYTH), yesNo('j_myth', 'myth')),
+      h('div', { class: 'crit', 'data-crit': 'conflict' },
+        h('div', { class: 'cn' }, 'Does your company have people on this team?'),
+        h('div', { class: 'muted' }, 'If yes, your card is kept and not tallied.'), yesNo('j_conflict', 'conflict')),
+      h('label', { for: 'j_note' }, 'NOTES FOR STAFF (OPTIONAL)'), textarea('j_note', { id: 'j_note', maxlength: '500', style: 'min-height:60px' }),
+      h('div', { class: 'jtotal', id: 'judge-total' }, total == null ? 'Score all seven criteria to see the total.' : 'Weighted total: ' + fmtScore(total) + ' of 100' + (d.j_myth ? ' + 5 bonus' : '')),
+      errLine('judge'),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: 'go', id: 'judge-submit', disabled: state.busy.judge, onclick: () => saveCard(true) }, 'Submit scorecard'),
+        h('button', { type: 'button', id: 'judge-draft', disabled: state.busy.judge, onclick: () => saveCard(false) }, 'Save as draft'),
+        h('button', { type: 'button', class: 'quiet', id: 'judge-back', onclick: closeCard }, 'Never mind')));
+  }
+  // Judges need no PIN. A judge enters a name on the judging page. Staff see the name on the judge list.
+  function doJudgeJoin() {
+    return withBusy('jjoin', async () => {
+      state.err.jjoin = null;
+      const name = (state.drafts.jname || '').trim();
+      if (name.length < 2) { state.err.jjoin = msg('bad_name'); return; }
+      const r = await call('event_judge_join', { p_name: name });
+      if (!r.ok) { state.err.jjoin = msg(r.error); return; }
+      state.token = r.token; state.me = r.me; state.drafts.jname = '';
+      store.set(TOKEN_KEY, r.token);
+      state.tab = 'judge';
+      await loadTeam(true);
+      await loadJudge(true);
+    });
+  }
+  function viewJudgeJoin() {
+    return h('div', { class: 'card gold', id: 'judge-join' }, h('h2', null, 'JUDGES'),
+      h('p', { style: 'margin-top:0' }, 'Enter your name to get your scorecards. No PIN.'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Staff see every name on the judge list and remove anyone who is not a judge.'),
+      form(doJudgeJoin,
+        h('label', { for: 'jname' }, 'YOUR NAME'), input('jname', { id: 'jname', maxlength: '40', placeholder: 'First and last name' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.jjoin, id: 'judge-join-go' }, 'Start judging')),
+        errLine('jjoin')));
+  }
+  function viewJudge() {
+    const j = state.judge, me = state.me;
+    const out = [h('div', { class: 'card', id: 'judge-who' }, h('div', { class: 'who' },
+      h('div', null, h('div', { class: 'name' }, 'Judging'), h('div', { class: 'meta' }, 'Judge: ' + me.display_name))))];
+    if (state.jRemoved) { out.push(h('div', { class: 'card gold', id: 'judge-removed' }, h('h2', null, 'REMOVED'), h('p', { style: 'margin:0' }, msg('removed')))); return out; }
+    if (!j) { out.push(h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'))); return out; }
+    if (state.note.judge) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'judge-ok' }, state.note.judge));
+    if (state.jTeam && j.open) { out.push(cardForm()); return out; }
+    const done = j.cards.filter(c => c.submitted && j.teams.some(t => t.id === c.team_id)).length;
+    out.push(h('div', { class: 'card', id: 'judge-teams' }, h('h2', null, 'SCORECARDS · ' + done + ' OF ' + j.teams.length + ' SUBMITTED'),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'judge-how' }, j.open
+        ? 'One card per team. Seven criteria, 1 to 5 each. You can change a card until staff close judging.'
+        : 'Judging is closed. Your cards are final.'),
+      j.teams.length ? j.teams.map(t => {
+        const c = jCard(t.id);
+        const st = !c ? ['new', 'NOT SCORED'] : !c.submitted ? ['claimed', 'DRAFT'] : c.conflict ? ['done', 'SUBMITTED · NOT TALLIED'] : ['on_the_way', 'SUBMITTED'];
+        return h('div', { class: 'door', 'data-jteam': t.name },
+          h('div', null, h('span', { class: 'n' }, t.name), ' ', h('span', { class: 'st ' + st[0] }, st[1])),
+          c && c.total != null ? h('div', { class: 'muted' }, 'Your score: ' + fmtScore(c.total) + ' of 100' + (c.myth ? ' + 5 bonus' : '') + (c.conflict ? ' · your company is on this team' : '')) : null,
+          j.open ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: c ? 'quiet' : 'go', 'data-act': 'score', onclick: () => openCard(t.id) }, c ? 'Change' : 'Score')) : null);
+      }) : h('p', { class: 'muted', style: 'margin:0' }, 'No teams to score yet.')));
+    return out;
+  }
+  async function staffJudgingOpen(open) {
+    const r = await call('event_staff_judging_open', { p_token: state.token, p_open: open });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  async function staffCardCount(id, counted) {
+    const r = await call('event_staff_card_count', { p_token: state.token, p_id: id, p_counted: counted });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  async function staffJudgeRemove(id, removed) {
+    const r = await call('event_staff_judge_remove', { p_token: state.token, p_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  // Staff tab: the judge list, the ranking, and every card. Nobody else sees this.
+  function judgingCard() {
+    const g = state.judging;
+    if (!g) return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING'), h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'));
+    const byId = {};
+    for (const j of g.judges) byId[j.id] = j;
+    // Two judges can enter the same name. Each then shows its number, so staff can tell them apart.
+    const twin = j => g.judges.filter(x => x.name.toLowerCase() === j.name.toLowerCase()).length > 1;
+    const label = j => j.name + (twin(j) ? ' #' + j.id : '');
+    const gone = c => !!(byId[c.judge_id] && byId[c.judge_id].removed);
+    const status = c => gone(c) ? 'judge removed, not tallied' : !c.submitted ? 'draft' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
+    const cardLine = c => h('div', { class: 'jc', 'data-jcard': String(c.id) },
+      h('span', { class: 'muted' }, (byId[c.judge_id] ? label(byId[c.judge_id]) : c.judge) + ': ' + (c.total != null ? fmtScore(c.total) + (c.myth ? ' + 5' : '') : 'no total yet') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
+      c.submitted && !c.conflict && !gone(c) ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
+    const judgeRow = j => h('div', { class: 'jc jrow', 'data-judge': label(j) },
+      h('span', null, h('span', { class: 'n' }, label(j)), j.removed ? [' ', h('span', { class: 'st done' }, 'REMOVED')] : null,
+        h('span', { class: 'muted' }, ' · ' + j.submitted + ' of ' + g.teams.length + ' submitted' + (j.drafts ? ', ' + j.drafts + ' in draft' : '') + ' · signed in ' + ago(j.at)
+          + (j.removed && j.removed_by ? ' · removed by ' + j.removed_by : ''))),
+      j.removed ? h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-back', onclick: () => staffJudgeRemove(j.id, false) }, 'Put back')
+        : h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-remove', onclick: () => twoTap('jr' + j.id, () => staffJudgeRemove(j.id, true)) }, state.confirm === 'jr' + j.id ? 'Tap again to remove' : 'Remove'));
+    return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING · ' + (g.open ? 'OPEN' : 'CLOSED')),
+      h('p', { class: 'muted', style: 'margin-top:0', id: 'judging-how' }, g.open
+        ? 'Judges can save and change cards. Close judging before the judges confer. After that no card can change.'
+        : 'Closed. No card can change. Open it again to let a judge fix a card.'),
+      h('div', { class: 'rowbtn' },
+        h('button', { type: 'button', class: g.open ? 'go' : null, id: 'judging-toggle', onclick: () => twoTap('jo', () => staffJudgingOpen(!g.open)) }, state.confirm === 'jo' ? 'Tap again to confirm' : (g.open ? 'Close judging' : 'Open judging again')),
+        h('button', { type: 'button', class: 'quiet', id: 'judging-refresh', onclick: () => loadJudging(true) }, 'Refresh')),
+      errLine('judging'),
+      h('label', null, 'JUDGES (' + g.judges.filter(j => !j.removed).length + ')'),
+      h('p', { class: 'muted', style: 'margin:0', id: 'judging-where' }, 'Judges open easyassap.com/judge and enter their name. No PIN. Remove anyone who is not a judge: that person is signed out and the cards leave the tally.'),
+      g.judges.length ? h('div', { id: 'judging-judges' }, g.judges.map(judgeRow))
+        : h('p', { class: 'muted', style: 'margin:8px 0 0', id: 'judging-none' }, 'No judges yet.'),
+      h('label', null, 'RANKING · AVERAGE OF THE TALLIED CARDS'),
+      g.results.map(r => h('div', { class: 'door', 'data-result': r.team },
+        h('div', null, h('span', { class: 'n' }, (r.rank != null ? r.rank + '. ' : '') + r.team), ' ',
+          r.score != null ? h('span', { class: 'st on_the_way' }, fmtScore(r.score)) : h('span', { class: 'st done' }, 'NO CARDS TALLIED')),
+        r.score != null ? h('div', { class: 'muted' }, r.cards + (r.cards === 1 ? ' card' : ' cards') + ' · weighted ' + fmtScore(r.weighted) + ' + bonus ' + fmtScore(r.bonus)) : null,
+        r.score != null ? h('div', { class: 'muted' }, RUBRIC.map((c, i) => c[0] + ' ' + fmtScore(r.crit[i])).join(' · ')) : null,
+        g.cards.filter(c => c.team_id === r.team_id).map(cardLine))));
+  }
+
+  function viewStaff() {
+    const s = state.staff;
+    if (!state.me.display_name) return nameCard('Pick a callsign. It is recorded with what you post and schedule. No real names.');
+    const out = [];
+    if (state.pinReveal) {
+      const p = state.pinReveal;
+      out.push(h('div', { class: 'card gold', id: 'pin-reveal' }, h('h2', null, 'PIN FOR ' + p.name.toUpperCase()),
+        h('div', { class: 'pinshow' }, p.pin.length === 8 ? p.pin.slice(0, 4) + ' ' + p.pin.slice(4) : p.pin.slice(0, 3) + ' ' + p.pin.slice(3)),
+        h('p', { class: 'muted', style: 'margin-top:0' }, 'Shown once. Write it down or hand it to the coach now. If it gets lost, reset it below.'),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'button', id: 'pin-ack', onclick: () => { state.pinReveal = null; render(); } }, 'Got it'))));
+    }
+    out.push(judgingCard());
+    const annTeams = s ? s.doors.filter(d => d.kind === 'team' && d.active) : [];
+    const annTo = annTeams.find(d => d.id === state.drafts.ann_to) || null;
+    out.push(h('div', { class: 'card', id: 'ann-card' }, h('h2', null, 'POST AN ANNOUNCEMENT'),
+      form(staffAnnounce,
+        h('label', { for: 'ann_to' }, 'TO'),
+        select('ann_to', [{ value: '', label: 'Everyone' }].concat(annTeams.map(d => ({ value: d.id, label: d.name }))), { id: 'ann_to' }),
+        h('label', { for: 'ann' }, 'MESSAGE'),
+        textarea('ann', { id: 'ann', maxlength: '280', placeholder: annTo ? 'e.g., You are in Room 12B tomorrow.' : 'e.g., Lunch is up. Decks are due at 7:30 AM Thursday.', style: 'min-height:72px' }),
+        h('p', { class: 'muted', style: 'margin:8px 0 0', id: 'ann-who' }, annTo ? 'Only ' + annTo.name + ' and staff will see this.' : 'Everyone will see this, signed in or not.'),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.ann, id: 'ann-go' }, annTo ? 'Post to ' + annTo.name : 'Post to everyone')),
+        errLine('ann'),
+        state.note.ann ? h('div', { class: 'ok', id: 'ann-ok' }, state.note.ann) : null),
+      s && s.announcements.length ? s.announcements.map(a => h('div', { class: 'door', 'data-ann': a.id },
+        h('div', null, a.body), h('div', { class: 'muted' }, 'To ' + (a.door_id ? (a.team || 'one team') : 'everyone') + ' · ' + ago(a.at) + (a.active ? ' · showing' : ' · taken down')),
+        a.active ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', 'data-annoff': a.id, onclick: () => staffAnnounceOff(a.id) }, 'Take down')) : null)) : null));
+
+    out.push(h('div', { class: 'card' }, h('h2', null, 'ADD A TEAM OR A PIN'),
+      form(staffCreateDoor,
+        h('label', { for: 'd_kind' }, 'TYPE'),
+        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
+        h('label', { for: 'd_name' }, 'CALLSIGN'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Uniform' }),
+        state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
+          h('div', null, h('label', { for: 'd_room' }, 'MAIN ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
+          h('div', null, h('label', { for: 'd_coach' }, 'COACH CALLSIGN'), input('d_coach', { id: 'd_coach', maxlength: '60' }))) : null,
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.door, id: 'door-go' }, 'Create and show PIN')),
+        errLine('door'))));
+
+    out.push(h('div', { class: 'card', id: 'doors' }, h('h2', null, 'TEAMS AND PINS'), errLine('staff'),
+      s ? s.doors.filter(d => d.kind !== 'judge').map(d => {
+        const editing = state.editDoor === d.id;
+        const mine = d.kind === 'staff' && d.name === state.me.name;
+        const rn = s.renames ? s.renames[d.id] : null;
+        const mem = s.members ? s.members[d.id] : null;
+        const memNames = mem ? mem.names.map(m => m.name + (m.devices > 1 ? ' (' + m.devices + ' devices)' : '')).join(', ') : '';
+        const memRest = mem && mem.unnamed ? (memNames ? ' · ' : '') + mem.unnamed + (mem.unnamed === 1 ? ' device' : ' devices') + ' without a callsign' : '';
+        return h('div', { class: 'door', 'data-door': d.name },
+          h('div', null, h('span', { class: 'n' }, d.name), ' ', h('span', { class: 'st ' + (d.active ? 'claimed' : 'done') }, d.kind.toUpperCase() + (d.active ? '' : ' · OFF'))),
+          rn && rn.original !== d.name ? h('div', { class: 'muted', 'data-was': rn.original }, 'Started as ' + rn.original + (rn.last_by ? ' · renamed by ' + rn.last_by : '')) : null,
+          h('div', { class: 'muted' }, (d.kind === 'team' ? (d.room ? 'Room ' + d.room : 'No room yet') + (d.rooms || []).map(x => ' · ' + dayLabel(x.day) + ': Room ' + x.room).join('') + (d.coach ? ' · Coach: ' + d.coach : '') + ' · ' : '') + d.people + (d.people === 1 ? ' device' : ' devices') + ' signed in' + (d.kind === 'team' ? ' · ' + d.open + ' open' : '')),
+          memNames || memRest ? h('div', { class: 'muted', 'data-members': d.name }, 'Signed in: ', h('span', { style: 'color:var(--paper)' }, memNames), memRest) : null,
+          editing ? form(() => staffSaveDoor(d.id),
+            h('div', { class: 'grid2' },
+              h('div', null, h('label', { for: 'e_room' }, 'MAIN ROOM'), input('e_room', { id: 'e_room', maxlength: '60' })),
+              h('div', null, h('label', { for: 'e_coach' }, 'COACH CALLSIGN'), input('e_coach', { id: 'e_coach', maxlength: '60' }))),
+            d.kind === 'team' ? [h('label', null, 'A DIFFERENT ROOM ON ONE DAY. BLANK MEANS THE MAIN ROOM.'),
+              h('div', { class: 'grid2', id: 'e_days' }, eventDays().map(day => h('div', null, h('label', { for: 'e_rd_' + day }, dayLabel(day)),
+                input('e_rd_' + day, { id: 'e_rd_' + day, maxlength: '60', placeholder: state.drafts.e_room || 'Main room' }))))] : null,
+            h('label', { for: 'e_name' }, 'CALLSIGN'), input('e_name', { id: 'e_name', maxlength: '60' }),
+            h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', 'data-act': 'save-door' }, 'Save'),
+              h('button', { type: 'button', onclick: () => { state.editDoor = null; render(); } }, 'Never mind')))
+          : h('div', { class: 'rowbtn' },
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'edit-door', onclick: () => { state.editDoor = d.id; state.drafts.e_room = d.room || ''; state.drafts.e_coach = d.coach || ''; state.drafts.e_name = d.name;
+                eventDays().forEach(day => { state.drafts['e_rd_' + day] = ((d.rooms || []).find(x => x.day === day) || {}).room || ''; }); render(); } }, 'Edit'),
+              mine ? h('span', { class: 'muted', style: 'align-self:center' }, 'You are signed in through this one.') : [
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'reset-pin', onclick: () => twoTap('r' + d.id, () => staffResetPin(d)) }, state.confirm === 'r' + d.id ? 'Tap again: signs everyone out' : 'Reset PIN'),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'toggle-door', onclick: () => twoTap('t' + d.id, () => staffToggleDoor(d)) }, state.confirm === 't' + d.id ? 'Tap again to confirm' : (d.active ? 'Turn off' : 'Turn on')),
+              d.kind === 'team' ? h('button', { type: 'button', class: 'quiet', 'data-act': 'remove-door', onclick: () => twoTap('z' + d.id, () => staffRemoveDoor(d.id, true)) }, state.confirm === 'z' + d.id ? 'Tap again to delete' : 'Delete') : null]),
+          !editing && state.confirm === 'z' + d.id ? h('div', { 'data-warn': d.name, style: 'font-size:14px;margin-top:10px;color:var(' + (d.people || d.open ? '--gold' : '--dim') + ')' }, delWarn(d)) : null);
+      }) : h('p', { class: 'muted' }, 'Loading...')));
+    const del = deletedDoors();
+    if (del.length) out.push(h('div', { class: 'card', id: 'deleted-doors' }, h('h2', null, 'DELETED TEAMS (' + del.length + ')'),
+      state.showDeleted
+        ? [del.map(d => h('div', { class: 'door', 'data-deleted': d.name },
+            h('div', null, h('span', { class: 'n' }, d.name)),
+            h('div', { class: 'rowbtn' }, h('span', { class: 'muted', style: 'flex:1 1 140px;align-self:center' }, 'Deleted' + (d.by ? ' by ' + d.by : '')),
+              h('button', { type: 'button', class: 'quiet', 'data-act': 'restore-door', onclick: () => staffRemoveDoor(d.id, false) }, 'Put back')))),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', id: 'deleted-hide', onclick: () => { state.showDeleted = false; render(); } }, 'Hide'))]
+        : [h('p', { class: 'muted', style: 'margin-top:0', id: 'deleted-how' }, 'Their PINs are off. Put a team back and its PIN works again.'),
+          h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: 'quiet', id: 'deleted-show', onclick: () => { state.showDeleted = true; render(); } }, 'Show'))]));
+    return out;
+  }
+
+  
+
+  // ---------------------------------------------------------------- boot
+  let lastPub = 0, lastTeam = 0, lastCrew = 0, lastStaff = 0, lastCal = 0, lastUC = 0, lastJudge = 0, lastJudging = 0;
+  async function tick() {
+    const now = Date.now();
+    const ae = document.activeElement;
+    const crewIn = state.token && state.me && isCrewKind(state.me.kind);
+    // A hidden tab, or an open picker, stops the usual refresh. With alerts on, the crew queue
+    // is still checked (without redrawing the page) so a new request is never missed.
+    if (document.hidden || (ae && (ae.tagName === 'SELECT' || ae.type === 'time'))) {
+      if (state.alerts && crewIn && now - lastCrew > 10000) { lastCrew = now; loadCrew(false, !document.hidden); }
+      return;
+    }
+    if (now - lastPub > 60000) { lastPub = now; loadPublic(false); }
+    if (state.token && state.me) {
+      if (state.me.kind === 'team' && now - lastTeam > 20000) { lastTeam = now; loadTeam(false); }
+      if (isCrewKind(state.me.kind) && now - lastCrew > 10000) { lastCrew = now; loadCrew(false); }
+      if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastStaff > 30000) { lastStaff = now; loadStaff(false); }
+      if (state.me.kind === 'staff' && state.tab === 'staff' && now - lastJudging > 15000) { lastJudging = now; loadJudging(false); }
+      // A scorecard that is open is left alone. The list, and a closed judging, are kept current.
+      if (state.me.kind === 'judge' && (!state.jTeam || !state.judge || !state.judge.open) && now - lastJudge > 20000) { lastJudge = now; loadJudge(false); }
+      if (now - lastCal > 60000) { lastCal = now; loadCal(false); }
+      if (now - lastUC > 60000 && (state.tab === 'uc' || (state.tab === 'crew' && state.crewTab === 'uc'))) { lastUC = now; loadUC(false); }
+    }
+  }
+  async function boot() {
+    if (FALLBACK && !state.pub) {
+      // Show the schedule that shipped with the page at once. Live data replaces it when the server answers.
+      state.pub = { schedule: FALLBACK.schedule, announcements: [], topics: FALLBACK.topics };
+      pickDay();
+      state.loaded = true;
+    }
+    render();
+    lastPub = Date.now();
+    await loadPublic(true);
+    if (state.token) {
+      await loadTeam(true);
+      if (state.me) {
+        state.tab = state.me.kind === 'team' ? 'team' : state.me.kind === 'judge' ? 'judge' : 'crew';
+        if (state.me.kind === 'staff') { await loadStaff(true); loadJudging(true); }
+        if (state.me.kind === 'judge') await loadJudge(true);
+        render();
+        lastCal = Date.now();
+        loadCal(true);
+      }
+    }
+    setInterval(tick, 5000);
+    setInterval(() => { if (!document.hidden && state.tab === 'schedule' && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.key)) render(); }, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { seen(); lastPub = lastTeam = lastCrew = lastStaff = lastCal = lastUC = lastJudge = lastJudging = 0; tick(); } });
+    window.addEventListener('focus', seen);
+    // Browsers only let sound start after a tap or a key press. After a reload, the first one turns it back on.
+    document.addEventListener('pointerdown', () => { if (state.alerts) audioOn(); seen(); }, { passive: true });
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
