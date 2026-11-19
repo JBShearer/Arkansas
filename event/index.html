@@ -1530,15 +1530,17 @@ footer .ebl span{color:var(--evil)}
     render(); window.scrollTo(0, 0);
   }
   function closeCard() { state.jTeam = null; state.err.judge = null; render(); }
-  function saveCard(submit) {
+  // Every saved score counts. A card with blank criteria is saved and tallied on the criteria it has.
+  function saveCard() {
     return withBusy('judge', async () => {
       state.err.judge = null;
       const d = state.drafts, scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
-      if (submit && scores.some(x => x == null)) { state.err.judge = msg('incomplete'); return; }
+      if (scores.every(x => x == null)) { state.err.judge = 'Pick at least one score.'; return; }
+      const submit = scores.every(x => x != null);
       const r = await call('event_judge_save', { p_token: state.token, p_team_id: state.jTeam, p_scores: scores, p_myth: !!d.j_myth, p_conflict: !!d.j_conflict, p_note: d.j_note || null, p_submit: submit });
       if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); if (r.error === 'removed') { state.jRemoved = true; state.jTeam = null; return; } state.err.judge = msg(r.error); if (r.error === 'judging_closed') loadJudge(true); return; }
       const team = state.judge.teams.find(t => t.id === state.jTeam);
-      state.note.judge = (submit ? 'Submitted: ' : 'Draft saved: ') + (team ? team.name : 'the card') + '.' + (submit ? '' : ' A draft is not counted until you submit it.');
+      state.note.judge = 'Saved: ' + (team ? team.name : 'the card') + '.';
       state.jTeam = null;
       await loadJudge(true);
       window.scrollTo(0, 0);
@@ -1551,6 +1553,7 @@ footer .ebl span{color:var(--evil)}
     if (!t) { state.jTeam = null; return null; }
     const scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
     const total = scores.every(x => x != null) ? RUBRIC.reduce((n, r, i) => n + r[1] * scores[i], 0) / 5 : null;
+    const picked = scores.filter(x => x != null).length;
     const yesNo = (key, attr) => h('div', { class: 'pick two' },
       h('button', { type: 'button', class: d[key] ? 'on' : null, ['data-' + attr]: 'yes', 'aria-pressed': d[key] ? 'true' : 'false', onclick: () => { d[key] = true; state.err.judge = null; render(); } }, 'Yes'),
       h('button', { type: 'button', class: d[key] ? null : 'on', ['data-' + attr]: 'no', 'aria-pressed': d[key] ? 'false' : 'true', onclick: () => { d[key] = false; state.err.judge = null; render(); } }, 'No'));
@@ -1568,12 +1571,11 @@ footer .ebl span{color:var(--evil)}
         h('div', { class: 'cn' }, 'Does your company have people on this team?'),
         h('div', { class: 'muted' }, 'If yes, your card is kept and not tallied.'), yesNo('j_conflict', 'conflict')),
       h('label', { for: 'j_note' }, 'NOTES FOR STAFF (OPTIONAL)'), textarea('j_note', { id: 'j_note', maxlength: '500', style: 'min-height:60px' }),
-      h('div', { class: 'jtotal', id: 'judge-total' }, total == null ? 'Score all seven criteria to see the total.' : 'Weighted total: ' + fmtScore(total) + ' of 100' + (d.j_myth ? ' + 5 bonus' : '')),
+      h('div', { class: 'jtotal', id: 'judge-total' }, total == null ? (picked ? picked + ' of 7 scored. A blank criterion is left out of the tally.' : 'Score the seven criteria, 1 to 5.') : 'Weighted total: ' + fmtScore(total) + ' of 100' + (d.j_myth ? ' + 5 bonus' : '')),
       errLine('judge'),
-      h('p', { class: 'muted', style: 'margin:12px 0 0', id: 'judge-hint' }, 'Submit counts the card. You can still change it until staff close judging. A draft is saved and not counted.'),
+      h('p', { class: 'muted', style: 'margin:12px 0 0', id: 'judge-hint' }, 'Every score you save is counted, even if some criteria are blank. You can change a card until staff close judging.'),
       h('div', { class: 'rowbtn' },
-        h('button', { type: 'button', class: 'go', id: 'judge-submit', disabled: state.busy.judge, onclick: () => saveCard(true) }, 'Submit scorecard'),
-        h('button', { type: 'button', id: 'judge-draft', disabled: state.busy.judge, onclick: () => saveCard(false) }, 'Save draft (not counted)'),
+        h('button', { type: 'button', class: 'go', id: 'judge-submit', disabled: state.busy.judge, onclick: () => saveCard() }, 'Save scorecard'),
         h('button', { type: 'button', class: 'quiet', id: 'judge-back', onclick: closeCard }, 'Never mind')));
   }
   // Judges need no PIN. A judge enters a name on the judging page. Staff see the name on the judge list.
@@ -1608,21 +1610,20 @@ footer .ebl span{color:var(--evil)}
     if (!j) { out.push(h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'))); return out; }
     if (state.note.judge) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'judge-ok' }, state.note.judge));
     if (state.jTeam && j.open) { out.push(cardForm()); return out; }
-    const done = j.cards.filter(c => c.submitted && j.teams.some(t => t.id === c.team_id)).length;
-    const draftN = j.cards.filter(c => !c.submitted && j.teams.some(t => t.id === c.team_id)).length;
-    if (j.open && draftN) out.push(h('div', { class: 'card gold', id: 'judge-drafts' }, h('p', { style: 'margin:0' },
-      (draftN === 1 ? '1 card is in draft.' : draftN + ' cards are in draft.') + ' A draft is not counted. Open it and tap Submit scorecard.')));
-    out.push(h('div', { class: 'card', id: 'judge-teams' }, h('h2', null, 'SCORECARDS · ' + done + ' OF ' + j.teams.length + ' SUBMITTED'),
+    const scoredOn = c => c ? c.scores.filter(x => x != null).length : 0;
+    const saved = j.cards.filter(c => scoredOn(c) > 0 && j.teams.some(t => t.id === c.team_id)).length;
+    out.push(h('div', { class: 'card', id: 'judge-teams' }, h('h2', null, 'SCORECARDS · ' + saved + ' OF ' + j.teams.length + ' SAVED'),
       h('p', { class: 'muted', style: 'margin-top:0', id: 'judge-how' }, j.open
-        ? 'One card per team. Seven criteria, 1 to 5 each. Only a submitted card is counted. You can change a card until staff close judging.'
-        : 'Judging is closed. Your cards are final.' + (draftN ? ' ' + (draftN === 1 ? '1 draft was not submitted and is' : draftN + ' drafts were not submitted and are') + ' not counted. See staff.' : '')),
+        ? 'One card per team. Seven criteria, 1 to 5 each. Every score you save is counted. You can change a card until staff close judging.'
+        : 'Judging is closed. Your cards are final.'),
       j.teams.length ? j.teams.map(t => {
-        const c = jCard(t.id);
-        const st = !c ? ['new', 'NOT SCORED'] : !c.submitted ? ['new', 'DRAFT · NOT COUNTED'] : c.conflict ? ['done', 'SUBMITTED · NOT TALLIED'] : ['on_the_way', 'SUBMITTED'];
+        const c = jCard(t.id), n = scoredOn(c);
+        const st = !n ? ['new', 'NOT SCORED'] : c.conflict ? ['done', 'SAVED · NOT TALLIED'] : n < 7 ? ['claimed', 'SAVED · ' + n + ' OF 7 SCORED'] : ['on_the_way', 'SAVED'];
         return h('div', { class: 'door', 'data-jteam': t.name },
           h('div', null, h('span', { class: 'n' }, t.name), ' ', h('span', { class: 'st ' + st[0] }, st[1])),
-          c && c.total != null ? h('div', { class: 'muted' }, 'Your score: ' + fmtScore(c.total) + ' of 100' + (c.myth ? ' + 5 bonus' : '') + (c.conflict ? ' · your company is on this team' : '')) : null,
-          j.open ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: c && c.submitted ? 'quiet' : 'go', 'data-act': 'score', onclick: () => openCard(t.id) }, !c ? 'Score' : c.submitted ? 'Change' : 'Finish and submit')) : null);
+          n === 7 && c.total != null ? h('div', { class: 'muted' }, 'Your score: ' + fmtScore(c.total) + ' of 100' + (c.myth ? ' + 5 bonus' : '') + (c.conflict ? ' · your company is on this team' : ''))
+            : n ? h('div', { class: 'muted' }, n + ' of 7 criteria scored. The blanks are left out of the tally.' + (c.conflict ? ' Your company is on this team.' : '')) : null,
+          j.open ? h('div', { class: 'rowbtn' }, h('button', { type: 'button', class: n ? 'quiet' : 'go', 'data-act': 'score', onclick: () => openCard(t.id) }, n ? 'Change' : 'Score')) : null);
       }) : h('p', { class: 'muted', style: 'margin:0' }, 'No teams to score yet.')));
     return out;
   }
@@ -1654,20 +1655,20 @@ footer .ebl span{color:var(--evil)}
     const twin = j => g.judges.filter(x => x.name.toLowerCase() === j.name.toLowerCase()).length > 1;
     const label = j => j.name + (twin(j) ? ' #' + j.id : '');
     const gone = c => !!(byId[c.judge_id] && byId[c.judge_id].removed);
-    const draftCards = g.cards.filter(c => !c.submitted && !gone(c) && g.teams.some(t => t.id === c.team_id)).length;
-    const status = c => gone(c) ? 'judge removed, not tallied' : !c.submitted ? 'draft' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
+    const scoredOn = c => c.scores.filter(x => x != null).length;
+    const status = c => gone(c) ? 'judge removed, not tallied' : !scoredOn(c) ? 'nothing scored, not tallied' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
     const cardLine = c => h('div', { class: 'jc', 'data-jcard': String(c.id) },
-      h('span', { class: 'muted' }, (byId[c.judge_id] ? label(byId[c.judge_id]) : c.judge) + ': ' + (c.total != null ? fmtScore(c.total) + (c.myth ? ' + 5' : '') : 'no total yet') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
-      c.submitted && !c.conflict && !gone(c) ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
+      h('span', { class: 'muted' }, (byId[c.judge_id] ? label(byId[c.judge_id]) : c.judge) + ': ' + (c.total != null ? fmtScore(c.total) : scoredOn(c) ? scoredOn(c) + ' of 7 scored' : 'no scores') + (scoredOn(c) && c.myth ? ' + 5' : '') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
+      scoredOn(c) && !c.conflict && !gone(c) ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
     const judgeRow = j => h('div', { class: 'jc jrow', 'data-judge': label(j) },
       h('span', null, h('span', { class: 'n' }, label(j)), j.removed ? [' ', h('span', { class: 'st done' }, 'REMOVED')] : null,
-        h('span', { class: 'muted' }, ' · ' + j.submitted + ' of ' + g.teams.length + ' submitted' + (j.drafts ? ', ' + j.drafts + ' in draft (not counted)' : '') + ' · signed in ' + ago(j.at)
+        h('span', { class: 'muted' }, ' · ' + (j.submitted + j.drafts) + ' of ' + g.teams.length + ' scored' + (j.drafts ? ', ' + j.drafts + ' with blanks' : '') + ' · signed in ' + ago(j.at)
           + (j.removed && j.removed_by ? ' · removed by ' + j.removed_by : ''))),
       j.removed ? h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-back', onclick: () => staffJudgeRemove(j.id, false) }, 'Put back')
         : h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-remove', onclick: () => twoTap('jr' + j.id, () => staffJudgeRemove(j.id, true)) }, state.confirm === 'jr' + j.id ? 'Tap again to remove' : 'Remove'));
     return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING · ' + (g.open ? 'OPEN' : 'CLOSED')),
       h('p', { class: 'muted', style: 'margin-top:0', id: 'judging-how' }, g.open
-        ? 'Judges can save and change cards. Close judging before the judges confer. After that no card can change.'
+        ? 'Judges can save and change cards. Every saved score is counted, with blanks left out. Close judging before the judges confer. After that no card can change.'
         : 'Closed. No card can change. Open it again to let a judge fix a card.'),
       h('div', { class: 'rowbtn' },
         h('button', { type: 'button', class: g.open ? 'go' : null, id: 'judging-toggle', onclick: () => twoTap('jo', () => staffJudgingOpen(!g.open)) }, state.confirm === 'jo' ? 'Tap again to confirm' : (g.open ? 'Close judging' : 'Open judging again')),
@@ -1677,14 +1678,12 @@ footer .ebl span{color:var(--evil)}
       h('p', { class: 'muted', style: 'margin:0', id: 'judging-where' }, 'Judges open easyassap.com/judge and enter their name. No PIN. Remove anyone who is not a judge: that person is signed out and the cards leave the tally.'),
       g.judges.length ? h('div', { id: 'judging-judges' }, g.judges.map(judgeRow))
         : h('p', { class: 'muted', style: 'margin:8px 0 0', id: 'judging-none' }, 'No judges yet.'),
-      draftCards ? h('p', { class: 'err', style: 'margin:10px 0 0', id: 'judging-drafts' }, (draftCards === 1 ? '1 card is' : draftCards + ' cards are')
-        + ' in draft and not counted. Each judge must open the card and tap Submit scorecard.') : null,
-      h('label', null, 'RANKING · AVERAGE OF THE TALLIED CARDS'),
+      h('label', null, 'RANKING · EVERY SAVED SCORE IS COUNTED'),
       g.results.map(r => h('div', { class: 'door', 'data-result': r.team },
         h('div', null, h('span', { class: 'n' }, (r.rank != null ? r.rank + '. ' : '') + r.team), ' ',
           r.score != null ? h('span', { class: 'st on_the_way' }, fmtScore(r.score)) : h('span', { class: 'st done' }, 'NO CARDS TALLIED')),
         r.score != null ? h('div', { class: 'muted' }, r.cards + (r.cards === 1 ? ' card' : ' cards') + ' · weighted ' + fmtScore(r.weighted) + ' + bonus ' + fmtScore(r.bonus)) : null,
-        r.score != null ? h('div', { class: 'muted' }, RUBRIC.map((c, i) => c[0] + ' ' + fmtScore(r.crit[i])).join(' · ')) : null,
+        r.score != null ? h('div', { class: 'muted' }, RUBRIC.map((c, i) => c[0] + ' ' + (r.crit[i] == null ? 'no score' : fmtScore(r.crit[i]))).join(' · ')) : null,
         g.cards.filter(c => c.team_id === r.team_id).map(cardLine))));
   }
 
