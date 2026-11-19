@@ -81,6 +81,8 @@ button[disabled]{opacity:.5;cursor:default}
 .pick button{padding:12px 0}
 .jtotal{margin-top:14px;font-weight:700;color:var(--gold)}
 .jc{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:6px}
+.jrow{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.jrow .n{font-weight:700}
 .badge{display:inline-block;font-size:11px;letter-spacing:.1em;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 6px;margin-left:8px;vertical-align:1px}
 .badge.now{color:var(--green)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -156,6 +158,10 @@ footer .ebl span{color:var(--evil)}
     set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
     del(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
   };
+  // The same source builds two pages. The judging page (easyassap.com/judge) opens on judge sign-in and keeps
+  // its own session, so a browser can hold a staff or team session on the event page and a judge session here.
+  const JUDGE_PAGE = CONFIG.entry === 'judge';
+  const TOKEN_KEY = JUDGE_PAGE ? 'ev_judge_token' : 'ev_token';
 
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -235,6 +241,8 @@ footer .ebl span{color:var(--evil)}
     judging_closed: 'Judging is closed. Cards can no longer change.',
     bad_score: 'Each score is 1 to 5.',
     incomplete: 'Score all seven criteria before you submit.',
+    removed: 'Staff removed you from the judge list. See staff if that is a mistake.',
+    too_many: 'Too many sign-ins from this network. Wait 15 minutes, or find a cowboy hat.',
     cannot_reset_self: 'Reset your own staff PIN from the database, not from here.',
     network: 'Cannot reach the server from this network. The schedule below is the built-in copy. Requests need a connection: try cellular.'
   };
@@ -242,14 +250,14 @@ footer .ebl span{color:var(--evil)}
 
   // -------------------------------------------------------------- state
   const state = {
-    pub: null, offset: 0, token: store.get('ev_token'), me: null,
+    pub: null, offset: 0, token: store.get(TOKEN_KEY), me: null,
     team: null, crew: null, staff: null, cal: null, calEdit: null, renameOpen: false,
     alerts: store.get('ev_alerts') === '1', unseen: false, count: 0, sessOpen: false, sessEdit: null,
     uc: null, ucFail: false, ucOpen: false, ucEdit: null,
-    tab: 'schedule', day: null, form: null, crewTab: 'open',
+    tab: JUDGE_PAGE ? 'judge' : 'schedule', day: null, form: null, crewTab: 'open',
     drafts: {}, err: {}, note: {}, busy: {}, pinReveal: null, noteOpen: null,
     editDoor: null, confirm: null, joined: false, loaded: false, offline: false, last: {}, showDeleted: false, openMore: null,
-    judge: null, jTeam: null, judging: null
+    judge: null, jTeam: null, judging: null, jRemoved: false
   };
 
   // ---------------------------------------------------------------- api
@@ -430,7 +438,13 @@ footer .ebl span{color:var(--evil)}
   async function loadJudge(force) {
     if (!state.token || !state.me || state.me.kind !== 'judge') return;
     const r = await call('event_judge_state', { p_token: state.token });
-    if (!r.ok) { if (r.error === 'auth') signedOut(msg('auth')); return; }
+    if (!r.ok) {
+      // A removed judge keeps the session. If staff put the judge back, the cards return on the next check.
+      if (r.error === 'removed') { if (!state.jRemoved) { state.jRemoved = true; state.jTeam = null; state.last.judge = null; render(); } }
+      else if (r.error === 'auth' || r.error === 'judge_only') signedOut(msg('auth'));
+      return;
+    }
+    if (state.jRemoved) { state.jRemoved = false; force = true; }
     if (r.open && state.judge && !state.judge.open) state.err.judge = null;
     if (changed('judge', r) || force) { state.judge = r; render(); }
   }
@@ -476,11 +490,11 @@ footer .ebl span{color:var(--evil)}
     state.token = null; state.me = null; state.team = null; state.crew = null; state.staff = null;
     state.cal = null; state.calEdit = null; state.renameOpen = false; state.sessOpen = false; state.sessEdit = null;
     state.uc = null; state.ucFail = false; state.ucOpen = false; state.ucEdit = null;
-    state.judge = null; state.jTeam = null; state.judging = null;
+    state.judge = null; state.jTeam = null; state.judging = null; state.jRemoved = false;
     state.last = { pub: state.last.pub };
-    store.del('ev_token');
-    state.err.pin = why || null;
-    state.tab = 'team';
+    store.del(TOKEN_KEY);
+    if (JUDGE_PAGE) { state.err.jjoin = why === ERR.auth ? 'Your session ended. Enter your name to start again.' : (why || null); state.tab = 'judge'; }
+    else { state.err.pin = why || null; state.tab = 'team'; }
     alertPrev = null; state.unseen = false; state.count = 0;
     setTitle();
     render();
@@ -530,7 +544,7 @@ footer .ebl span{color:var(--evil)}
       const r = await call('event_login', { p_pin: pin });
       if (!r.ok) { state.err.pin = msg(r.error); return; }
       state.token = r.token; state.me = r.me; state.drafts.pin = '';
-      store.set('ev_token', r.token);
+      store.set(TOKEN_KEY, r.token);
       state.tab = r.me.kind === 'team' ? 'team' : r.me.kind === 'judge' ? 'judge' : 'crew';
       await loadTeam(true);
       if (isCrewKind(r.me.kind)) await loadCrew(true);
@@ -972,19 +986,20 @@ footer .ebl span{color:var(--evil)}
     kids.push(h('header', { class: 'top' },
       h('div', { class: 'eyebrow' }, 'NOV 16-19 · IBM ONE MADISON · NYC'),
       h('h1', null, 'A&D AI HACKATHON', h('span', { class: 'cursor', 'aria-hidden': 'true' })),
-      h('div', { class: 'sub' }, 'PARTNER EDITION · COMPANION SITE')));
+      h('div', { class: 'sub' }, 'PARTNER EDITION · ' + (JUDGE_PAGE ? 'JUDGING' : 'COMPANION SITE'))));
 
     if (CONFIG.mode === 'demo') kids.push(h('div', { class: 'demo' }, demo.hint));
     if (state.offline) kids.push(h('div', { class: 'err', role: 'alert' }, msg('network')));
 
     const kind = state.me ? state.me.kind : null;
-    const tabs = [['schedule', 'Schedule']];
-    if (!kind) tabs.push(['team', 'Enter PIN']);
-    if (kind === 'team') { tabs.push(['team', 'My team']); tabs.push(['uc', 'Use cases']); }
-    if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
-    if (kind === 'staff') tabs.push(['staff', 'Staff']);
-    if (kind === 'judge') tabs.push(['judge', 'Judging']);
-    if (!tabs.some(t => t[0] === state.tab)) state.tab = 'schedule';
+    const tabs = JUDGE_PAGE ? [['judge', 'Judging'], ['schedule', 'Schedule']] : [['schedule', 'Schedule']];
+    if (!JUDGE_PAGE) {
+      if (!kind) tabs.push(['team', 'Enter PIN']);
+      if (kind === 'team') { tabs.push(['team', 'My team']); tabs.push(['uc', 'Use cases']); }
+      if (kind === 'crew' || kind === 'staff') tabs.push(['crew', 'Crew']);
+      if (kind === 'staff') tabs.push(['staff', 'Staff']);
+    }
+    if (!tabs.some(t => t[0] === state.tab)) state.tab = JUDGE_PAGE ? 'judge' : 'schedule';
     kids.push(h('nav', { class: 'tabs', 'aria-label': 'Sections' }, tabs.map(t =>
       h('button', { type: 'button', class: state.tab === t[0] ? 'on' : null, 'data-tab': t[0], onclick: () => go(t[0]) }, t[1]))));
 
@@ -1001,7 +1016,7 @@ footer .ebl span{color:var(--evil)}
     else if (state.tab === 'uc') kids.push(viewUC());
     else if (state.tab === 'crew') kids.push(viewCrew());
     else if (state.tab === 'staff') kids.push(viewStaff());
-    else if (state.tab === 'judge') kids.push(viewJudge());
+    else if (state.tab === 'judge') kids.push(kind === 'judge' ? viewJudge() : viewJudgeJoin());
 
     kids.push(h('footer', null,
       h('div', null, 'Unofficial companion site for the SAP Aerospace & Defense AI Hackathon 2026: Partner Edition. Not an SAP system. Do not enter proprietary, export-controlled, or classified information.'),
@@ -1521,7 +1536,7 @@ footer .ebl span{color:var(--evil)}
       const d = state.drafts, scores = RUBRIC.map((_, i) => d['j_s' + i] || null);
       if (submit && scores.some(x => x == null)) { state.err.judge = msg('incomplete'); return; }
       const r = await call('event_judge_save', { p_token: state.token, p_team_id: state.jTeam, p_scores: scores, p_myth: !!d.j_myth, p_conflict: !!d.j_conflict, p_note: d.j_note || null, p_submit: submit });
-      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judge = msg(r.error); if (r.error === 'judging_closed') loadJudge(true); return; }
+      if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); if (r.error === 'removed') { state.jRemoved = true; state.jTeam = null; return; } state.err.judge = msg(r.error); if (r.error === 'judging_closed') loadJudge(true); return; }
       const team = state.judge.teams.find(t => t.id === state.jTeam);
       state.note.judge = (submit ? 'Submitted: ' : 'Draft saved: ') + (team ? team.name : 'the card') + '.';
       state.jTeam = null;
@@ -1560,10 +1575,35 @@ footer .ebl span{color:var(--evil)}
         h('button', { type: 'button', id: 'judge-draft', disabled: state.busy.judge, onclick: () => saveCard(false) }, 'Save as draft'),
         h('button', { type: 'button', class: 'quiet', id: 'judge-back', onclick: closeCard }, 'Never mind')));
   }
+  // Judges need no PIN. A judge enters a name on the judging page. Staff see the name on the judge list.
+  function doJudgeJoin() {
+    return withBusy('jjoin', async () => {
+      state.err.jjoin = null;
+      const name = (state.drafts.jname || '').trim();
+      if (name.length < 2) { state.err.jjoin = msg('bad_name'); return; }
+      const r = await call('event_judge_join', { p_name: name });
+      if (!r.ok) { state.err.jjoin = msg(r.error); return; }
+      state.token = r.token; state.me = r.me; state.drafts.jname = '';
+      store.set(TOKEN_KEY, r.token);
+      state.tab = 'judge';
+      await loadTeam(true);
+      await loadJudge(true);
+    });
+  }
+  function viewJudgeJoin() {
+    return h('div', { class: 'card gold', id: 'judge-join' }, h('h2', null, 'JUDGES'),
+      h('p', { style: 'margin-top:0' }, 'Enter your name to get your scorecards. No PIN.'),
+      h('p', { class: 'muted', style: 'margin-top:0' }, 'Staff see every name on the judge list and remove anyone who is not a judge.'),
+      form(doJudgeJoin,
+        h('label', { for: 'jname' }, 'YOUR NAME'), input('jname', { id: 'jname', maxlength: '40', placeholder: 'First and last name' }),
+        h('div', { class: 'rowbtn' }, h('button', { type: 'submit', class: 'go', disabled: state.busy.jjoin, id: 'judge-join-go' }, 'Start judging')),
+        errLine('jjoin')));
+  }
   function viewJudge() {
     const j = state.judge, me = state.me;
-    if (!me.display_name) return nameCard('Pick a callsign. It goes on your scorecards, and staff see it with your scores. No real names.');
-    const out = [whoCard('Judging', 'Signed in as ' + me.display_name + ' · ' + me.name)];
+    const out = [h('div', { class: 'card', id: 'judge-who' }, h('div', { class: 'who' },
+      h('div', null, h('div', { class: 'name' }, 'Judging'), h('div', { class: 'meta' }, 'Judge: ' + me.display_name))))];
+    if (state.jRemoved) { out.push(h('div', { class: 'card gold', id: 'judge-removed' }, h('h2', null, 'REMOVED'), h('p', { style: 'margin:0' }, msg('removed')))); return out; }
     if (!j) { out.push(h('div', { class: 'card' }, h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'))); return out; }
     if (state.note.judge) out.push(h('div', { class: 'ok', style: 'margin:0 0 14px', id: 'judge-ok' }, state.note.judge));
     if (state.jTeam && j.open) { out.push(cardForm()); return out; }
@@ -1594,22 +1634,32 @@ footer .ebl span{color:var(--evil)}
     state.err.judging = null;
     await loadJudging(true);
   }
-  // Staff tab: who has voted, the ranking, and every card. Nobody else sees this.
+  async function staffJudgeRemove(id, removed) {
+    const r = await call('event_staff_judge_remove', { p_token: state.token, p_id: id, p_removed: removed });
+    if (!r.ok) { if (r.error === 'auth') return signedOut(msg('auth')); state.err.judging = msg(r.error); render(); return; }
+    state.err.judging = null;
+    await loadJudging(true);
+  }
+  // Staff tab: the judge list, the ranking, and every card. Nobody else sees this.
   function judgingCard() {
     const g = state.judging;
     if (!g) return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING'), h('p', { class: 'muted', style: 'margin:0' }, 'Loading...'));
-    const judges = [];
-    for (const c of g.cards) {
-      const k = (c.pin || '') + '|' + c.judge.toLowerCase();
-      let j = judges.find(x => x.k === k);
-      if (!j) judges.push(j = { k, name: c.judge, pin: c.pin, done: 0, draft: 0 });
-      if (!g.teams.some(t => t.id === c.team_id)) continue;
-      if (c.submitted) j.done++; else j.draft++;
-    }
-    const status = c => !c.submitted ? 'draft' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
+    const byId = {};
+    for (const j of g.judges) byId[j.id] = j;
+    // Two judges can enter the same name. Each then shows its number, so staff can tell them apart.
+    const twin = j => g.judges.filter(x => x.name.toLowerCase() === j.name.toLowerCase()).length > 1;
+    const label = j => j.name + (twin(j) ? ' #' + j.id : '');
+    const gone = c => !!(byId[c.judge_id] && byId[c.judge_id].removed);
+    const status = c => gone(c) ? 'judge removed, not tallied' : !c.submitted ? 'draft' : c.conflict ? 'own company, not tallied' : !c.counted ? 'left out by staff' : 'tallied';
     const cardLine = c => h('div', { class: 'jc', 'data-jcard': String(c.id) },
-      h('span', { class: 'muted' }, c.judge + ' (' + c.pin + '): ' + (c.total != null ? fmtScore(c.total) + (c.myth ? ' + 5' : '') : 'no total yet') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
-      c.submitted && !c.conflict ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
+      h('span', { class: 'muted' }, (byId[c.judge_id] ? label(byId[c.judge_id]) : c.judge) + ': ' + (c.total != null ? fmtScore(c.total) + (c.myth ? ' + 5' : '') : 'no total yet') + ' · ' + status(c) + (c.note ? ' · note: ' + c.note : '')),
+      c.submitted && !c.conflict && !gone(c) ? h('button', { type: 'button', class: 'quiet', 'data-act': 'card-count', onclick: () => staffCardCount(c.id, !c.counted) }, c.counted ? 'Leave out' : 'Count it') : null);
+    const judgeRow = j => h('div', { class: 'jc jrow', 'data-judge': label(j) },
+      h('span', null, h('span', { class: 'n' }, label(j)), j.removed ? [' ', h('span', { class: 'st done' }, 'REMOVED')] : null,
+        h('span', { class: 'muted' }, ' · ' + j.submitted + ' of ' + g.teams.length + ' submitted' + (j.drafts ? ', ' + j.drafts + ' in draft' : '') + ' · signed in ' + ago(j.at)
+          + (j.removed && j.removed_by ? ' · removed by ' + j.removed_by : ''))),
+      j.removed ? h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-back', onclick: () => staffJudgeRemove(j.id, false) }, 'Put back')
+        : h('button', { type: 'button', class: 'quiet', 'data-act': 'judge-remove', onclick: () => twoTap('jr' + j.id, () => staffJudgeRemove(j.id, true)) }, state.confirm === 'jr' + j.id ? 'Tap again to remove' : 'Remove'));
     return h('div', { class: 'card gold', id: 'judging' }, h('h2', null, 'JUDGING · ' + (g.open ? 'OPEN' : 'CLOSED')),
       h('p', { class: 'muted', style: 'margin-top:0', id: 'judging-how' }, g.open
         ? 'Judges can save and change cards. Close judging before the judges confer. After that no card can change.'
@@ -1618,9 +1668,10 @@ footer .ebl span{color:var(--evil)}
         h('button', { type: 'button', class: g.open ? 'go' : null, id: 'judging-toggle', onclick: () => twoTap('jo', () => staffJudgingOpen(!g.open)) }, state.confirm === 'jo' ? 'Tap again to confirm' : (g.open ? 'Close judging' : 'Open judging again')),
         h('button', { type: 'button', class: 'quiet', id: 'judging-refresh', onclick: () => loadJudging(true) }, 'Refresh')),
       errLine('judging'),
-      h('label', null, 'JUDGES'),
-      judges.length ? h('div', { class: 'muted', id: 'judging-judges' }, judges.map(j => j.name + ' (' + j.pin + '): ' + j.done + ' of ' + g.teams.length + ' submitted' + (j.draft ? ', ' + j.draft + ' in draft' : '')).join(' · '))
-        : h('p', { class: 'muted', style: 'margin:0', id: 'judging-none' }, 'No cards yet. Judges sign in with a judge PIN. Create one below: Add a team or a PIN, type Judge.'),
+      h('label', null, 'JUDGES (' + g.judges.filter(j => !j.removed).length + ')'),
+      h('p', { class: 'muted', style: 'margin:0', id: 'judging-where' }, 'Judges open easyassap.com/judge and enter their name. No PIN. Remove anyone who is not a judge: that person is signed out and the cards leave the tally.'),
+      g.judges.length ? h('div', { id: 'judging-judges' }, g.judges.map(judgeRow))
+        : h('p', { class: 'muted', style: 'margin:8px 0 0', id: 'judging-none' }, 'No judges yet.'),
       h('label', null, 'RANKING · AVERAGE OF THE TALLIED CARDS'),
       g.results.map(r => h('div', { class: 'door', 'data-result': r.team },
         h('div', null, h('span', { class: 'n' }, (r.rank != null ? r.rank + '. ' : '') + r.team), ' ',
@@ -1661,7 +1712,7 @@ footer .ebl span{color:var(--evil)}
     out.push(h('div', { class: 'card' }, h('h2', null, 'ADD A TEAM OR A PIN'),
       form(staffCreateDoor,
         h('label', { for: 'd_kind' }, 'TYPE'),
-        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }, { value: 'judge', label: 'Judge (8-digit PIN)' }], { id: 'd_kind' }),
+        select('d_kind', [{ value: 'team', label: 'Team (6-digit PIN)' }, { value: 'crew', label: 'Flight Crew (8-digit PIN)' }, { value: 'staff', label: 'Staff (8-digit PIN)' }], { id: 'd_kind' }),
         h('label', { for: 'd_name' }, 'CALLSIGN'), input('d_name', { id: 'd_name', maxlength: '60', placeholder: 'e.g., Team Uniform' }),
         state.drafts.d_kind === 'team' || !state.drafts.d_kind ? h('div', { class: 'grid2' },
           h('div', null, h('label', { for: 'd_room' }, 'MAIN ROOM'), input('d_room', { id: 'd_room', maxlength: '60' })),
@@ -1670,7 +1721,7 @@ footer .ebl span{color:var(--evil)}
         errLine('door'))));
 
     out.push(h('div', { class: 'card', id: 'doors' }, h('h2', null, 'TEAMS AND PINS'), errLine('staff'),
-      s ? s.doors.map(d => {
+      s ? s.doors.filter(d => d.kind !== 'judge').map(d => {
         const editing = state.editDoor === d.id;
         const mine = d.kind === 'staff' && d.name === state.me.name;
         const rn = s.renames ? s.renames[d.id] : null;
